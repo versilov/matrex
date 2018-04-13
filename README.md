@@ -1,6 +1,7 @@
 # Matrex
 
 Matrix manipulation library for Elixir implemented in C native code.
+Extracted from https://github.com/sdwolfz/exlearn
 
 ## Installation
 
