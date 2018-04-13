@@ -50,7 +50,7 @@ defmodule Matrex.MixProject do
   defp deps do
     [
       {:benchfella, "0.3.4", only: :dev},
-      {:dialyxir, "0.5.0", only: [:dev, :test]}
+      {:dialyxir, "0.5.0", only: [:dev, :test], runtime: false}
     ]
   end
 end
