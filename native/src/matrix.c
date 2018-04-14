@@ -2,9 +2,9 @@
 
 void
 matrix_clone(Matrix destination, Matrix source) {
-  int32_t length = source[0] * source[1] + 2;
+  uint64_t length = source[0] * source[1] + 2;
 
-  for (int32_t index = 0; index < length; index += 1) {
+  for (uint64_t index = 0; index < length; index += 1) {
     destination[index] = source[index];
   }
 }
@@ -20,7 +20,7 @@ matrix_free(Matrix *matrix_address) {
 
 Matrix
 matrix_new(int32_t rows, int32_t columns) {
-  int32_t length = rows * columns + 2;
+  uint64_t length = rows * columns + 2;
   Matrix  result = malloc(sizeof(float) * length);
 
   result[0] = rows;
@@ -31,27 +31,27 @@ matrix_new(int32_t rows, int32_t columns) {
 
 void
 matrix_fill(Matrix matrix, int32_t value) {
-  int32_t length = matrix[0] * matrix[1] + 2;
+  uint64_t length = matrix[0] * matrix[1] + 2;
 
-  for (int32_t index = 2; index < length; index += 1) {
+  for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = value;
   }
 }
 
 void
 matrix_random(Matrix matrix) {
-  int32_t length = matrix[0] * matrix[1] + 2;
+  uint64_t length = matrix[0] * matrix[1] + 2;
 
   srand(time(NULL));
 
-  for (int32_t index = 2; index < length; index += 1) {
+  for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = (float)rand()/(float)RAND_MAX;
   }
 }
 
 void
 matrix_eye(Matrix matrix, int32_t value) {
-  int32_t length = matrix[0] * matrix[1] * sizeof(float);
+  uint64_t length = matrix[0] * matrix[1] * sizeof(float);
   int32_t rows = (int32_t)matrix[0];
   int32_t cols = (int32_t)matrix[1];
 
@@ -63,7 +63,7 @@ matrix_eye(Matrix matrix, int32_t value) {
 
 void
 matrix_zeros(Matrix matrix) {
-  int32_t length = matrix[0] * matrix[1] * sizeof(float);
+  uint64_t length = matrix[0] * matrix[1] * sizeof(float);
   memset((void*)&matrix[2], 0, length);
 }
 
@@ -72,9 +72,9 @@ matrix_equal(Matrix first, Matrix second) {
   if (first[0] != second[0]) return 0;
   if (first[1] != second[1]) return 0;
 
-  int32_t length = first[0] * first[1] + 2;
+  uint64_t length = first[0] * first[1] + 2;
 
-  for (int32_t index = 2; index < length; index += 1) {
+  for (uint64_t index = 2; index < length; index += 1) {
     if (first[index] != second[index]) return 0;
   }
 
@@ -83,22 +83,22 @@ matrix_equal(Matrix first, Matrix second) {
 
 void
 matrix_add(const Matrix first, const Matrix second, Matrix result) {
-  int32_t data_size = (int32_t) (first[0] * first[1] + 2);
+  uint64_t data_size = (uint64_t) (first[0] * first[1] + 2);
 
   result[0] = first[0];
   result[1] = first[1];
 
-  for (int32_t index = 2; index < data_size; index += 1) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] + second[index];
   }
 }
 
 int32_t
 matrix_argmax(const Matrix matrix) {
-  int32_t data_size = (int32_t) (matrix[0] * matrix[1] + 2);
-  int32_t argmax    = 2;
+  uint64_t data_size = (int64_t) (matrix[0] * matrix[1] + 2);
+  uint64_t argmax    = 2;
 
-  for (int32_t index = 3; index < data_size; index += 1) {
+  for (uint64_t index = 3; index < data_size; index += 1) {
     if (matrix[argmax] < matrix[index]) {
       argmax = index;
     }
@@ -109,12 +109,12 @@ matrix_argmax(const Matrix matrix) {
 
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result) {
-  int32_t data_size = (int32_t) (first[0] * first[1] + 2);
+  uint64_t data_size = (uint64_t) (first[0] * first[1] + 2);
 
   result[0] = first[0];
   result[1] = first[1];
 
-  for (int32_t index = 2; index < data_size; index += 1) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] / second[index];
   }
 }
@@ -146,7 +146,7 @@ void
 matrix_dot_and_add(
   const Matrix first, const Matrix second, const Matrix third, Matrix result
 ) {
-  int32_t data_size = (int32_t) (first[0] * second[1] + 2);
+  uint64_t data_size = (uint64_t) (first[0] * second[1] + 2);
 
   result[0] = first[0];
   result[1] = second[1];
@@ -168,7 +168,7 @@ matrix_dot_and_add(
     result[1]
   );
 
-  for(int32_t index = 2; index < data_size; index += 1) {
+  for(uint64_t index = 2; index < data_size; index += 1) {
     result[index] += third[index];
   }
 }
