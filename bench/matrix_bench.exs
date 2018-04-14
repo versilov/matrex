@@ -1,4 +1,4 @@
-defmodule MatrixBench.RandomMatrix do
+defmodule MatrexBench.RandomMatrix do
   @doc """
   Generates a random matrix just so we can test large matrices
   """
@@ -8,7 +8,7 @@ defmodule MatrixBench.RandomMatrix do
   end
 end
 
-defmodule MatrixBench do
+defmodule MatrexBench do
   @moduledoc """
   Benchfella module to compare matrix operations performance with a115/exmatrix
 
@@ -31,11 +31,11 @@ defmodule MatrixBench do
   ```
 
 
-  ## ExLearn.Matrix
+  ## Matrex
   ```
   Finished in 19.3 seconds
 
-  ## MatrixBench
+  ## MatrexBench
   benchmark name                iterations   average time
   50x50 matrices dot product        500000   6.89 µs/op
   transpose a 100x100 matrix        100000   28.55 µs/op
@@ -50,7 +50,7 @@ defmodule MatrixBench do
 
   use Benchfella
   import Matrex
-  import MatrixBench.RandomMatrix
+  import MatrexBench.RandomMatrix
 
   @random_a random(50)
   @random_b random(50)
