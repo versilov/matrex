@@ -525,6 +525,34 @@ defmodule Matrex do
   end
 
   @doc """
+  Converts to flat list
+  """
+  @spec to_list(binary) :: binary
+  def to_list(matrix) when is_binary(matrix) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
+  @doc """
+  Converts to list of lists
+  """
+  @spec to_list_of_lists(binary) :: binary
+  def to_list_of_lists(matrix) when is_binary(matrix) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
+  @doc """
   Transposes a matrix
   """
   @spec transpose(binary) :: binary

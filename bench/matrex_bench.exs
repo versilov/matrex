@@ -97,6 +97,14 @@ defmodule MatrexBench do
     dot(@random_a_vlarge, @random_b_vlarge)
   end
 
+  bench "400x400 matrix to list" do
+    to_list(@random_a_vlarge)
+  end
+
+  bench "400x400 matrix to list of lists" do
+    to_list_of_lists(@random_a_vlarge)
+  end
+
   bench "300x300 zeros matrix creation" do
     zeros(300)
   end

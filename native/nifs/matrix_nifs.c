@@ -391,6 +391,60 @@ sum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
+  /* to_list(matrix) -> [first row, second row, ...,last row] */
+  ErlNifBinary  matrix;
+  float *matrix_data;
+  ERL_NIF_TERM  result;
+  uint32_t rows, cols;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+  rows = matrix_data[0];
+  cols = matrix_data[1];
+
+  result = enif_make_list(env, 0);
+
+  for (uint32_t i = rows*cols + 2; i-- > 2; ) {
+    result = enif_make_list_cell(env, enif_make_double(env, matrix_data[i]), result);
+  }
+
+  return result;
+}
+
+static ERL_NIF_TERM
+to_list_of_lists(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
+  /* to_list_of_lists(matrix) -> [[first row], [second row], ...,[last row]] */
+  ErlNifBinary  matrix;
+  float *matrix_data;
+  ERL_NIF_TERM  result;
+  uint32_t rows, cols;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+  rows = matrix_data[0];
+  cols = matrix_data[1];
+
+  result = enif_make_list(env, 0);
+
+  for (uint32_t r = rows; r-- > 0; ) {
+    ERL_NIF_TERM row = enif_make_list(env, 0);
+    for (uint32_t c = cols; c-- > 0; ) {
+      row = enif_make_list_cell(env, enif_make_double(env, matrix_data[2 + cols*r + c]), row);
+    }
+    result = enif_make_list_cell(env, row, result);
+  }
+
+  return result;
+}
+
+static ERL_NIF_TERM
 transpose(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
@@ -451,6 +505,8 @@ static ErlNifFunc nif_functions[] = {
   {"random",               2, random_matrix,        0},
   {"substract",            2, substract,            0},
   {"sum",                  1, sum,                  0},
+  {"to_list",              1, to_list,              0},
+  {"to_list_of_lists",     1, to_list_of_lists,     0},
   {"transpose",            1, transpose,            0},
   {"zeros",                2, zeros,                0}
 };
