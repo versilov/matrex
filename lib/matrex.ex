@@ -7,7 +7,18 @@ defmodule Matrex do
 
   @spec load_nifs :: :ok
   def load_nifs do
-    :ok = :erlang.load_nif('./priv/matrix_nifs', 0)
+    priv_dir =
+      case :code.priv_dir(__MODULE__) do
+        {:error, _} ->
+          ebin_dir = :code.which(__MODULE__) |> :filename.dirname()
+          app_path = :filename.dirname(ebin_dir)
+          :filename.join(app_path, "priv")
+
+        path ->
+          path
+      end
+
+    :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
   end
 
   @doc """
