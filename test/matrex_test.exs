@@ -10,6 +10,15 @@ defmodule MatrexTest do
     assert Matrex.add(first, second) == expected
   end
 
+  test "#add raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.add(first, second)
+    end
+  end
+
   test "#apply/2 applies a function/1 on each element of the matrix" do
     function = &(&1 + 1)
     input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
@@ -64,12 +73,30 @@ defmodule MatrexTest do
     assert Matrex.divide(first, second) == expected
   end
 
+  test "#divide raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.divide(first, second)
+    end
+  end
+
   test "#dot multiplies two matrices" do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
     expected = Matrex.new(2, 2, [[22, 28], [49, 64]])
 
     assert Matrex.dot(first, second) == expected
+  end
+
+  test "#dot raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.dot(first, second)
+    end
   end
 
   test "#dot_and_add multiplies two matrices and adds the third" do
@@ -81,12 +108,31 @@ defmodule MatrexTest do
     assert Matrex.dot_and_add(first, second, third) == expected
   end
 
+  test "#dot_and_add raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
+    third = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.dot_and_add(first, second, third)
+    end
+  end
+
   test "#dot_nt multiplies two matrices, second needing to be transposed" do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 3, [[1, 3, 5], [2, 4, 6]])
     expected = Matrex.new(2, 2, [[22, 28], [49, 64]])
 
     assert Matrex.dot_nt(first, second) == expected
+  end
+
+  test "#dot_nt raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.dot_nt(first, second)
+    end
   end
 
   test "#dot_tn multiplies two matrices, first needing to be transposed" do
@@ -97,10 +143,25 @@ defmodule MatrexTest do
     assert Matrex.dot_tn(first, second) == expected
   end
 
+  test "#dot_tn raises when sizes do not match" do
+    first = Matrex.new(3, 2, [[1, 4], [2, 5], [3, 6]])
+    second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.dot_tn(first, second)
+    end
+  end
+
   test "#first returns the first element of the matrix" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
 
     assert Matrex.first(matrix) == 1
+  end
+
+  test "#size returns the size of the matrix" do
+    matrix = Matrex.new(2, 3, [[4, 8, 22], [20, 0, 9]])
+
+    assert Matrex.size(matrix) == {2, 3}
   end
 
   test "#inspect displays a matrix visualization to stdout" do
@@ -128,6 +189,15 @@ defmodule MatrexTest do
     expected = Matrex.new(2, 3, [[5, 4, 3], [12, 20, 36]])
 
     assert Matrex.multiply(first, second) == expected
+  end
+
+  test "#multiply raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.multiply(first, second)
+    end
   end
 
   test "#multiply_with_scalar multiplies matrix element by a scalar" do
@@ -182,6 +252,15 @@ defmodule MatrexTest do
     expected = Matrex.new(2, 3, [[-4, 0, 2], [1, 1, 0]])
 
     assert Matrex.substract(first, second) == expected
+  end
+
+  test "#substract raises when sizes do not match" do
+    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.substract(first, second)
+    end
   end
 
   test "#substract_inverse substracts the second matrix from the first" do
