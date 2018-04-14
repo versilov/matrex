@@ -279,26 +279,6 @@ defmodule Matrex do
   end
 
   @doc """
-  Create matrix of random floats in [0, 1] range
-  """
-  @spec random(integer, integer) :: binary
-  def random(rows, cols)
-      when is_integer(rows) and is_integer(cols) do
-    # excoveralls ignore
-    :erlang.nif_error(:nif_library_not_loaded)
-
-    # excoveralls ignore
-    random_size = :rand.uniform(2)
-    # excoveralls ignore
-    <<1::size(random_size)>>
-  end
-
-  @doc """
-  Create square matrix of random floats.
-  """
-  def random(size), do: random(size, size)
-
-  @doc """
   Create matrix filled with given value
   """
   @spec fill(integer, integer, integer) :: binary
@@ -473,7 +453,27 @@ defmodule Matrex do
   Create matrix filled with ones
   """
   def ones(rows, cols), do: fill(rows, cols, 1)
-  def ones(size), do: fill(size, size, 1)
+  def ones(size), do: fill(size, 1)
+
+  @doc """
+  Create matrix of random floats in [0, 1] range
+  """
+  @spec random(integer, integer) :: binary
+  def random(rows, cols)
+      when is_integer(rows) and is_integer(cols) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
+  @doc """
+  Create square matrix of random floats.
+  """
+  def random(size), do: random(size, size)
 
   @doc """
   Return size of matrix as {rows, cols}

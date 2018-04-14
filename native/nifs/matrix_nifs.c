@@ -201,6 +201,50 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM result;
+  long size;
+  float *result_data;
+  size_t result_size;
+
+  (void)(argc);
+
+  enif_get_int64(env, argv[0], &size);
+
+  result_size = (size*size + 2) * sizeof(float);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  result_data[0] = size;
+  result_data[1] = size;
+  matrix_eye(result_data, 1);
+
+  return result;
+}
+
+static ERL_NIF_TERM
+fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM result;
+  long rows, cols, value;
+  float *result_data;
+  size_t result_size;
+
+  (void)(argc);
+
+  enif_get_int64(env, argv[0], &rows);
+  enif_get_int64(env, argv[1], &cols);
+  enif_get_int64(env, argv[2], &value);
+
+  result_size = (rows*cols + 2) * sizeof(float);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  result_data[0] = rows;
+  result_data[1] = cols;
+  matrix_fill(result_data, value);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 max(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   float         max;
@@ -274,6 +318,28 @@ multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
   matrix_multiply_with_scalar(matrix_data, scalar, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
+random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM result;
+  long rows, cols;
+  float *result_data;
+  size_t result_size;
+
+  (void)(argc);
+
+  enif_get_int64(env, argv[0], &rows);
+  enif_get_int64(env, argv[1], &cols);
+
+  result_size = (rows*cols + 2) * sizeof(float);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  result_data[0] = rows;
+  result_data[1] = cols;
+  matrix_random(result_data);
 
   return result;
 }
@@ -368,73 +434,6 @@ zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   return result;
 }
-
-static ERL_NIF_TERM
-eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  long size;
-  float *result_data;
-  size_t result_size;
-
-  (void)(argc);
-
-  enif_get_int64(env, argv[0], &size);
-
-  result_size = (size*size + 2) * sizeof(float);
-  result_data = (float *) enif_make_new_binary(env, result_size, &result);
-
-  result_data[0] = size;
-  result_data[1] = size;
-  matrix_eye(result_data, 1);
-
-  return result;
-}
-
-static ERL_NIF_TERM
-fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  long rows, cols, value;
-  float *result_data;
-  size_t result_size;
-
-  (void)(argc);
-
-  enif_get_int64(env, argv[0], &rows);
-  enif_get_int64(env, argv[1], &cols);
-  enif_get_int64(env, argv[2], &value);
-
-  result_size = (rows*cols + 2) * sizeof(float);
-  result_data = (float *) enif_make_new_binary(env, result_size, &result);
-
-  result_data[0] = rows;
-  result_data[1] = cols;
-  matrix_fill(result_data, value);
-
-  return result;
-}
-
-static ERL_NIF_TERM
-random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  long rows, cols;
-  float *result_data;
-  size_t result_size;
-
-  (void)(argc);
-
-  enif_get_int64(env, argv[0], &rows);
-  enif_get_int64(env, argv[1], &cols);
-
-  result_size = (rows*cols + 2) * sizeof(float);
-  result_data = (float *) enif_make_new_binary(env, result_size, &result);
-
-  result_data[0] = rows;
-  result_data[1] = cols;
-  matrix_random(result_data);
-
-  return result;
-}
-
 
 static ErlNifFunc nif_functions[] = {
   {"add",                  2, add,                  0},
