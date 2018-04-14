@@ -247,11 +247,11 @@ defmodule Matrex do
   end
 
   @doc """
-  Create square matrix of random floats in [0, 1] range
+  Create matrix of random floats in [0, 1] range
   """
-  @spec random(integer) :: binary
-  def random(size)
-      when is_integer(size) do
+  @spec random(integer, integer) :: binary
+  def random(rows, cols)
+      when is_integer(rows) and is_integer(cols) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
@@ -262,11 +262,16 @@ defmodule Matrex do
   end
 
   @doc """
-  Fill matrix with given value
+  Create square matrix of random floats.
   """
-  @spec fill(integer, integer) :: binary
-  def fill(size, value)
-      when is_integer(size) and is_integer(value) do
+  def random(size), do: random(size, size)
+
+  @doc """
+  Create matrix filled with given value
+  """
+  @spec fill(integer, integer, integer) :: binary
+  def fill(rows, cols, value)
+      when is_integer(rows) and is_integer(cols) and is_integer(value) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
@@ -276,6 +281,16 @@ defmodule Matrex do
     <<1::size(random_size)>>
   end
 
+  @doc """
+  Create square matrix filled with given value
+  """
+  @spec fill(integer, integer) :: binary
+  def fill(size, value), do: fill(size, size, value)
+
+  @doc """
+  Return first element of a matrix.
+  """
+  @spec first(binary) :: float
   def first(matrix) do
     <<
       _rows::float-little-32,
@@ -416,6 +431,26 @@ defmodule Matrex do
   end
 
   @doc """
+  Create matrix filled with ones
+  """
+  def ones(rows, cols), do: fill(rows, cols, 1)
+  def ones(size), do: fill(size, size, 1)
+
+  @doc """
+  Return size of matrix as {rows, cols}
+  """
+  @spec size(binary) :: {integer, integer}
+  def size(matrix) when is_binary(matrix) do
+    <<
+      rows::float-little-32,
+      cols::float-little-32,
+      _rest::binary
+    >> = matrix
+
+    {trunc(rows), trunc(cols)}
+  end
+
+  @doc """
   Substracts two matrices
   """
   @spec substract(binary, binary) :: binary
@@ -467,7 +502,8 @@ defmodule Matrex do
   @doc """
   Create matrix of zeros of the specified size.
   """
-  def zeros(size) when is_integer(size) do
+  @spec zeros(integer, integer) :: binary
+  def zeros(rows, cols) when is_integer(rows) and is_integer(cols) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
@@ -476,4 +512,10 @@ defmodule Matrex do
     # excoveralls ignore
     <<1::size(random_size)>>
   end
+
+  @doc """
+  Create square matrix of zeros
+  """
+  @spec zeros(integer) :: binary
+  def zeros(size), do: zeros(size, size)
 end

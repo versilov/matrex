@@ -23,6 +23,10 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+    return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -64,6 +68,10 @@ divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+      return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -89,6 +97,10 @@ dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[1] != second_data[0])
+    return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * second_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -116,6 +128,12 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
   third_data  = (float *) third.data;
+
+  if (first_data[1] != second_data[0] ||
+      first_data[0] != third_data[0] ||
+      second_data[1] != third_data[1])
+    return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * second_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -141,6 +159,9 @@ dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[1] != second_data[1]) return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * second_data[0] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -166,6 +187,9 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[0] != second_data[0]) return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[1] * second_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -208,6 +232,10 @@ multiply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+      return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -265,6 +293,10 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
+
+  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+      return enif_make_badarg(env);
+
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
   result_size = sizeof(float) * data_size;
@@ -318,19 +350,20 @@ transpose(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  long size;
+  long rows, cols;
   float *result_data;
   size_t result_size;
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &size);
+  enif_get_int64(env, argv[0], &rows);
+  enif_get_int64(env, argv[1], &cols);
 
-  result_size = (size*size + 2) * sizeof(float);
+  result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = size;
-  result_data[1] = size;
+  result_data[0] = rows;
+  result_data[1] = cols;
   matrix_zeros(result_data);
 
   return result;
@@ -360,21 +393,21 @@ eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  long size;
-  long value;
+  long rows, cols, value;
   float *result_data;
   size_t result_size;
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &size);
-  enif_get_int64(env, argv[1], &value);
+  enif_get_int64(env, argv[0], &rows);
+  enif_get_int64(env, argv[1], &cols);
+  enif_get_int64(env, argv[2], &value);
 
-  result_size = (size*size + 2) * sizeof(float);
+  result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = size;
-  result_data[1] = size;
+  result_data[0] = rows;
+  result_data[1] = cols;
   matrix_fill(result_data, value);
 
   return result;
@@ -383,19 +416,20 @@ fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  long size;
+  long rows, cols;
   float *result_data;
   size_t result_size;
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &size);
+  enif_get_int64(env, argv[0], &rows);
+  enif_get_int64(env, argv[1], &cols);
 
-  result_size = (size*size + 2) * sizeof(float);
+  result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = size;
-  result_data[1] = size;
+  result_data[0] = rows;
+  result_data[1] = cols;
   matrix_random(result_data);
 
   return result;
@@ -411,15 +445,15 @@ static ErlNifFunc nif_functions[] = {
   {"dot_nt",               2, dot_nt,               0},
   {"dot_tn",               2, dot_tn,               0},
   {"eye",                  1, eye,                  0},
-  {"fill",                 2, fill,                 0},
+  {"fill",                 3, fill,                 0},
   {"max",                  1, max,                  0},
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},
-  {"random",               1, random_matrix,        0},
+  {"random",               2, random_matrix,        0},
   {"substract",            2, substract,            0},
   {"sum",                  1, sum,                  0},
   {"transpose",            1, transpose,            0},
-  {"zeros",                1, zeros,                0}
+  {"zeros",                2, zeros,                0}
 };
 
 ERL_NIF_INIT(Elixir.Matrex, nif_functions, NULL, NULL, NULL, NULL)
