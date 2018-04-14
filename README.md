@@ -1,6 +1,7 @@
 # Matrex
 
-Matrix manipulation library for Elixir implemented in C native code.
+Fast matrix manipulation library for Elixir implemented in C native code with highly optimized CBLAS sgemm() used for matrix multiplication.
+
 Extracted from https://github.com/sdwolfz/exlearn
 
 ## benchmark on 2015 MacBook Pro
