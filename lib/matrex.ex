@@ -434,6 +434,13 @@ defmodule Matrex do
     end)
   end
 
+  @spec new(list(list)) :: binary
+  def new(list_of_lists) when is_list(list_of_lists) do
+    rows = length(list_of_lists)
+    cols = length(List.first(list_of_lists))
+    new(rows, cols, list_of_lists)
+  end
+
   defp new_matrix_from_function(0, _, accumulator), do: accumulator
 
   defp new_matrix_from_function(size, function, accumulator) do

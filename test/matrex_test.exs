@@ -11,8 +11,8 @@ defmodule MatrexTest do
   end
 
   test "#add raises when sizes do not match" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[5, 2], [3, 4]])
 
     assert_raise ArgumentError, fn ->
       Matrex.add(first, second)
@@ -258,6 +258,25 @@ defmodule MatrexTest do
     >>
 
     assert Matrex.new(rows, columns, list) == expected
+  end
+
+  test "#new creates a new matrix initialized by a list, without rows and cols specification" do
+    list = [[1, 2, 3, 3], [4, 5, 6, 6]]
+
+    expected = <<
+      2::float-little-32,
+      4::float-little-32,
+      1::float-little-32,
+      2::float-little-32,
+      3::float-little-32,
+      3::float-little-32,
+      4::float-little-32,
+      5::float-little-32,
+      6::float-little-32,
+      6::float-little-32
+    >>
+
+    assert Matrex.new(list) == expected
   end
 
   test "#substract substracts two matrices" do
