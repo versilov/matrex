@@ -157,6 +157,27 @@ defmodule Matrex do
   end
 
   @doc """
+  Get element of a matrix at given zero-based position.
+  """
+  @spec at(binary, integer, integer) :: float
+  def at(matrix, row, col) when is_binary(matrix) and is_integer(row) and is_integer(col) do
+    <<
+      rows::float-little-32,
+      columns::float-little-32,
+      data::binary
+    >> = matrix
+
+    if row < 0 or row >= rows,
+      do: raise(ArgumentError, message: "Row position out of range: #{row}")
+
+    if col < 0 or col >= columns,
+      do: raise(ArgumentError, message: "Column position out of range: #{col}")
+
+    <<elem::float-little-32>> = binary_part(data, trunc(row * columns + col) * 4, 4)
+    elem
+  end
+
+  @doc """
   Divides two matrices
   """
   @spec divide(binary, binary) :: binary

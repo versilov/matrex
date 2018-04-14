@@ -65,6 +65,20 @@ defmodule MatrexTest do
     assert Matrex.argmax(third) == 3
   end
 
+  test "#at returns element at the given position" do
+    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+
+    assert Matrex.at(matrix, 0, 2) == 3
+  end
+
+  test "#at raises when position is out of range" do
+    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.at(matrix, 0, 3)
+    end
+  end
+
   test "#divide divides two matrices" do
     first = Matrex.new(2, 3, [[1, 2, 6], [9, 10, 18]])
     second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])
