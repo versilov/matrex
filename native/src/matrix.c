@@ -315,10 +315,10 @@ matrix_substract(const Matrix first, const Matrix second, Matrix result) {
 
 float
 matrix_sum(const Matrix matrix) {
-  int32_t data_size = matrix[0] * matrix[1] + 2;
+  int64_t data_size = matrix[0] * matrix[1] + 2;
   float   sum       = 0;
 
-  for (int32_t index = 2; index < data_size; index += 1) {
+  for (int64_t index = 2; index < data_size; index += 1) {
     sum += matrix[index];
   }
 
@@ -332,8 +332,8 @@ matrix_transpose(const Matrix matrix, Matrix result) {
 
   for (int32_t row = 0; row < matrix[0]; row += 1) {
     for (int32_t column = 0; column < matrix[1]; column += 1) {
-      int32_t result_index = column * result[1] + row    + 2;
-      int32_t matrix_index = row *    matrix[1] + column + 2;
+      int64_t result_index = column * result[1] + row    + 2;
+      int64_t matrix_index = row *    matrix[1] + column + 2;
 
       result[result_index] = matrix[matrix_index];
     }
