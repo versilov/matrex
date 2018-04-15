@@ -454,7 +454,14 @@ defmodule Matrex do
   defp new_matrix_from_function(0, _, _, _, accumulator), do: accumulator
 
   defp new_matrix_from_function(size, rows, columns, function, accumulator) do
-    current = <<function.(rows, columns)::float-little-32>>
+    {row, col} =
+      if rem(size, columns) == 0 do
+        {rows - div(size, columns), 0}
+      else
+        {rows - 1 - div(size, columns), columns - rem(size, columns)}
+      end
+
+    current = <<function.(row, col)::float-little-32>>
     new_accumulator = accumulator <> current
 
     new_matrix_from_function(size - 1, rows, columns, function, new_accumulator)
