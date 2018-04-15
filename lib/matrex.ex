@@ -360,7 +360,7 @@ defmodule Matrex do
   Creates "magic" n*n matrix, where sums of all dimensions are equal
   """
   @spec magic(integer) :: binary
-  def magic(n) when is_integer(n) and n >= 3 do
+  def magic(n) when is_integer(n) and n >= 3 and n < 77 do
     Matrex.MagicSquare.new(n) |> new()
   end
 

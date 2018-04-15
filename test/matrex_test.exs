@@ -14,7 +14,7 @@ defmodule MatrexTest do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2], [3, 4]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.add(first, second)
     end
   end
@@ -91,7 +91,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.divide(first, second)
     end
   end
@@ -108,7 +108,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.dot(first, second)
     end
   end
@@ -127,7 +127,7 @@ defmodule MatrexTest do
     second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
     third = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.dot_and_add(first, second, third)
     end
   end
@@ -144,7 +144,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.dot_nt(first, second)
     end
   end
@@ -161,7 +161,7 @@ defmodule MatrexTest do
     first = Matrex.new(3, 2, [[1, 4], [2, 5], [3, 6]])
     second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.dot_tn(first, second)
     end
   end
@@ -180,7 +180,7 @@ defmodule MatrexTest do
 
   test "#inspect displays a matrix visualization to stdout" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    expected = "Rows: 2 Columns: 3\n1.0 2.0 3.0\n4.0 5.0 6.0\n"
+    expected = "Rows: 2 Columns: 3\n1 2 3\n4 5 6\n"
 
     output =
       capture_io(fn ->
@@ -248,7 +248,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.multiply(first, second)
     end
   end
@@ -330,7 +330,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])
 
-    assert_raise ArgumentError, fn ->
+    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
       Matrex.substract(first, second)
     end
   end
