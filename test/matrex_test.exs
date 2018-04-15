@@ -213,8 +213,15 @@ defmodule MatrexTest do
     assert Matrex.sum(magic5) == 25 * (25 + 1) / 2
 
     assert Matrex.magic(4) == magic4
-    assert Matrex.max(magic4) == 16
-    assert Matrex.sum(magic4) == 16 * (16 + 1) / 2
+    assert Matrex.max(magic4) == 4 * 4
+    assert Matrex.sum(magic4) == 4 * 4 * (4 * 4 + 1) / 2
+  end
+
+  test "#magic returns square with magic properties of arbitrary size" do
+    n = 76
+    magicN = Matrex.magic(n)
+    assert Matrex.max(magicN) == n * n
+    assert Matrex.sum(magicN) == n * n * (n * n + 1) / 2
   end
 
   test "#max returns the maximum element from the matrix" do
