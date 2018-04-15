@@ -340,12 +340,12 @@ defmodule Matrex do
     next_column =
       case column == columns do
         true ->
-          IO.puts(element)
+          IO.puts(undot(element))
 
           1.0
 
         false ->
-          IO.write("#{element} ")
+          IO.write("#{undot(element)} ")
 
           column + 1.0
       end
@@ -353,11 +353,14 @@ defmodule Matrex do
     inspect_element(next_column, columns, rest)
   end
 
+  defp undot(f) when f - trunc(f) == 0.0, do: trunc(f)
+  defp undot(f), do: f
+
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
   """
   @spec magic(integer) :: binary
-  def magic(n) when is_integer(n) and n >= 3 and n < 76 do
+  def magic(n) when is_integer(n) and n >= 3 do
     Matrex.MagicSquare.new(n) |> new()
   end
 
