@@ -225,10 +225,6 @@ defmodule MatrexTest do
     assert Matrex.sum(magicN) == n * n * div(n * n + 1, 2)
   end
 
-  test "#magic raises error, when trying to create larger, than 75x75 matrix" do
-    assert_raise ArgumentError, fn -> Matrex.magic(77) end
-  end
-
   test "#max returns the maximum element from the matrix" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     expected = 6
@@ -346,6 +342,13 @@ defmodule MatrexTest do
   test "#sum/1 returns the sum of all elements in the matrix" do
     input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     expected = 21
+
+    assert Matrex.sum(input) == expected
+  end
+
+  test "#sum works precisely with big numbers" do
+    input = Matrex.fill(1000, 10_000)
+    expected = 1000 * 1000 * 10_000
 
     assert Matrex.sum(input) == expected
   end
