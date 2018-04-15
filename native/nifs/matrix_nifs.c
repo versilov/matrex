@@ -25,7 +25,7 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
-    return enif_make_badarg(env);
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
@@ -70,7 +70,7 @@ divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
-      return enif_make_badarg(env);
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
@@ -99,7 +99,7 @@ dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (first_data[1] != second_data[0])
-    return enif_make_badarg(env);
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * second_data[1] + 2);
 
@@ -132,7 +132,7 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   if (first_data[1] != second_data[0] ||
       first_data[0] != third_data[0] ||
       second_data[1] != third_data[1])
-    return enif_make_badarg(env);
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * second_data[1] + 2);
 
@@ -160,7 +160,8 @@ dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[1] != second_data[1]) return enif_make_badarg(env);
+  if (first_data[1] != second_data[1])
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * second_data[0] + 2);
 
@@ -188,7 +189,8 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[0] != second_data[0]) return enif_make_badarg(env);
+  if (first_data[0] != second_data[0])
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[1] * second_data[1] + 2);
 
@@ -278,7 +280,7 @@ multiply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
-      return enif_make_badarg(env);
+    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
@@ -361,7 +363,7 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
-      return enif_make_badarg(env);
+      return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
   data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
 
@@ -408,7 +410,7 @@ to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   result = enif_make_list(env, 0);
 
-  for (uint32_t i = rows*cols + 2; i-- > 2; ) {
+  for (uint64_t i = rows*cols + 2; i-- > 2; ) {
     result = enif_make_list_cell(env, enif_make_double(env, matrix_data[i]), result);
   }
 
