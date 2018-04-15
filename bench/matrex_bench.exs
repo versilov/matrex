@@ -121,4 +121,8 @@ defmodule MatrexBench do
   bench "300x300 eye matrix creation" do
     eye(300)
   end
+
+  bench "400x400 matrix sum" do
+    sum(@random_a_vlarge)
+  end
 end

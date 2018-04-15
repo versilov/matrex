@@ -82,7 +82,7 @@ matrix_multiply_with_scalar(
 void
 matrix_substract(const Matrix first, const Matrix second, Matrix result);
 
-float
+double
 matrix_sum(const Matrix matrix);
 
 void

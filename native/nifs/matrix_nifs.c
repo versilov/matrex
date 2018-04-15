@@ -378,7 +378,7 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 sum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
-  float         sum;
+  double         sum;
   float        *matrix_data;
 
   (void)(argc);

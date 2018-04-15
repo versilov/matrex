@@ -360,16 +360,9 @@ defmodule Matrex do
   Creates "magic" n*n matrix, where sums of all dimensions are equal
   """
   @spec magic(integer) :: binary
-  def magic(n) when is_integer(n) and n >= 3 and n < 77 do
+  def magic(n) when is_integer(n) and n >= 3 do
     Matrex.MagicSquare.new(n) |> new()
   end
-
-  def magic(n) when n >= 76,
-    do:
-      raise(
-        ArgumentError,
-        "Magic matrix greater than 75x75 cannot be created with this algorithm."
-      )
 
   @doc """
   Maximum element in a matrix.

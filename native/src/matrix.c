@@ -313,10 +313,10 @@ matrix_substract(const Matrix first, const Matrix second, Matrix result) {
   }
 }
 
-float
+double
 matrix_sum(const Matrix matrix) {
   int64_t data_size = matrix[0] * matrix[1] + 2;
-  float   sum       = 0;
+  double   sum       = 0.0;
 
   for (int64_t index = 2; index < data_size; index += 1) {
     sum += matrix[index];
