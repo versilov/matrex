@@ -354,6 +354,14 @@ defmodule Matrex do
   end
 
   @doc """
+  Creates "magic" n*n matrix, where sums of all dimensions are equal
+  """
+  @spec magic(integer) :: binary
+  def magic(n) when is_integer(n) and n >= 3 do
+    Matrex.MagicSquare.new(n) |> new()
+  end
+
+  @doc """
   Maximum element in a matrix.
   """
   @spec max(binary) :: number

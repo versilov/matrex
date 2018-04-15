@@ -190,6 +190,33 @@ defmodule MatrexTest do
     assert output == expected
   end
 
+  test "#magic returns magic square of the given size" do
+    magic5 =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    magic4 =
+      Matrex.new([
+        [1, 15, 14, 4],
+        [12, 6, 7, 9],
+        [8, 10, 11, 5],
+        [13, 3, 2, 16]
+      ])
+
+    assert Matrex.magic(5) == magic5
+    assert Matrex.max(magic5) == 25
+    assert Matrex.sum(magic5) == 25 * (25 + 1) / 2
+
+    assert Matrex.magic(4) == magic4
+    assert Matrex.max(magic4) == 16
+    assert Matrex.sum(magic4) == 16 * (16 + 1) / 2
+  end
+
   test "#max returns the maximum element from the matrix" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     expected = 6
