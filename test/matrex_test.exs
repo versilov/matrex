@@ -218,10 +218,15 @@ defmodule MatrexTest do
   end
 
   test "#magic returns square with magic properties of arbitrary size" do
-    n = 76
+    n = 75
+
     magicN = Matrex.magic(n)
     assert Matrex.max(magicN) == n * n
-    assert Matrex.sum(magicN) == n * n * (n * n + 1) / 2
+    assert Matrex.sum(magicN) == n * n * div(n * n + 1, 2)
+  end
+
+  test "#magic raises error, when trying to create larger, than 75x75 matrix" do
+    assert_raise ArgumentError, fn -> Matrex.magic(77) end
   end
 
   test "#max returns the maximum element from the matrix" do
