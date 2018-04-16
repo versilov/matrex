@@ -1,6 +1,6 @@
 defmodule Matrex do
   @moduledoc """
-  Performs operations on matrices
+  Performs fast operations on matrices using native C code and CBLAS library.
   """
 
   @on_load :load_nifs
