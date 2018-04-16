@@ -1,5 +1,7 @@
 # Matrex
 
+[![hex.pm version](https://img.shields.io/hexpm/v/matrex.svg)](https://hex.pm/packages/matrex)
+
 Fast matrix manipulation library for Elixir implemented in C native code with highly optimized CBLAS sgemm() used for matrix multiplication.
 
 Extracted from https://github.com/sdwolfz/exlearn
@@ -31,7 +33,13 @@ def deps do
   ]
 end
 ```
+On MacOS everything works out of the box, thanks to Accelerate library.
 
+On Ubuntu you need to install scientific libraries for this package to compile:
+
+```
+> sudo apt-get install libblas-dev libgsl0-dev
+```
 ## Matrices
 
 For the sake of efficiency matrices are stored as binaries, which are actually arrays of floats. The first two floats are numbers of rows and columns, the rest of the array is the matrix body.
