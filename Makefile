@@ -17,7 +17,12 @@ ERL_INCLUDE_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_d
 
 # For compiling and linking the final NIF shared objects.
 CFLAGS  = -fPIC -I$(ERL_INCLUDE_PATH) -O3 -shared -std=gnu11 -Wall -Wextra
-LDFLAGS = -lblas -lgsl -lgslcblas -lm -flat_namespace -undefined suppress
+LDFLAGS = -lblas -lgsl -lgslcblas -lm
+
+# MacOS needs extra flags to link successfully
+ifeq ($(shell uname -s), Darwin)
+	LDFLAGS +=  -flat_namespace -undefined suppress
+endif
 
 # For compiling and linking the test runner.
 TEST_CFLAGS  = -g -O0 -std=gnu11 -Wall -Wextra --coverage
@@ -159,7 +164,7 @@ $(PRIV_DIRECTORY):
 #   priv/
 #   native/nifs/matrix_nifs.c
 #   native/nifs/helpers/network_state_helper.c
-#   native/obj/matrix.o
+#   _build/obj/matrix.o
 #
 # Output:
 #   ```
