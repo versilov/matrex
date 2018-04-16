@@ -5,6 +5,7 @@ defmodule Matrex do
 
   @on_load :load_nifs
 
+  @doc false
   @spec load_nifs :: :ok
   def load_nifs do
     priv_dir =
