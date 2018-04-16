@@ -124,6 +124,9 @@ defmodule Matrex do
     end
   end
 
+  @doc """
+  Applies function to elements of two matrices and returns matrix of function results.
+  """
   @spec apply(binary, binary, function) :: binary
   def apply(first, second, function) do
     <<
@@ -437,6 +440,9 @@ defmodule Matrex do
     end)
   end
 
+  @doc """
+  Creates new matrix from list of lists.
+  """
   @spec new(list(list)) :: binary
   def new(list_of_lists) when is_list(list_of_lists) do
     rows = length(list_of_lists)
@@ -469,13 +475,17 @@ defmodule Matrex do
   end
 
   @doc """
-  Create matrix filled with ones
+  Create matrix filled with ones.
   """
   def ones(rows, cols), do: fill(rows, cols, 1)
+
+  @doc """
+  Create square matrix filled with ones.
+  """
   def ones(size), do: fill(size, 1)
 
   @doc """
-  Create matrix of random floats in [0, 1] range
+  Create matrix of random floats in [0, 1] range.
   """
   @spec random(integer, integer) :: binary
   def random(rows, cols)
