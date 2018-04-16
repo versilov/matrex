@@ -27,7 +27,7 @@ by adding `matrex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:matrex, github: "versilov/matrex"}
+    {:matrex, "~> 0.1"}
   ]
 end
 ```
