@@ -34,9 +34,9 @@ SRC_DIRECTORY = ./native/src
 # Location fo the root directory for the C header files.
 INCLUDE_DIRECTORY = ./native/include
 
-# Location of the root directory for the boject files created from the C code
+# Location of the root directory for the object files created from the C code
 # files.
-OBJ_DIRECTORY = ./native/obj
+OBJ_DIRECTORY = ./_build/obj
 
 # Location of the root directory for the NIF code files.
 NIFS_DIRECTORY = ./native/nifs
