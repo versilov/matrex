@@ -1,4 +1,8 @@
 defmodule Matrex.MagicSquare do
+  @moduledoc false
+
+  # Magic square generation algorithms.
+
   @lux %{L: [4, 1, 2, 3], U: [1, 4, 2, 3], X: [1, 4, 3, 2]}
 
   def new(n) when n < 3, do: raise(ArgumentError, "Magic square less than 3x3 is not possible.")
