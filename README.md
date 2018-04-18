@@ -33,7 +33,7 @@ def deps do
   ]
 end
 ```
-On MacOS everything works out of the box, thanks to Accelerate library.
+On MacOS everything works out of the box, thanks to Accelerate framework.
 
 On Ubuntu you need to install scientific libraries for this package to compile:
 
