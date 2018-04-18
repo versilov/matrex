@@ -60,6 +60,8 @@ defmodule MatrexBench do
   @random_b_qlarge random(200)
   @random_a_vlarge random(400)
   @random_b_vlarge random(400)
+  @random_a_xlarge random(1000)
+  @random_b_xlarge random(1000)
   # @random_a random(50, 50, 100)
   # @random_b random(50, 50, 100)
   # @random_a_large random(100, 100, 100)
@@ -68,6 +70,10 @@ defmodule MatrexBench do
   # @random_b_qlarge random(200, 200, 100)
   # @random_a_vlarge random(400, 400, 100)
   # @random_b_vlarge random(400, 400, 100)
+
+  bench "transpose a 50x50 matrix" do
+    transpose(@random_a)
+  end
 
   bench "transpose a 100x100 matrix" do
     transpose(@random_a_large)
@@ -95,6 +101,10 @@ defmodule MatrexBench do
 
   bench "400x400 matrices dot product" do
     dot(@random_a_vlarge, @random_b_vlarge)
+  end
+
+  bench "1000x1000 matrices dot product" do
+    dot(@random_a_xlarge, @random_b_xlarge)
   end
 
   bench "400x400 matrix to list" do
