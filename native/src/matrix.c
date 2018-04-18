@@ -52,14 +52,14 @@ matrix_random(Matrix matrix) {
 void
 matrix_eye(Matrix matrix, int32_t value) {
   uint64_t length = MX_DATA_BYTE_SIZE(matrix);
-  uint32_t rows = MX_ROWS(matrix);
-  uint32_t cols = MX_COLS(matrix);
+  uint64_t rows = MX_ROWS(matrix);
+  uint64_t cols = MX_COLS(matrix);
 
   // Set it all to zeros
   memset((void*)&matrix[2], 0, length);
 
   // Now set the diagonal
-  for (uint32_t x = 0, y = 0; x < cols && y < rows; x++, y++) {
+  for (uint64_t x = 0, y = 0; x < cols && y < rows; x++, y++) {
     matrix[2 + y*cols + x] = value;
   }
 }
