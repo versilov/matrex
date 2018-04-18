@@ -40,10 +40,14 @@ endif
 
 else
 	CFLAGS += -shared
-	LDFLAGS += -lgsl -lgslcblas -lm
+	LDFLAGS += -lm
 
 ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
+endif
+
+ifeq ($(BLAS), atlas)
+	LDFLAGS += -latlas
 endif
 
 endif
