@@ -45,3 +45,6 @@ matrex-*.tar
 *.gcda
 *.gcno
 *.gcov
+
+.tags
+.tags1
