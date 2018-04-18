@@ -15,13 +15,30 @@ ERL_INCLUDE_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_d
 # FLAGS
 #-------------------------------------------------------------------------------
 
+# Switches between different BLAS implementations
+# Can be blas, openblas
+BLAS = blas
+
 # For compiling and linking the final NIF shared objects.
-CFLAGS  = -fPIC -I$(ERL_INCLUDE_PATH) -O3 -shared -std=gnu11 -Wall -Wextra
-LDFLAGS = -lblas -lgsl -lgslcblas -lm
+
+CFLAGS = -fPIC -I$(ERL_INCLUDE_PATH) -O3 -std=gnu11 -Wall -Wextra
+LDFLAGS =
+
+ifeq (BLAS, blas)
+	LDFLAGS += -lblas
+endif
+
+ifeq (BLAS, openblas)
+	CFLAGS += -I/usr/local/opt/openblas/include
+	LDFLAGS += -L/usr/local/opt/openblas/lib
+endif
 
 # MacOS needs extra flags to link successfully
 ifeq ($(shell uname -s), Darwin)
 	LDFLAGS +=  -flat_namespace -undefined suppress
+else
+	CFLAGS += -shared
+	LDFLAGS += -lgsl -gslcblas -lm
 endif
 
 # For compiling and linking the test runner.
