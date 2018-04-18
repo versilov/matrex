@@ -33,17 +33,17 @@ endif
 ifeq ($(shell uname -s), Darwin)
 	LDFLAGS +=  -flat_namespace -undefined suppress
 
-	ifeq (BLAS, openblas)
-		CFLAGS += -I/usr/local/opt/openblas/include
-		LDFLAGS += -L/usr/local/opt/openblas/lib
-	endif
+ifeq (BLAS, openblas)
+	CFLAGS += -I/usr/local/opt/openblas/include
+	LDFLAGS += -L/usr/local/opt/openblas/lib
+endif
 else
 	CFLAGS += -shared
 	LDFLAGS += -lgsl -lgslcblas -lm
 
-	ifeq (BLAS, openblas)
-		LDFLAGS += -lopenblas
-	endif
+ifeq (BLAS, openblas)
+	LDFLAGS += -lopenblas
+endif
 endif
 
 # For compiling and linking the test runner.
