@@ -17,7 +17,7 @@ ERL_INCLUDE_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_d
 
 # Switches between different BLAS implementations
 # Can be blas, openblas
-BLAS = blas
+BLAS = openblas
 
 # For compiling and linking the final NIF shared objects.
 
@@ -33,17 +33,19 @@ endif
 ifeq ($(shell uname -s), Darwin)
 	LDFLAGS +=  -flat_namespace -undefined suppress
 
-ifeq (BLAS, openblas)
+ifeq ($(BLAS), openblas)
 	CFLAGS += -I/usr/local/opt/openblas/include
 	LDFLAGS += -L/usr/local/opt/openblas/lib
 endif
+
 else
 	CFLAGS += -shared
 	LDFLAGS += -lgsl -lgslcblas -lm
 
-ifeq (BLAS, openblas)
+ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
 endif
+
 endif
 
 # For compiling and linking the test runner.
