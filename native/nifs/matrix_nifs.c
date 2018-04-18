@@ -24,10 +24,10 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+  if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
+  data_size   = MX_LENGTH(first_data);
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -69,10 +69,10 @@ divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+  if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
+  data_size   = MX_LENGTH(first_data);
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -87,7 +87,7 @@ dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
-  int32_t       data_size;
+  int64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -98,10 +98,10 @@ dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[1] != second_data[0])
+  if (MX_COLS(first_data) != MX_ROWS(second_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * second_data[1] + 2);
+  data_size   =  MX_ROWS(first_data) * MX_COLS(second_data) + 2;
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -116,7 +116,7 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second, third;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *third_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -129,12 +129,12 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
   third_data  = (float *) third.data;
 
-  if (first_data[1] != second_data[0] ||
-      first_data[0] != third_data[0] ||
-      second_data[1] != third_data[1])
+  if (MX_COLS(first_data) != MX_ROWS(second_data) ||
+      MX_ROWS(first_data) != MX_ROWS(third_data) ||
+      MX_COLS(second_data) != MX_COLS(third_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * second_data[1] + 2);
+  data_size   = MX_ROWS(first_data) * MX_COLS(second_data) + 2;
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -149,7 +149,7 @@ dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -160,10 +160,10 @@ dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[1] != second_data[1])
+  if (MX_COLS(first_data) != MX_COLS(second_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * second_data[0] + 2);
+  data_size   = MX_ROWS(first_data) * MX_ROWS(second_data) + 2;
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -178,7 +178,7 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -189,10 +189,10 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[0] != second_data[0])
+  if (MX_ROWS(first_data) != MX_ROWS(second_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[1] * second_data[1] + 2);
+  data_size   = MX_COLS(first_data) * MX_COLS(second_data) + 2;
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -205,19 +205,19 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  long size;
+  unsigned long size;
   float *result_data;
   size_t result_size;
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &size);
+  enif_get_uint64(env, argv[0], &size);
 
   result_size = (size*size + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = size;
-  result_data[1] = size;
+  MX_SET_ROWS(result_data, size);
+  MX_SET_COLS(result_data, size);
   matrix_eye(result_data, 1);
 
   return result;
@@ -226,21 +226,22 @@ eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  long rows, cols, value;
+  unsigned long rows, cols, value;
   float *result_data;
   size_t result_size;
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &rows);
-  enif_get_int64(env, argv[1], &cols);
-  enif_get_int64(env, argv[2], &value);
+  enif_get_uint64(env, argv[0], &rows);
+  enif_get_uint64(env, argv[1], &cols);
+  enif_get_uint64(env, argv[2], &value);
 
   result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = rows;
-  result_data[1] = cols;
+  MX_SET_ROWS(result_data, rows);
+  MX_SET_COLS(result_data, cols);
+
   matrix_fill(result_data, value);
 
   return result;
@@ -268,7 +269,7 @@ multiply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -279,10 +280,10 @@ multiply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+  if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
     return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
+  data_size   = MX_LENGTH(first_data);
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -299,7 +300,7 @@ multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   double        large_scalar;
   float         scalar;
   float        *matrix_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -314,7 +315,7 @@ multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   scalar = (float) large_scalar;
 
   matrix_data = (float *) matrix.data;
-  data_size   = (int32_t) (matrix_data[0] * matrix_data[1] + 2);
+  data_size   = MX_LENGTH(matrix_data);
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -339,8 +340,9 @@ random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = rows;
-  result_data[1] = cols;
+  MX_SET_ROWS(result_data, rows);
+  MX_SET_COLS(result_data, cols);
+
   matrix_random(result_data);
 
   return result;
@@ -362,10 +364,10 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (first_data[0] != second_data[0] || first_data[1] != second_data[1])
+  if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
       return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
 
-  data_size   = (int32_t) (first_data[0] * first_data[1] + 2);
+  data_size   = MX_LENGTH(first_data);
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -405,8 +407,8 @@ to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
 
   matrix_data = (float *) matrix.data;
-  rows = matrix_data[0];
-  cols = matrix_data[1];
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
 
   result = enif_make_list(env, 0);
 
@@ -430,8 +432,8 @@ to_list_of_lists(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
 
   matrix_data = (float *) matrix.data;
-  rows = matrix_data[0];
-  cols = matrix_data[1];
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
 
   result = enif_make_list(env, 0);
 
@@ -451,7 +453,7 @@ transpose(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
   float        *matrix_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -459,7 +461,7 @@ transpose(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
 
   matrix_data = (float *) matrix.data;
-  data_size   = (int32_t) (matrix_data[0] * matrix_data[1] + 2);
+  data_size   = MX_LENGTH(matrix_data);
 
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -484,8 +486,9 @@ zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  result_data[0] = rows;
-  result_data[1] = cols;
+  MX_SET_ROWS(result_data, rows);
+  MX_SET_COLS(result_data, cols);
+
   matrix_zeros(result_data);
 
   return result;

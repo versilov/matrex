@@ -263,8 +263,8 @@ defmodule MatrexTest do
     function = fn -> 1 end
 
     expected = <<
-      2::float-little-32,
-      3::float-little-32,
+      2::unsigned-integer-little-32,
+      3::unsigned-integer-little-32,
       1::float-little-32,
       1::float-little-32,
       1::float-little-32,
@@ -282,8 +282,8 @@ defmodule MatrexTest do
     list = [[1, 2, 3], [4, 5, 6]]
 
     expected = <<
-      2::float-little-32,
-      3::float-little-32,
+      2::unsigned-integer-little-32,
+      3::unsigned-integer-little-32,
       1::float-little-32,
       2::float-little-32,
       3::float-little-32,
@@ -299,8 +299,8 @@ defmodule MatrexTest do
     list = [[1, 2, 3, 3], [4, 5, 6, 6]]
 
     expected = <<
-      2::float-little-32,
-      4::float-little-32,
+      2::unsigned-integer-little-32,
+      4::unsigned-integer-little-32,
       1::float-little-32,
       2::float-little-32,
       3::float-little-32,

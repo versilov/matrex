@@ -12,6 +12,14 @@
 
 typedef float* Matrix;
 
+#define MX_ROWS(matrix) (((uint32_t*)matrix)[0])
+#define MX_COLS(matrix) (((uint32_t*)matrix)[1])
+#define MX_SET_ROWS(matrix, rows) ((uint32_t*)matrix)[0] = rows
+#define MX_SET_COLS(matrix, cols) ((uint32_t*)matrix)[1] = cols
+#define MX_LENGTH(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)
+#define MX_BYTE_SIZE(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)*4
+#define MX_DATA_BYTE_SIZE(matrix) (((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1])*4
+
 void
 matrix_clone(Matrix destination, Matrix source);
 
@@ -19,7 +27,7 @@ void
 matrix_free(Matrix *matrix);
 
 Matrix
-matrix_new(int32_t rows, int32_t columns);
+matrix_new(uint32_t rows, uint32_t columns);
 
 void
 matrix_fill(Matrix matrix, int32_t value);

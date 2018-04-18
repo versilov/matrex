@@ -30,8 +30,8 @@ static void test_matrix_free() {
 static void test_matrix_new() {
   Matrix matrix = matrix_new(1, 2);
 
-  assert(matrix[0] == 1); /* LCOV_EXCL_BR_LINE */
-  assert(matrix[1] == 2); /* LCOV_EXCL_BR_LINE */
+  assert(MX_ROWS(matrix) == 1); /* LCOV_EXCL_BR_LINE */
+  assert(MX_COLS(matrix) == 2); /* LCOV_EXCL_BR_LINE */
 }
 
 static void test_matrix_fill() {
@@ -39,8 +39,8 @@ static void test_matrix_fill() {
 
   matrix_fill(matrix, 3);
 
-  assert(matrix[0] == 1); /* LCOV_EXCL_BR_LINE */
-  assert(matrix[1] == 2); /* LCOV_EXCL_BR_LINE */
+  assert(MX_ROWS(matrix) == 1); /* LCOV_EXCL_BR_LINE */
+  assert(MX_COLS(matrix) == 2); /* LCOV_EXCL_BR_LINE */
   assert(matrix[2] == 3); /* LCOV_EXCL_BR_LINE */
   assert(matrix[3] == 3); /* LCOV_EXCL_BR_LINE */
 
@@ -52,6 +52,13 @@ static void test_matrix_equal() {
   float third[8]  = {2, 3, 5, 2, 1, 3, 4, 6 };
   float fourth[8] = {3, 2, 5, 2, 1, 3, 4, 6 };
   float fifth[10] = {2, 4, 5, 2, 1, 3, 4, 6, 7, 8};
+
+  *(uint32_t*)&first[0] = 2;
+  *(uint32_t*)&first[1] = 3;
+  *(uint32_t*)&second[0] = 2;
+  *(uint32_t*)&second[1] = 3;
+  *(uint32_t*)&third[0] = 2;
+  *(uint32_t*)&third[1] = 3;
 
   assert(matrix_equal(first, second)); /* LCOV_EXCL_BR_LINE */
 

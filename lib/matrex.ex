@@ -44,12 +44,12 @@ defmodule Matrex do
   def apply(matrix, function)
       when is_binary(matrix) and is_function(function, 1) do
     <<
-      rows::float-little-32,
-      columns::float-little-32,
+      rows::unsigned-integer-little-32,
+      columns::unsigned-integer-little-32,
       data::binary
     >> = matrix
 
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     apply_on_matrix(data, function, initial)
   end
@@ -58,12 +58,12 @@ defmodule Matrex do
   def apply(matrix, function)
       when is_binary(matrix) and is_function(function, 2) do
     <<
-      rows::float-little-32,
-      columns::float-little-32,
+      rows::unsigned-integer-little-32,
+      columns::unsigned-integer-little-32,
       data::binary
     >> = matrix
 
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
     size = rows * columns
 
     apply_on_matrix(data, function, 1, size, initial)
@@ -73,12 +73,12 @@ defmodule Matrex do
   def apply(matrix, function)
       when is_binary(matrix) and is_function(function, 3) do
     <<
-      rows::float-little-32,
-      columns::float-little-32,
+      rows::unsigned-integer-little-32,
+      columns::unsigned-integer-little-32,
       data::binary
     >> = matrix
 
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     apply_on_matrix(data, function, 1, 1, columns, initial)
   end
@@ -130,18 +130,18 @@ defmodule Matrex do
   @spec apply(binary, binary, function) :: binary
   def apply(first, second, function) do
     <<
-      rows::float-little-32,
-      columns::float-little-32,
+      rows::unsigned-integer-little-32,
+      columns::unsigned-integer-little-32,
       first_data::binary
     >> = first
 
     <<
-      _::float-little-32,
-      _::float-little-32,
+      _::unsigned-integer-little-32,
+      _::unsigned-integer-little-32,
       second_data::binary
     >> = second
 
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     apply_on_matrices(first_data, second_data, function, initial)
   end
@@ -177,8 +177,8 @@ defmodule Matrex do
   @spec at(binary, integer, integer) :: float
   def at(matrix, row, col) when is_binary(matrix) and is_integer(row) and is_integer(col) do
     <<
-      rows::float-little-32,
-      columns::float-little-32,
+      rows::unsigned-integer-little-32,
+      columns::unsigned-integer-little-32,
       data::binary
     >> = matrix
 
@@ -309,8 +309,8 @@ defmodule Matrex do
   @spec first(binary) :: float
   def first(matrix) do
     <<
-      _rows::float-little-32,
-      _columns::float-little-32,
+      _rows::unsigned-integer-little-32,
+      _columns::unsigned-integer-little-32,
       element::float-little-32,
       _rest::binary
     >> = matrix
@@ -324,8 +324,8 @@ defmodule Matrex do
   @spec inspect(binary) :: binary
   def inspect(matrix) do
     <<
-      rows::float-little-32,
-      columns::float-little-32,
+      rows::unsigned-integer-little-32,
+      columns::unsigned-integer-little-32,
       rest::binary
     >> = matrix
 
@@ -415,14 +415,14 @@ defmodule Matrex do
   """
   @spec new(non_neg_integer, non_neg_integer, function) :: binary
   def new(rows, columns, function) when is_function(function, 0) do
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     new_matrix_from_function(rows * columns, function, initial)
   end
 
   @spec new(non_neg_integer, non_neg_integer, function) :: binary
   def new(rows, columns, function) when is_function(function, 2) do
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
     size = rows * columns
 
     new_matrix_from_function(size, rows, columns, function, initial)
@@ -430,7 +430,7 @@ defmodule Matrex do
 
   @spec new(non_neg_integer, non_neg_integer, list(list)) :: binary
   def new(rows, columns, list_of_lists) when is_list(list_of_lists) do
-    initial = <<rows::float-little-32, columns::float-little-32>>
+    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     Enum.reduce(list_of_lists, initial, fn list, accumulator ->
       accumulator <>
@@ -510,8 +510,8 @@ defmodule Matrex do
   @spec size(binary) :: {integer, integer}
   def size(matrix) when is_binary(matrix) do
     <<
-      rows::float-little-32,
-      cols::float-little-32,
+      rows::unsigned-integer-little-32,
+      cols::unsigned-integer-little-32,
       _rest::binary
     >> = matrix
 

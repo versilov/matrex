@@ -2,7 +2,7 @@
 
 void
 matrix_clone(Matrix destination, Matrix source) {
-  uint64_t length = source[0] * source[1] + 2;
+  uint64_t length = MX_LENGTH(source);
 
   for (uint64_t index = 0; index < length; index += 1) {
     destination[index] = source[index];
@@ -19,19 +19,19 @@ matrix_free(Matrix *matrix_address) {
 }
 
 Matrix
-matrix_new(int32_t rows, int32_t columns) {
+matrix_new(uint32_t rows, uint32_t columns) {
   uint64_t length = rows * columns + 2;
   Matrix  result = malloc(sizeof(float) * length);
 
-  result[0] = rows;
-  result[1] = columns;
+  MX_SET_ROWS(result, rows);
+  MX_SET_COLS(result, columns);
 
   return result;
 }
 
 void
 matrix_fill(Matrix matrix, int32_t value) {
-  uint64_t length = matrix[0] * matrix[1] + 2;
+  uint64_t length = MX_LENGTH(matrix);
 
   for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = value;
@@ -40,7 +40,7 @@ matrix_fill(Matrix matrix, int32_t value) {
 
 void
 matrix_random(Matrix matrix) {
-  uint64_t length = matrix[0] * matrix[1] + 2;
+  uint64_t length = MX_LENGTH(matrix);
 
   srand(time(NULL));
 
@@ -51,28 +51,31 @@ matrix_random(Matrix matrix) {
 
 void
 matrix_eye(Matrix matrix, int32_t value) {
-  uint64_t length = matrix[0] * matrix[1] * sizeof(float);
-  int32_t rows = (int32_t)matrix[0];
-  int32_t cols = (int32_t)matrix[1];
+  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
+  uint32_t rows = MX_ROWS(matrix);
+  uint32_t cols = MX_COLS(matrix);
 
+  // Set it all to zeros
   memset((void*)&matrix[2], 0, length);
-  for (int32_t x = 0, y = 0; x < cols && y < rows; x++, y++) {
-    matrix[y*cols + x + 2] = value;
+
+  // Now set the diagonal
+  for (uint32_t x = 0, y = 0; x < cols && y < rows; x++, y++) {
+    matrix[2 + y*cols + x] = value;
   }
 }
 
 void
 matrix_zeros(Matrix matrix) {
-  uint64_t length = matrix[0] * matrix[1] * sizeof(float);
+  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
   memset((void*)&matrix[2], 0, length);
 }
 
 int32_t
 matrix_equal(Matrix first, Matrix second) {
-  if (first[0] != second[0]) return 0;
-  if (first[1] != second[1]) return 0;
+  if (MX_ROWS(first) != MX_ROWS(second)) return 0;
+  if (MX_COLS(first) != MX_COLS(second)) return 0;
 
-  uint64_t length = first[0] * first[1] + 2;
+  uint64_t length = MX_LENGTH(first);
 
   for (uint64_t index = 2; index < length; index += 1) {
     if (first[index] != second[index]) return 0;
@@ -83,10 +86,10 @@ matrix_equal(Matrix first, Matrix second) {
 
 void
 matrix_add(const Matrix first, const Matrix second, Matrix result) {
-  uint64_t data_size = (uint64_t) (first[0] * first[1] + 2);
+  uint64_t data_size = MX_LENGTH(first);
 
-  result[0] = first[0];
-  result[1] = first[1];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(first));
 
   for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] + second[index];
@@ -95,7 +98,7 @@ matrix_add(const Matrix first, const Matrix second, Matrix result) {
 
 int32_t
 matrix_argmax(const Matrix matrix) {
-  uint64_t data_size = (int64_t) (matrix[0] * matrix[1] + 2);
+  uint64_t data_size = MX_LENGTH(matrix);
   uint64_t argmax    = 2;
 
   for (uint64_t index = 3; index < data_size; index += 1) {
@@ -109,10 +112,10 @@ matrix_argmax(const Matrix matrix) {
 
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result) {
-  uint64_t data_size = (uint64_t) (first[0] * first[1] + 2);
+  uint64_t data_size = MX_LENGTH(first);
 
-  result[0] = first[0];
-  result[1] = first[1];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(first));
 
   for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] / second[index];
@@ -121,24 +124,24 @@ matrix_divide(const Matrix first, const Matrix second, Matrix result) {
 
 void
 matrix_dot(const Matrix first, const Matrix second, Matrix result) {
-  result[0] = first[0];
-  result[1] = second[1];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(second));
 
   cblas_sgemm(
     CblasRowMajor,
     CblasNoTrans,
     CblasNoTrans,
-    first[0],
-    second[1],
-    first[1],
+    MX_ROWS(first),
+    MX_COLS(second),
+    MX_COLS(first),
     1.0,
     first + 2,
-    first[1],
+    MX_COLS(first),
     second + 2,
-    second[1],
+    MX_COLS(second),
     0.0,
     result + 2,
-    result[1]
+    MX_COLS(result)
   );
 }
 
@@ -146,26 +149,26 @@ void
 matrix_dot_and_add(
   const Matrix first, const Matrix second, const Matrix third, Matrix result
 ) {
-  uint64_t data_size = (uint64_t) (first[0] * second[1] + 2);
+  uint64_t data_size = MX_ROWS(first) * MX_COLS(second) + 2;
 
-  result[0] = first[0];
-  result[1] = second[1];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(second));
 
   cblas_sgemm(
     CblasRowMajor,
     CblasNoTrans,
     CblasNoTrans,
-    first[0],
-    second[1],
-    first[1],
+    MX_ROWS(first),
+    MX_COLS(second),
+    MX_COLS(first),
     1.0,
     first + 2,
-    first[1],
+    MX_COLS(first),
     second + 2,
-    second[1],
+    MX_COLS(second),
     0.0,
     result + 2,
-    result[1]
+    MX_COLS(result)
   );
 
   for(uint64_t index = 2; index < data_size; index += 1) {
@@ -175,47 +178,47 @@ matrix_dot_and_add(
 
 void
 matrix_dot_nt(const Matrix first, const Matrix second, Matrix result) {
-  result[0] = first[0];
-  result[1] = second[0];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_ROWS(second));
 
   cblas_sgemm(
     CblasRowMajor,
     CblasNoTrans,
     CblasTrans,
-    first[0],
-    second[0],
-    first[1],
+    MX_ROWS(first),
+    MX_ROWS(second),
+    MX_COLS(first),
     1.0,
     first + 2,
-    first[1],
+    MX_COLS(first),
     second + 2,
-    second[1],
+    MX_COLS(second),
     0.0,
     result + 2,
-    result[1]
+    MX_COLS(result)
   );
 }
 
 void
 matrix_dot_tn(const Matrix first, const Matrix second, Matrix result) {
-  result[0] = first[1];
-  result[1] = second[1];
+  MX_SET_ROWS(result, MX_COLS(first));
+  MX_SET_COLS(result, MX_COLS(second));
 
   cblas_sgemm(
     CblasRowMajor,
     CblasTrans,
     CblasNoTrans,
-    first[1],
-    second[1],
-    first[0],
+    MX_COLS(first),
+    MX_COLS(second),
+    MX_ROWS(first),
     1.0,
     first + 2,
-    first[1],
+    MX_COLS(first),
     second + 2,
-    second[1],
+    MX_COLS(second),
     0.0,
     result + 2,
-    result[1]
+    MX_COLS(result)
   );
 }
 
@@ -226,15 +229,15 @@ matrix_first(const Matrix matrix) {
 
 void
 matrix_inspect(const Matrix matrix) {
-  int32_t length = matrix[0] * matrix[1] + 2;
+  uint64_t length = MX_LENGTH(matrix);
 
   printf("<#Matrix\n");
 
-  printf("  rows:    %f\n", matrix[0]);
-  printf("  columns: %f\n", matrix[1]);
+  printf("  rows:    %d\n", MX_ROWS(matrix));
+  printf("  columns: %d\n", MX_COLS(matrix));
 
   printf("  values: ");
-  for(int32_t index = 2; index < length; index += 1) {
+  for(uint64_t index = 2; index < length; index += 1) {
     printf(" %f", matrix[index]);
   }
 
@@ -243,19 +246,19 @@ matrix_inspect(const Matrix matrix) {
 
 void
 matrix_inspect_internal(const Matrix matrix, int32_t indentation) {
-  int32_t length = matrix[0] * matrix[1] + 2;
+  uint64_t length = MX_LENGTH(matrix);
 
   printf("<#Matrix\n");
 
   print_spaces(indentation);
-  printf("  rows:    %f\n", matrix[0]);
+  printf("  rows:    %d\n", MX_ROWS(matrix));
 
   print_spaces(indentation);
-  printf("  columns: %f\n", matrix[1]);
+  printf("  columns: %d\n", MX_COLS(matrix));
 
   print_spaces(indentation);
   printf("  values: ");
-  for(int32_t index = 2; index < length; index += 1) {
+  for(uint64_t index = 2; index < length; index += 1) {
     printf(" %f", matrix[index]);
   }
   printf(">");
@@ -263,10 +266,10 @@ matrix_inspect_internal(const Matrix matrix, int32_t indentation) {
 
 float
 matrix_max(const Matrix matrix) {
-  int32_t data_size = (int32_t) (matrix[0] * matrix[1] + 2);
+  uint64_t data_size = MX_LENGTH(matrix);
   float   max       = matrix[2];
 
-  for (int32_t index = 3; index < data_size; index += 1) {
+  for (uint64_t index = 3; index < data_size; index += 1) {
     if (max < matrix[index]) {
       max = matrix[index];
     }
@@ -277,12 +280,12 @@ matrix_max(const Matrix matrix) {
 
 void
 matrix_multiply(const Matrix first, const Matrix second, Matrix result) {
-  int32_t data_size = (int32_t) (first[0] * first[1] + 2);
+  uint64_t data_size = MX_LENGTH(first);
 
-  result[0] = first[0];
-  result[1] = first[1];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(first));
 
-  for (int32_t index = 2; index < data_size; index += 1) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] * second[index];
   }
 }
@@ -291,34 +294,34 @@ void
 matrix_multiply_with_scalar(
   const Matrix matrix, const float scalar, Matrix result
 ) {
-  int32_t data_size = (int32_t) (matrix[0] * matrix[1] + 2);
+  uint64_t data_size = MX_LENGTH(matrix);
 
-  result[0] = matrix[0];
-  result[1] = matrix[1];
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
 
-  for (int32_t index = 2; index < data_size; index += 1) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = matrix[index] * scalar;
   }
 }
 
 void
 matrix_substract(const Matrix first, const Matrix second, Matrix result) {
-  int32_t data_size = (int32_t) (first[0] * first[1] + 2);
+  uint64_t data_size = MX_LENGTH(first);
 
-  result[0] = first[0];
-  result[1] = first[1];
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(first));
 
-  for (int32_t index = 2; index < data_size; index += 1) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] - second[index];
   }
 }
 
 double
 matrix_sum(const Matrix matrix) {
-  int64_t data_size = matrix[0] * matrix[1] + 2;
+  uint64_t data_size = MX_LENGTH(matrix);
   double   sum       = 0.0;
 
-  for (int64_t index = 2; index < data_size; index += 1) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
     sum += matrix[index];
   }
 
@@ -327,13 +330,13 @@ matrix_sum(const Matrix matrix) {
 
 void
 matrix_transpose(const Matrix matrix, Matrix result) {
-  result[0] = matrix[1];
-  result[1] = matrix[0];
+  MX_SET_ROWS(result, MX_COLS(matrix));
+  MX_SET_COLS(result, MX_ROWS(matrix));
 
-  for (int32_t row = 0; row < matrix[0]; row += 1) {
-    for (int32_t column = 0; column < matrix[1]; column += 1) {
-      int64_t result_index = column * result[1] + row    + 2;
-      int64_t matrix_index = row *    matrix[1] + column + 2;
+  for (uint64_t row = 0; row < MX_ROWS(matrix); row += 1) {
+    for (uint64_t column = 0; column < MX_COLS(matrix); column += 1) {
+      uint64_t result_index = column * MX_COLS(result) + row    + 2;
+      uint64_t matrix_index = row *    MX_COLS(matrix) + column + 2;
 
       result[result_index] = matrix[matrix_index];
     }
