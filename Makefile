@@ -38,7 +38,7 @@ ifeq ($(shell uname -s), Darwin)
 	LDFLAGS +=  -flat_namespace -undefined suppress
 else
 	CFLAGS += -shared
-	LDFLAGS += -lgsl -gslcblas -lm
+	LDFLAGS += -lgsl -lgslcblas -lm
 endif
 
 # For compiling and linking the test runner.
