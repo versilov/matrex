@@ -42,13 +42,13 @@ On Ubuntu you need to install scientific libraries for this package to compile:
 ```
 ## Matrices
 
-For the sake of efficiency matrices are stored as binaries, which are actually arrays of floats. The first two floats are numbers of rows and columns, the rest of the array is the matrix body.
+For the sake of efficiency matrices are stored as binaries, which are actually arrays of floats. The first two elements of matrix binary are unsinged integer numbers of rows and columns, the rest of the array is the matrix body.
 
 Here is a 3x3 matrix of ones:
 
 ```elixir
 iex> Matrex.ones(3)
-<<0, 0, 64, 64, 0, 0, 64, 64, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0,
+<<3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0,
   128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0,
   128, 63>>
 ```
