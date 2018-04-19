@@ -51,6 +51,10 @@ defmodule Matrex do
                :log2,
                :sqrt,
                :cbrt,
+               :ceil,
+               :floor,
+               :trunc,
+               :round,
                :sin,
                :cos,
                :tan,
@@ -62,7 +66,11 @@ defmodule Matrex do
                :tanh,
                :asinh,
                :acosh,
-               :atanh
+               :atanh,
+               :erf,
+               :erfc,
+               :tgamma,
+               :lgamma
              ],
       do: apply_math(matrix, c_math_function)
 

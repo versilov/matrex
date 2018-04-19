@@ -103,6 +103,22 @@ float (*math_func_from_name(char* name))(float) {
     return &exp2f;
   if (strcmp(name, "expm1") == 0)
     return &expm1f;
+  if (strcmp(name, "ceil") == 0)
+    return &ceilf;
+  if (strcmp(name, "floor") == 0)
+    return &floorf;
+  if (strcmp(name, "trunc") == 0)
+    return &truncf;
+  if (strcmp(name, "round") == 0)
+    return &roundf;
+  if (strcmp(name, "erf") == 0)
+    return &erff;
+  if (strcmp(name, "erfc") == 0)
+    return &erfcf;
+  if (strcmp(name, "tgamma") == 0)
+    return &tgammaf;
+  if (strcmp(name, "lgamma") == 0)
+    return &lgammaf;
   if (strcmp(name, "log") == 0)
     return &logf;
   if (strcmp(name, "log2") == 0)
