@@ -136,9 +136,8 @@ defmodule Matrex do
     <<value::float-little-32, rest::binary>> = data
 
     new_value = function.(value)
-    new_element = <<new_value::float-little-32>>
 
-    apply_on_matrix(rest, function, accumulator <> new_element)
+    apply_on_matrix(rest, function, <<accumulator::binary, new_value::float-little-32>>)
   end
 
   defp apply_on_matrix(<<>>, _, _, _, accumulator), do: accumulator
@@ -147,10 +146,14 @@ defmodule Matrex do
     <<value::float-little-32, rest::binary>> = data
 
     new_value = function.(value, index)
-    new_element = <<new_value::float-little-32>>
-    new_accumulator = accumulator <> new_element
 
-    apply_on_matrix(rest, function, index + 1, size, new_accumulator)
+    apply_on_matrix(
+      rest,
+      function,
+      index + 1,
+      size,
+      <<accumulator::binary, new_value::float-little-32>>
+    )
   end
 
   defp apply_on_matrix(<<>>, _, _, _, _, accumulator), do: accumulator
@@ -159,8 +162,7 @@ defmodule Matrex do
     <<value::float-little-32, rest::binary>> = data
 
     new_value = function.(value, row_index, column_index)
-    new_element = <<new_value::float-little-32>>
-    new_accumulator = accumulator <> new_element
+    new_accumulator = <<accumulator::binary, new_value::float-little-32>>
 
     case column_index < columns do
       true ->
@@ -200,8 +202,7 @@ defmodule Matrex do
     <<second_value::float-little-32, second_rest::binary>> = second_data
 
     new_value = function.(first_value, second_value)
-    new_element = <<new_value::float-little-32>>
-    new_accumulator = accumulator <> new_element
+    new_accumulator = <<accumulator::binary, new_value::float-little-32>>
 
     apply_on_matrices(first_rest, second_rest, function, new_accumulator)
   end
@@ -502,11 +503,13 @@ defmodule Matrex do
 
   defp new_matrix_from_function(0, _, accumulator), do: accumulator
 
-  defp new_matrix_from_function(size, function, accumulator) do
-    current = <<function.()::float-little-32>>
-
-    new_matrix_from_function(size - 1, function, accumulator <> current)
-  end
+  defp new_matrix_from_function(size, function, accumulator),
+    do:
+      new_matrix_from_function(
+        size - 1,
+        function,
+        <<accumulator::binary, function.()::float-little-32>>
+      )
 
   defp new_matrix_from_function(0, _, _, _, accumulator), do: accumulator
 
@@ -518,8 +521,7 @@ defmodule Matrex do
         {rows - 1 - div(size, columns), columns - rem(size, columns)}
       end
 
-    current = <<function.(row, col)::float-little-32>>
-    new_accumulator = accumulator <> current
+    new_accumulator = <<accumulator::binary, function.(row, col)::float-little-32>>
 
     new_matrix_from_function(size - 1, rows, columns, function, new_accumulator)
   end
