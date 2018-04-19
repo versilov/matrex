@@ -485,7 +485,7 @@ defmodule Matrex do
     Enum.reduce(list_of_lists, initial, fn list, accumulator ->
       accumulator <>
         Enum.reduce(list, <<>>, fn element, partial ->
-          partial <> <<element::float-little-32>>
+          <<partial::binary, element::float-little-32>>
         end)
     end)
   end
