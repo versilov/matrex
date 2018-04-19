@@ -17,7 +17,7 @@ ERL_INCLUDE_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_d
 
 # Switches between different BLAS implementations
 # Can be blas, openblas
-BLAS = openblas
+BLAS = blas
 
 # For compiling and linking the final NIF shared objects.
 
