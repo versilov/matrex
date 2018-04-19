@@ -41,9 +41,9 @@ defmodule Matrex do
   Apply C math function to matrix elementwise.
   """
   @spec apply(binary, atom) :: binary
-  def apply(matrix, c_math_function)
+  def apply(matrix, function)
       when is_binary(matrix) and
-             c_math_function in [
+             function in [
                :exp,
                :exp2,
                :expm1,
@@ -72,7 +72,7 @@ defmodule Matrex do
                :tgamma,
                :lgamma
              ],
-      do: apply_math(matrix, c_math_function)
+      do: apply_math(matrix, function)
 
   defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
     # excoveralls ignore
