@@ -71,7 +71,7 @@ matrix_zeros(Matrix matrix) {
 }
 
 int32_t
-matrix_equal(Matrix first, Matrix second) {
+matrix_equal(const Matrix first, const Matrix second) {
   if (MX_ROWS(first) != MX_ROWS(second)) return 0;
   if (MX_COLS(first) != MX_COLS(second)) return 0;
 
@@ -94,6 +94,65 @@ matrix_add(const Matrix first, const Matrix second, Matrix result) {
   for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] + second[index];
   }
+}
+
+float (*math_func_from_name(char* name))(float) {
+  if (strcmp(name, "exp") == 0)
+    return &expf;
+  if (strcmp(name, "exp2") == 0)
+    return &exp2f;
+  if (strcmp(name, "expm1") == 0)
+    return &expm1f;
+  if (strcmp(name, "log") == 0)
+    return &logf;
+  if (strcmp(name, "log2") == 0)
+    return &log2f;
+  if (strcmp(name, "sqrt") == 0)
+    return &sqrtf;
+  if (strcmp(name, "cbrt") == 0)
+    return &cbrtf;
+  if (strcmp(name, "sin") == 0)
+    return &sinf;
+  if (strcmp(name, "cos") == 0)
+    return &cosf;
+  if (strcmp(name, "tan") == 0)
+    return &tanf;
+  if (strcmp(name, "asin") == 0)
+    return &asinf;
+  if (strcmp(name, "acos") == 0)
+    return &acosf;
+  if (strcmp(name, "atan") == 0)
+    return &atanf;
+  if (strcmp(name, "sinh") == 0)
+    return &sinhf;
+  if (strcmp(name, "cosh") == 0)
+    return &coshf;
+  if (strcmp(name, "tanh") == 0)
+    return &tanhf;
+  if (strcmp(name, "asinh") == 0)
+    return &asinhf;
+  if (strcmp(name, "acosh") == 0)
+    return &acoshf;
+  if (strcmp(name, "atanh") == 0)
+    return &atanhf;
+  return NULL;
+}
+
+int
+matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
+  uint64_t data_size = MX_LENGTH(matrix);
+  float (*func)(float) = math_func_from_name(function_name);
+
+  if (func == NULL) return 0;
+
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = func(matrix[index]);
+  }
+
+  return 1;
 }
 
 int32_t

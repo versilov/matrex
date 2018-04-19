@@ -19,6 +19,13 @@ defmodule MatrexTest do
     end
   end
 
+  test "#apply/2 applies a math function on each element of the matrix" do
+    input = Matrex.new([[4, 16, 9], [25, 49, 36]])
+    expected = Matrex.new([[2, 4, 3], [5, 7, 6]])
+
+    assert Matrex.apply(input, :sqrt) == expected
+  end
+
   test "#apply/2 applies a function/1 on each element of the matrix" do
     function = &(&1 + 1)
     input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])

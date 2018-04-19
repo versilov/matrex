@@ -13,7 +13,7 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
-  int32_t       data_size;
+  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -35,6 +35,34 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   matrix_add(first_data, second_data, result_data);
 
   return result;
+}
+
+static ERL_NIF_TERM
+apply_math(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  char          function_name[16];
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix )) return enif_make_badarg(env);
+  if (enif_get_atom(env, argv[1], function_name, 16, ERL_NIF_LATIN1) == 0)
+    return enif_raise_exception(env, enif_make_atom(env, "second_argument_must_be_an_atom"));
+
+  matrix_data  = (float *) matrix.data;
+
+  data_size   = MX_LENGTH(matrix_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  if (matrix_apply(matrix_data, function_name, result_data) == 1)
+    return result;
+  else
+    return enif_make_badarg(env);
 }
 
 static ERL_NIF_TERM
@@ -496,6 +524,7 @@ zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
 static ErlNifFunc nif_functions[] = {
   {"add",                  2, add,                  0},
+  {"apply_math",           2, apply_math,           0},
   {"argmax",               1, argmax,               0},
   {"divide",               2, divide,               0},
   {"dot",                  2, dot,                  0},
@@ -511,7 +540,7 @@ static ErlNifFunc nif_functions[] = {
   {"substract",            2, substract,            0},
   {"sum",                  1, sum,                  0},
   {"to_list",              1, to_list,              0},
-  {"to_list_of_lists",     1, to_list_of_lists,     0},
+  {"to_list_of_lists",     1, to_list_of_lists,     ERL_NIF_DIRTY_JOB_CPU_BOUND},
   {"transpose",            1, transpose,            0},
   {"zeros",                2, zeros,                0}
 };

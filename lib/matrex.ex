@@ -38,6 +38,45 @@ defmodule Matrex do
   end
 
   @doc """
+  Apply C math function to matrix elementwise.
+  """
+  @spec apply(binary, atom) :: binary
+  def apply(matrix, c_math_function)
+      when is_binary(matrix) and
+             c_math_function in [
+               :exp,
+               :exp2,
+               :expm1,
+               :log,
+               :log2,
+               :sqrt,
+               :cbrt,
+               :sin,
+               :cos,
+               :tan,
+               :asin,
+               :acos,
+               :atan,
+               :sinh,
+               :cosh,
+               :tanh,
+               :asinh,
+               :acosh,
+               :atanh
+             ],
+      do: apply_math(matrix, c_math_function)
+
+  defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
+  @doc """
   Applies the given function on each element of the matrix
   """
   @spec apply(binary, function) :: binary
@@ -480,12 +519,12 @@ defmodule Matrex do
   @doc """
   Create matrix filled with ones.
   """
-  def ones(rows, cols), do: fill(rows, cols, 1)
+  def ones(rows, cols) when is_integer(rows) and is_integer(cols), do: fill(rows, cols, 1)
 
   @doc """
   Create square matrix filled with ones.
   """
-  def ones(size), do: fill(size, 1)
+  def ones(size) when is_integer(size), do: fill(size, 1)
 
   @doc """
   Create matrix of random floats in [0, 1] range.
@@ -505,7 +544,7 @@ defmodule Matrex do
   @doc """
   Create square matrix of random floats.
   """
-  def random(size), do: random(size, size)
+  def random(size) when is_integer(size), do: random(size, size)
 
   @doc """
   Return size of matrix as {rows, cols}

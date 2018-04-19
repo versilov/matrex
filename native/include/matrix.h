@@ -2,6 +2,7 @@
 #define INCLUDED_MATRIX_H
 
 #include <cblas.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,6 +47,9 @@ matrix_equal(Matrix first, Matrix second);
 
 void
 matrix_add(const Matrix first, const Matrix second, Matrix result);
+
+int
+matrix_apply(const Matrix matrix, char* function_name, Matrix result);
 
 int32_t
 matrix_argmax(const Matrix matrix);
