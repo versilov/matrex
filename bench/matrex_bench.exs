@@ -114,6 +114,10 @@ defmodule MatrexBench do
     dot(@random_a_xlarge, @random_b_xlarge)
   end
 
+  bench "400x400 matrix exponent" do
+    Matrex.apply(@random_a_vlarge, :exp)
+  end
+
   bench "400x400 matrix to list" do
     to_list(@random_a_vlarge)
   end
