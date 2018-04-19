@@ -320,9 +320,11 @@ defmodule Matrex do
 
   @doc """
   Displays a visualization of the matrix.
+  Set the second parameter to true to show full numbers.
+  Otherwise, they are truncated.
   """
-  @spec inspect(binary) :: binary
-  def inspect(matrix) do
+  @spec inspect(binary, boolean) :: binary
+  def inspect(matrix, full \\ false) do
     <<
       rows::unsigned-integer-little-32,
       columns::unsigned-integer-little-32,
@@ -331,34 +333,35 @@ defmodule Matrex do
 
     IO.puts("Rows: #{trunc(rows)} Columns: #{trunc(columns)}")
 
-    inspect_element(1, columns, rest)
+    inspect_element(1, columns, rest, full)
 
     matrix
   end
 
-  defp inspect_element(_, _, <<>>), do: :ok
+  defp inspect_element(_, _, <<>>, _), do: :ok
 
-  defp inspect_element(column, columns, elements) do
+  defp inspect_element(column, columns, elements, full) do
     <<element::float-little-32, rest::binary>> = elements
 
     next_column =
       case column == columns do
         true ->
-          IO.puts(undot(element))
+          IO.puts(undot(element, full))
 
           1.0
 
         false ->
-          IO.write("#{undot(element)} ")
+          IO.write("#{undot(element, full)} ")
 
           column + 1.0
       end
 
-    inspect_element(next_column, columns, rest)
+    inspect_element(next_column, columns, rest, full)
   end
 
-  defp undot(f) when f - trunc(f) == 0.0, do: trunc(f)
-  defp undot(f), do: f
+  defp undot(f, false) when is_float(f) and f - trunc(f) == 0.0, do: trunc(f)
+  defp undot(f, false) when is_float(f), do: :io_lib.format("~7.3f", [f])
+  defp undot(f, true) when is_float(f), do: f
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
