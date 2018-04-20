@@ -42,10 +42,10 @@ void
 matrix_random(Matrix matrix) {
   uint64_t length = MX_LENGTH(matrix);
 
-  srand(time(NULL));
+  srandom(time(NULL));
 
   for (uint64_t index = 2; index < length; index += 1) {
-    matrix[index] = (float)rand()/(float)RAND_MAX;
+    matrix[index] = (float)random()/(float)RAND_MAX;
   }
 }
 
