@@ -74,16 +74,6 @@ defmodule Matrex do
              ],
       do: apply_math(matrix, function)
 
-  defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
-    # excoveralls ignore
-    :erlang.nif_error(:nif_library_not_loaded)
-
-    # excoveralls ignore
-    random_size = :rand.uniform(2)
-    # excoveralls ignore
-    <<1::size(random_size)>>
-  end
-
   @doc """
   Applies the given function on each element of the matrix
   """
@@ -130,11 +120,19 @@ defmodule Matrex do
     apply_on_matrix(data, function, 1, 1, columns, initial)
   end
 
+  defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
   defp apply_on_matrix(<<>>, _, accumulator), do: accumulator
 
-  defp apply_on_matrix(data, function, accumulator) do
-    <<value::float-little-32, rest::binary>> = data
-
+  defp apply_on_matrix(<<value::float-little-32, rest::binary>>, function, accumulator) do
     new_value = function.(value)
 
     apply_on_matrix(rest, function, <<accumulator::binary, new_value::float-little-32>>)
@@ -142,9 +140,13 @@ defmodule Matrex do
 
   defp apply_on_matrix(<<>>, _, _, _, accumulator), do: accumulator
 
-  defp apply_on_matrix(data, function, index, size, accumulator) do
-    <<value::float-little-32, rest::binary>> = data
-
+  defp apply_on_matrix(
+         <<value::float-little-32, rest::binary>>,
+         function,
+         index,
+         size,
+         accumulator
+       ) do
     new_value = function.(value, index)
 
     apply_on_matrix(
@@ -158,9 +160,14 @@ defmodule Matrex do
 
   defp apply_on_matrix(<<>>, _, _, _, _, accumulator), do: accumulator
 
-  defp apply_on_matrix(data, function, row_index, column_index, columns, accumulator) do
-    <<value::float-little-32, rest::binary>> = data
-
+  defp apply_on_matrix(
+         <<value::float-little-32, rest::binary>>,
+         function,
+         row_index,
+         column_index,
+         columns,
+         accumulator
+       ) do
     new_value = function.(value, row_index, column_index)
     new_accumulator = <<accumulator::binary, new_value::float-little-32>>
 
@@ -177,19 +184,19 @@ defmodule Matrex do
   Applies function to elements of two matrices and returns matrix of function results.
   """
   @spec apply(binary, binary, function) :: binary
-  def apply(first, second, function) do
-    <<
-      rows::unsigned-integer-little-32,
-      columns::unsigned-integer-little-32,
-      first_data::binary
-    >> = first
-
-    <<
-      _::unsigned-integer-little-32,
-      _::unsigned-integer-little-32,
-      second_data::binary
-    >> = second
-
+  def apply(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          first_data::binary
+        >>,
+        <<
+          _::unsigned-integer-little-32,
+          _::unsigned-integer-little-32,
+          second_data::binary
+        >>,
+        function
+      ) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     apply_on_matrices(first_data, second_data, function, initial)
@@ -197,10 +204,13 @@ defmodule Matrex do
 
   defp apply_on_matrices(<<>>, <<>>, _, accumulator), do: accumulator
 
-  defp apply_on_matrices(first_data, second_data, function, accumulator) do
-    <<first_value::float-little-32, first_rest::binary>> = first_data
-    <<second_value::float-little-32, second_rest::binary>> = second_data
-
+  defp apply_on_matrices(
+         <<first_value::float-little-32, first_rest::binary>>,
+         <<second_value::float-little-32, second_rest::binary>>,
+         function,
+         accumulator
+       )
+       when is_function(function, 2) do
     new_value = function.(first_value, second_value)
     new_accumulator = <<accumulator::binary, new_value::float-little-32>>
 
@@ -223,13 +233,16 @@ defmodule Matrex do
   Get element of a matrix at given zero-based position.
   """
   @spec at(binary, integer, integer) :: float
-  def at(matrix, row, col) when is_binary(matrix) and is_integer(row) and is_integer(col) do
-    <<
-      rows::unsigned-integer-little-32,
-      columns::unsigned-integer-little-32,
-      data::binary
-    >> = matrix
-
+  def at(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        row,
+        col
+      )
+      when is_integer(row) and is_integer(col) do
     if row < 0 or row >= rows,
       do: raise(ArgumentError, message: "Row position out of range: #{row}")
 
@@ -372,13 +385,14 @@ defmodule Matrex do
   Otherwise, they are truncated.
   """
   @spec inspect(binary, boolean) :: binary
-  def inspect(matrix, full \\ false) do
-    <<
-      rows::unsigned-integer-little-32,
-      columns::unsigned-integer-little-32,
-      rest::binary
-    >> = matrix
-
+  def inspect(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          rest::binary
+        >> = matrix,
+        full \\ false
+      ) do
     IO.puts("Rows: #{trunc(rows)} Columns: #{trunc(columns)}")
 
     inspect_element(1, columns, rest, full)
@@ -388,9 +402,7 @@ defmodule Matrex do
 
   defp inspect_element(_, _, <<>>, _), do: :ok
 
-  defp inspect_element(column, columns, elements, full) do
-    <<element::float-little-32, rest::binary>> = elements
-
+  defp inspect_element(column, columns, <<element::float-little-32, rest::binary>>, full) do
     next_column =
       case column == columns do
         true ->
