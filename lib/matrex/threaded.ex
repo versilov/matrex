@@ -22,8 +22,8 @@ defmodule Matrex.Threaded do
     :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_threaded_nifs"), 0)
   end
 
-  def apply_exp(rows, cols)
-      when is_integer(rows) and is_integer(cols) do
+  def apply_math(matrix, function)
+      when is_binary(matrix) and is_atom(function) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 

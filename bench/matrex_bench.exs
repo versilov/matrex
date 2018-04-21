@@ -58,7 +58,6 @@ defmodule MatrexBench do
 
   use Benchfella
   import Matrex
-  import Matrex.Threaded
 
   @random_a random(50)
   @random_b random(50)
@@ -119,10 +118,6 @@ defmodule MatrexBench do
     Matrex.apply(@random_a_vlarge, :exp)
   end
 
-  bench "400x400 matrix threaded exponent" do
-    apply_exp(@random_a_vlarge, :exp)
-  end
-
   bench "400x400 matrix to list" do
     to_list(@random_a_vlarge)
   end
@@ -150,10 +145,6 @@ defmodule MatrexBench do
 
   bench "400x400 matrix sum" do
     sum(@random_a_vlarge)
-  end
-
-  bench "1000x1000 matrix tadd" do
-    tadd(@random_a_xlarge, @random_b_xlarge)
   end
 
   bench "1000x1000 matrix add" do

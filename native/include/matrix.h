@@ -51,6 +51,10 @@ matrix_add(const Matrix first, const Matrix second, Matrix result);
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result);
 
+typedef float (*math_func_ptr_t)(float);
+
+math_func_ptr_t math_func_from_name(char* name);
+
 int32_t
 matrix_argmax(const Matrix matrix);
 

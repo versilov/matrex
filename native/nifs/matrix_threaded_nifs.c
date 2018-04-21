@@ -11,22 +11,27 @@
        __typeof__ (b) _b = (b); \
      _a < _b ? _a : _b; })
 
-void* expc(void* args) {
+typedef float (*math_func_ptr_t)(float);
+
+void* math(void* args) {
   const Matrix* m = (const Matrix*)args;
   const Matrix matrix = m[0];
   const Matrix result = m[1];
   const uint64_t* i= (const uint64_t*)args;
   const uint64_t from = i[2];
   const uint64_t to = i[3];
+  math_func_ptr_t* f = (math_func_ptr_t*)args;
+  math_func_ptr_t math_func = f[4];
+
   for (uint64_t index = 2 + from; index < (2 + to); index += 1) {
-    result[index] = expf(matrix[index]);
+    result[index] = math_func(matrix[index]);
   }
 
   return NULL;
 }
 
 static ERL_NIF_TERM
-apply_exp(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+apply_math(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
   char          function_name[16];
@@ -54,12 +59,13 @@ apply_exp(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   chunk_size = data_size / WORKERS_NUM + 1;
 
+  math_func_ptr_t func = math_func_from_name(function_name);
 
   for (int i = 0; i < WORKERS_NUM; i++ ) {
     uint64_t from = i*chunk_size;
     uint64_t to = min((i+1)*chunk_size, data_size-2);
-    void* args[] = {matrix_data, result_data, (void*)from, (void*)to};
-    enif_thread_create("texp", &workers[i], &expc, args, NULL);
+    void* args[] = {matrix_data, result_data, (void*)from, (void*)to, (void*)func};
+    enif_thread_create("apply_math", &workers[i], &math, args, NULL);
   }
 
   for (int i = 0; i < WORKERS_NUM; i++ ) {
@@ -70,7 +76,7 @@ apply_exp(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ErlNifFunc nif_functions[] = {
-  {"apply_exp",            2, apply_exp,           0}
+  {"apply_math",            2, apply_math,           0}
 };
 
 ERL_NIF_INIT(Elixir.Matrex.Threaded, nif_functions, NULL, NULL, NULL, NULL)

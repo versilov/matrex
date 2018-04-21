@@ -71,8 +71,13 @@ defmodule Matrex do
                :erfc,
                :tgamma,
                :lgamma
-             ],
-      do: apply_math(matrix, function)
+             ] do
+    {rows, cols} = size(matrix)
+
+    if rows * cols < 100_000,
+      do: apply_math(matrix, function),
+      else: apply_parallel_math(matrix, function)
+  end
 
   @doc """
   Applies the given function on each element of the matrix
@@ -121,6 +126,19 @@ defmodule Matrex do
   end
 
   defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
+  @doc """
+
+  """
+  defp apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
@@ -586,15 +604,15 @@ defmodule Matrex do
   Return size of matrix as {rows, cols}
   """
   @spec size(binary) :: {integer, integer}
-  def size(matrix) when is_binary(matrix) do
-    <<
-      rows::unsigned-integer-little-32,
-      cols::unsigned-integer-little-32,
-      _rest::binary
-    >> = matrix
-
-    {trunc(rows), trunc(cols)}
-  end
+  def size(
+        <<
+          rows::unsigned-integer-little-32,
+          cols::unsigned-integer-little-32,
+          _rest::binary
+        >> = matrix
+      )
+      when is_binary(matrix),
+      do: {rows, cols}
 
   @doc """
   Substracts two matrices

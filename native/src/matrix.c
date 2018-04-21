@@ -96,7 +96,7 @@ matrix_add(const Matrix first, const Matrix second, Matrix result) {
   }
 }
 
-float (*math_func_from_name(char* name))(float) {
+math_func_ptr_t math_func_from_name(char* name) {
   if (strcmp(name, "exp") == 0)
     return &expf;
   if (strcmp(name, "exp2") == 0)
@@ -157,7 +157,7 @@ float (*math_func_from_name(char* name))(float) {
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
   uint64_t data_size = MX_LENGTH(matrix);
-  float (*func)(float) = math_func_from_name(function_name);
+  math_func_ptr_t func = math_func_from_name(function_name);
 
   if (func == NULL) return 0;
 
