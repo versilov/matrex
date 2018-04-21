@@ -14,7 +14,7 @@ defmodule MatrexTest do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2], [3, 4]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.add(first, second)
     end
   end
@@ -98,7 +98,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
       Matrex.divide(first, second)
     end
   end
@@ -115,7 +115,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
       Matrex.dot(first, second)
     end
   end
@@ -134,7 +134,7 @@ defmodule MatrexTest do
     second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
     third = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.dot_and_add(first, second, third)
     end
   end
@@ -151,7 +151,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.dot_nt(first, second)
     end
   end
@@ -168,7 +168,7 @@ defmodule MatrexTest do
     first = Matrex.new(3, 2, [[1, 4], [2, 5], [3, 6]])
     second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.dot_tn(first, second)
     end
   end
@@ -251,7 +251,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.multiply(first, second)
     end
   end
@@ -333,7 +333,7 @@ defmodule MatrexTest do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])
 
-    assert_raise ErlangError, ~r/:matrices_size_mismatch/, fn ->
+    assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
       Matrex.substract(first, second)
     end
   end

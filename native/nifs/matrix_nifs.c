@@ -25,7 +25,7 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_LENGTH(first_data);
 
@@ -98,7 +98,7 @@ divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_LENGTH(first_data);
 
@@ -127,7 +127,7 @@ dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_COLS(first_data) != MX_ROWS(second_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   =  MX_ROWS(first_data) * MX_COLS(second_data) + 2;
 
@@ -160,7 +160,7 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   if (MX_COLS(first_data) != MX_ROWS(second_data) ||
       MX_ROWS(first_data) != MX_ROWS(third_data) ||
       MX_COLS(second_data) != MX_COLS(third_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_ROWS(first_data) * MX_COLS(second_data) + 2;
 
@@ -189,7 +189,7 @@ dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_COLS(first_data) != MX_COLS(second_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_ROWS(first_data) * MX_ROWS(second_data) + 2;
 
@@ -218,7 +218,7 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_ROWS(first_data) != MX_ROWS(second_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_COLS(first_data) * MX_COLS(second_data) + 2;
 
@@ -309,7 +309,7 @@ multiply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
-    return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_LENGTH(first_data);
 
@@ -377,6 +377,37 @@ random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+row_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  float *matrix_data;
+  unsigned long row;
+  ERL_NIF_TERM  result;
+  uint32_t rows, cols;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &row);
+
+
+  matrix_data = (float *) matrix.data;
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
+
+  if (row >= rows)
+    return enif_raise_exception(env, enif_make_string(env, "Row index out of bounds.", ERL_NIF_LATIN1));
+
+  result = enif_make_list(env, 0);
+
+  for (uint64_t i = (row+1)*cols + 2; i-- > row*cols + 2; ) {
+    result = enif_make_list_cell(env, enif_make_double(env, matrix_data[i]), result);
+  }
+
+  return result;
+}
+
+
+static ERL_NIF_TERM
 substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -393,7 +424,7 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   second_data = (float *) second.data;
 
   if (MX_ROWS(first_data) != MX_ROWS(second_data) || MX_COLS(first_data) != MX_COLS(second_data))
-      return enif_raise_exception(env, enif_make_atom(env, "matrices_size_mismatch"));
+      return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   = MX_LENGTH(first_data);
 
@@ -537,6 +568,7 @@ static ErlNifFunc nif_functions[] = {
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},
   {"random",               2, random_matrix,        0},
+  {"row_to_list",          2, row_to_list,          0},
   {"substract",            2, substract,            0},
   {"sum",                  1, sum,                  0},
   {"to_list",              1, to_list,              0},

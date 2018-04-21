@@ -569,6 +569,20 @@ defmodule Matrex do
   def random(size) when is_integer(size), do: random(size, size)
 
   @doc """
+  Return matrix row as list by zero-based index.
+  """
+  @spec row_to_list(binary, integer) :: list(float)
+  def row_to_list(matrix, row) do
+    # excoveralls ignore
+    :erlang.nif_error(:nif_library_not_loaded)
+
+    # excoveralls ignore
+    random_size = :rand.uniform(2)
+    # excoveralls ignore
+    <<1::size(random_size)>>
+  end
+
+  @doc """
   Return size of matrix as {rows, cols}
   """
   @spec size(binary) :: {integer, integer}
