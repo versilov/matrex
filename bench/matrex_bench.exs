@@ -118,14 +118,6 @@ defmodule MatrexBench do
     Matrex.apply(@random_a_vlarge, :exp)
   end
 
-  bench "400x400 matrix to list" do
-    to_list(@random_a_vlarge)
-  end
-
-  bench "400x400 matrix to list of lists" do
-    to_list_of_lists(@random_a_vlarge)
-  end
-
   bench "300x300 zeros matrix creation" do
     zeros(300)
   end
@@ -149,5 +141,18 @@ defmodule MatrexBench do
 
   bench "1000x1000 matrix add" do
     add(@random_a_xlarge, @random_b_xlarge)
+  end
+
+  bench "400x400 matrix to list" do
+    to_list(@random_a_vlarge)
+  end
+
+  bench "400x400 matrix to list of lists" do
+    to_list_of_lists(@random_a_vlarge)
+  end
+
+  bench "get element of a matrix" do
+    at(@random_a_vlarge, :rand.uniform(399), :rand.uniform(399))
+    0
   end
 end

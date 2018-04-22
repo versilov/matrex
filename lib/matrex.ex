@@ -268,7 +268,7 @@ defmodule Matrex do
     if col < 0 or col >= columns,
       do: raise(ArgumentError, message: "Column position out of range: #{col}")
 
-    <<elem::float-little-32>> = binary_part(data, trunc(row * columns + col) * 4, 4)
+    <<elem::float-little-32>> = binary_part(data, (row * columns + col) * 4, 4)
     elem
   end
 
@@ -663,6 +663,14 @@ defmodule Matrex do
     # excoveralls ignore
     <<1::size(random_size)>>
   end
+
+  def to_list2(<<_rows::integer-little-32, _cols::integer-little-32, data::binary>>),
+    do: to_list_of_floats(data)
+
+  defp to_list_of_floats(<<elem::float-little-32, rest::binary>>),
+    do: [elem | to_list_of_floats(rest)]
+
+  defp to_list_of_floats(<<>>), do: []
 
   @doc """
   Converts to list of lists
