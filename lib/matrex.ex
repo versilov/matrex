@@ -273,6 +273,45 @@ defmodule Matrex do
   end
 
   @doc """
+  Get column of matrix as matrix (vector) in binary form.
+  """
+  @spec column(binary, integer) :: binary
+  def column(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        col
+      ) do
+    column = <<rows::unsigned-integer-little-32, 1::unsigned-integer-little-32>>
+
+    0..(rows - 1)
+    |> Enum.reduce(column, fn row, acc ->
+      <<acc::binary, binary_part(data, (row * columns + col) * 4, 4)::binary>>
+    end)
+  end
+
+  @doc """
+  Get column of matrix as list of floats
+  """
+  @spec column_as_list(binary, integer) :: list(float)
+  def column_as_list(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        col
+      ) do
+    0..(rows - 1)
+    |> Enum.map(fn row ->
+      <<elem::float-little-32>> = binary_part(data, (row * columns + col) * 4, 4)
+      elem
+    end)
+  end
+
+  @doc """
   Divides two matrices
   """
   @spec divide(binary, binary) :: binary
@@ -599,6 +638,39 @@ defmodule Matrex do
     random_size = :rand.uniform(2)
     # excoveralls ignore
     <<1::size(random_size)>>
+  end
+
+  @doc """
+  Get row of matrix as matrix (vector) in binary form.
+  """
+  @spec row(binary, integer) :: binary
+  def row(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        row
+      )
+      when row < rows do
+    <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+      binary_part(data, row * columns * 4, columns * 4)::binary>>
+  end
+
+  @doc """
+  Get row of matrix as list of floats
+  """
+  @spec row_as_list(binary, integer) :: list(float)
+  def row_as_list(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        row
+      )
+      when row < rows do
+    binary_part(data, row * columns * 4, columns * 4) |> to_list_of_floats()
   end
 
   @doc """
