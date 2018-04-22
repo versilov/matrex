@@ -96,11 +96,17 @@ matrix_add(const Matrix first, const Matrix second, Matrix result) {
   }
 }
 
+float sigmoidf(float x) {
+  return 1.0f/(1.0f + expf(-x));
+}
+
 math_func_ptr_t math_func_from_name(char* name) {
   if (strcmp(name, "exp") == 0)
     return &expf;
   if (strcmp(name, "exp2") == 0)
     return &exp2f;
+  if (strcmp(name, "sigmoid") == 0)
+    return &sigmoidf;
   if (strcmp(name, "expm1") == 0)
     return &expm1f;
   if (strcmp(name, "ceil") == 0)

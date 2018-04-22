@@ -46,6 +46,7 @@ defmodule Matrex do
              function in [
                :exp,
                :exp2,
+               :sigmoid,
                :expm1,
                :log,
                :log2,
