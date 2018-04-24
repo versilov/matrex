@@ -29,10 +29,6 @@ defmodule Matrex do
   def add(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -126,18 +122,10 @@ defmodule Matrex do
 
   defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   defp apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   defp apply_on_matrix(<<>>, _, accumulator), do: accumulator
@@ -307,10 +295,6 @@ defmodule Matrex do
   def divide(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -320,10 +304,6 @@ defmodule Matrex do
   def dot(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -333,10 +313,6 @@ defmodule Matrex do
   def dot_and_add(first, second, third)
       when is_binary(first) and is_binary(second) and is_binary(third) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -346,10 +322,6 @@ defmodule Matrex do
   def dot_nt(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -359,10 +331,6 @@ defmodule Matrex do
   def dot_tn(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -372,10 +340,6 @@ defmodule Matrex do
   def eye(size)
       when is_integer(size) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -385,10 +349,6 @@ defmodule Matrex do
   def fill(rows, cols, value)
       when is_integer(rows) and is_integer(cols) and is_integer(value) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -481,10 +441,6 @@ defmodule Matrex do
   def multiply(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -494,10 +450,6 @@ defmodule Matrex do
   def multiply_with_scalar(matrix, scalar)
       when is_binary(matrix) and is_number(scalar) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -582,10 +534,6 @@ defmodule Matrex do
   def random(rows, cols)
       when is_integer(rows) and is_integer(cols) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -599,10 +547,6 @@ defmodule Matrex do
   @spec row_to_list(binary, integer) :: list(float)
   def row_to_list(matrix, row) when is_binary(matrix) and is_integer(row) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -659,10 +603,6 @@ defmodule Matrex do
   def substract(first, second)
       when is_binary(first) and is_binary(second) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -689,8 +629,6 @@ defmodule Matrex do
   @spec to_list(binary) :: binary
   def to_list(matrix) when is_binary(matrix) do
     :erlang.nif_error(:nif_library_not_loaded)
-    random_size = :rand.uniform(2)
-    <<1::size(random_size)>>
   end
 
   def to_list2(<<_rows::integer-little-32, _cols::integer-little-32, data::binary>>),
@@ -707,10 +645,6 @@ defmodule Matrex do
   @spec to_list_of_lists(binary) :: binary
   def to_list_of_lists(matrix) when is_binary(matrix) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -719,10 +653,6 @@ defmodule Matrex do
   @spec transpose(binary) :: binary
   def transpose(matrix) when is_binary(matrix) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
@@ -731,10 +661,6 @@ defmodule Matrex do
   @spec zeros(integer, integer) :: binary
   def zeros(rows, cols) when is_integer(rows) and is_integer(cols) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    random_size = :rand.uniform(2)
-
-    <<1::size(random_size)>>
   end
 
   @doc """
