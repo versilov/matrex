@@ -5,8 +5,9 @@ otp_release: '19.0'
 before_install:
   - sudo apt-get install build-essential erlang-dev libatlas-base-dev
 
-script:
-  - "MIX_ENV=test mix do deps.get, test && mix compile && mix coveralls.travis"
+env: MIX_ENV=test
+
+script: mix coveralls.travis
 
 after_script:
   - mix deps.get --only docs
