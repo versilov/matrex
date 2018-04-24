@@ -40,7 +40,8 @@ defmodule Matrex.MixProject do
           # "-Woverspecs",
           # "-Wspecdiffs"
         ]
-      ]
+      ],
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -56,6 +57,7 @@ defmodule Matrex.MixProject do
     [
       {:benchfella, "0.3.4", only: :dev},
       {:dialyxir, "0.5.0", only: [:dev, :test], runtime: false},
+      {:excoveralls, github: "parroty/excoveralls"},
       {:elixir_make, "~> 0.4", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:inch_ex, "~> 0.5", only: :docs}
