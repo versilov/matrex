@@ -221,8 +221,6 @@ defmodule Matrex do
   @spec argmax(binary) :: non_neg_integer
   def argmax(_matrix) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    :rand.uniform()
   end
 
   @doc """
@@ -430,8 +428,6 @@ defmodule Matrex do
   @spec max(binary) :: number
   def max(_matrix) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    :rand.uniform()
   end
 
   @doc """
@@ -619,8 +615,6 @@ defmodule Matrex do
   @spec sum(binary) :: number
   def sum(_matrix) do
     :erlang.nif_error(:nif_library_not_loaded)
-
-    :rand.uniform()
   end
 
   @doc """

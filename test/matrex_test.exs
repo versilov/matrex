@@ -215,6 +215,16 @@ defmodule MatrexTest do
         [13, 3, 2, 16]
       ])
 
+    magic6 =
+      Matrex.new([
+        [5, 8, 36, 33, 13, 16],
+        [6, 7, 34, 35, 14, 15],
+        [28, 25, 17, 20, 12, 9],
+        [26, 27, 18, 19, 10, 11],
+        [24, 21, 4, 1, 32, 29],
+        [22, 23, 2, 3, 30, 31]
+      ])
+
     assert Matrex.magic(5) == magic5
     assert Matrex.max(magic5) == 25
     assert Matrex.sum(magic5) == 25 * (25 + 1) / 2
@@ -222,6 +232,10 @@ defmodule MatrexTest do
     assert Matrex.magic(4) == magic4
     assert Matrex.max(magic4) == 4 * 4
     assert Matrex.sum(magic4) == 4 * 4 * (4 * 4 + 1) / 2
+
+    assert Matrex.magic(6) == magic6
+    assert Matrex.max(magic6) == 6 * 6
+    assert Matrex.sum(magic6) == 6 * 6 * (6 * 6 + 1) / 2
   end
 
   test "#magic returns square with magic properties of arbitrary size" do
@@ -321,6 +335,13 @@ defmodule MatrexTest do
     assert Matrex.new(list) == expected
   end
 
+  test "#row_to_list get row of a matrix" do
+    input = Matrex.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+    expected = [7, 8, 9]
+
+    assert Matrex.row_to_list(input, 2) == expected
+  end
+
   test "#substract substracts two matrices" do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 3, [[5, 2, 1], [3, 4, 6]])
@@ -367,10 +388,13 @@ defmodule MatrexTest do
     assert Matrex.transpose(input) == expected
   end
 
-  test "#row_to_list get row of a matrix" do
-    input = Matrex.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    expected = [7, 8, 9]
+  test "#zeros/1 returns zero filled square matrix" do
+    zero_matrix = Matrex.new([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
+    assert Matrex.zeros(3) == zero_matrix
+  end
 
-    assert Matrex.row_to_list(input, 2) == expected
+  test "#zeros/2 returns zero filled matrix" do
+    zero_matrix = Matrex.new([[0, 0, 0], [0, 0, 0]])
+    assert Matrex.zeros(2, 3) == zero_matrix
   end
 end
