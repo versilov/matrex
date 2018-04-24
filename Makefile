@@ -40,7 +40,7 @@ endif
 
 else
 	CFLAGS += -shared
-	LDFLAGS += -lm
+	LDFLAGS += -lm -cblas
 
 ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
