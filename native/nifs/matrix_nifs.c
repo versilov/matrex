@@ -647,4 +647,9 @@ static ErlNifFunc nif_functions[] = {
   {"zeros",                2, zeros,                0}
 };
 
-ERL_NIF_INIT(Elixir.Matrex, nif_functions, NULL, NULL, NULL, NULL)
+int
+upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM load_info) {
+  return 0;
+}
+
+ERL_NIF_INIT(Elixir.Matrex, nif_functions, NULL, NULL, upgrade, NULL)
