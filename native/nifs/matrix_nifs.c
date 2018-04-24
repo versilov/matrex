@@ -642,7 +642,7 @@ static ErlNifFunc nif_functions[] = {
   {"substract",            2, substract,            0},
   {"sum",                  1, sum,                  0},
   {"to_list",              1, to_list,              0},
-  {"to_list_of_lists",     1, to_list_of_lists,     ERL_NIF_DIRTY_JOB_CPU_BOUND},
+  {"to_list_of_lists",     1, to_list_of_lists,     0}, // ERL_NIF_DIRTY_JOB_CPU_BOUND},
   {"transpose",            1, transpose,            0},
   {"zeros",                2, zeros,                0}
 };
