@@ -79,4 +79,15 @@ static ErlNifFunc nif_functions[] = {
   {"apply_math",            2, apply_math,           0}
 };
 
-ERL_NIF_INIT(Elixir.Matrex.Threaded, nif_functions, NULL, NULL, NULL, NULL)
+// Solely to silence coveralls.travis task errors on Travis CI
+int
+upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM load_info) {
+  // Silence "unused var" warnings.
+  (void)(env);
+  (void)(priv_data);
+  (void)(old_priv_data);
+  (void)(load_info);
+  return 0;
+}
+
+ERL_NIF_INIT(Elixir.Matrex.Threaded, nif_functions, NULL, NULL, upgrade, NULL)
