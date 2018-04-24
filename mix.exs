@@ -57,7 +57,7 @@ defmodule Matrex.MixProject do
     [
       {:benchfella, "0.3.4", only: :dev},
       {:dialyxir, "0.5.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, github: "parroty/excoveralls"},
+      {:excoveralls, github: "parroty/excoveralls", only: :test},
       {:elixir_make, "~> 0.4", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:inch_ex, "~> 0.5", only: :docs}
