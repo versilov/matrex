@@ -39,7 +39,7 @@ On MacOS everything works out of the box, thanks to Accelerate framework.
 On Ubuntu you need to install scientific libraries for this package to compile:
 
 ```
-> sudo apt-get install libblas-dev
+> sudo apt-get install build-essential erlang-dev libatlas-base-dev
 ```
 ## Matrices
 
