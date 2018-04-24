@@ -136,9 +136,6 @@ defmodule Matrex do
     <<1::size(random_size)>>
   end
 
-  @doc """
-
-  """
   defp apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
@@ -630,7 +627,7 @@ defmodule Matrex do
   Return matrix row as list by zero-based index.
   """
   @spec row_to_list(binary, integer) :: list(float)
-  def row_to_list(matrix, row) do
+  def row_to_list(matrix, row) when is_binary(matrix) and is_integer(row) do
     # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
