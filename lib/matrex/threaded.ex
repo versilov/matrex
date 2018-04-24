@@ -24,12 +24,9 @@ defmodule Matrex.Threaded do
 
   def apply_math(matrix, function)
       when is_binary(matrix) and is_atom(function) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
     <<1::size(random_size)>>
   end
 end

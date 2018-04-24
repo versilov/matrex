@@ -28,12 +28,10 @@ defmodule Matrex do
   @spec add(binary, binary) :: binary
   def add(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -127,22 +125,18 @@ defmodule Matrex do
   end
 
   defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
   defp apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -238,10 +232,8 @@ defmodule Matrex do
   """
   @spec argmax(binary) :: non_neg_integer
   def argmax(_matrix) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     :rand.uniform()
   end
 
@@ -314,12 +306,10 @@ defmodule Matrex do
   @spec divide(binary, binary) :: binary
   def divide(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -329,12 +319,10 @@ defmodule Matrex do
   @spec dot(binary, binary) :: binary
   def dot(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -344,12 +332,10 @@ defmodule Matrex do
   @spec dot_and_add(binary, binary, binary) :: binary
   def dot_and_add(first, second, third)
       when is_binary(first) and is_binary(second) and is_binary(third) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -359,12 +345,10 @@ defmodule Matrex do
   @spec dot_nt(binary, binary) :: binary
   def dot_nt(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -374,12 +358,10 @@ defmodule Matrex do
   @spec dot_tn(binary, binary) :: binary
   def dot_tn(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -389,12 +371,10 @@ defmodule Matrex do
   @spec eye(integer) :: binary
   def eye(size)
       when is_integer(size) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -404,12 +384,10 @@ defmodule Matrex do
   @spec fill(integer, integer, integer) :: binary
   def fill(rows, cols, value)
       when is_integer(rows) and is_integer(cols) and is_integer(value) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -491,10 +469,8 @@ defmodule Matrex do
   """
   @spec max(binary) :: number
   def max(_matrix) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     :rand.uniform()
   end
 
@@ -504,12 +480,10 @@ defmodule Matrex do
   @spec multiply(binary, binary) :: binary
   def multiply(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -519,12 +493,10 @@ defmodule Matrex do
   @spec multiply_with_scalar(binary, number) :: binary
   def multiply_with_scalar(matrix, scalar)
       when is_binary(matrix) and is_number(scalar) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -609,12 +581,10 @@ defmodule Matrex do
   @spec random(integer, integer) :: binary
   def random(rows, cols)
       when is_integer(rows) and is_integer(cols) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -628,12 +598,10 @@ defmodule Matrex do
   """
   @spec row_to_list(binary, integer) :: list(float)
   def row_to_list(matrix, row) when is_binary(matrix) and is_integer(row) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -690,12 +658,10 @@ defmodule Matrex do
   @spec substract(binary, binary) :: binary
   def substract(first, second)
       when is_binary(first) and is_binary(second) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -712,10 +678,8 @@ defmodule Matrex do
   """
   @spec sum(binary) :: number
   def sum(_matrix) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     :rand.uniform()
   end
 
@@ -724,12 +688,8 @@ defmodule Matrex do
   """
   @spec to_list(binary) :: binary
   def to_list(matrix) when is_binary(matrix) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
-
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
     <<1::size(random_size)>>
   end
 
@@ -746,12 +706,10 @@ defmodule Matrex do
   """
   @spec to_list_of_lists(binary) :: binary
   def to_list_of_lists(matrix) when is_binary(matrix) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -760,12 +718,10 @@ defmodule Matrex do
   """
   @spec transpose(binary) :: binary
   def transpose(matrix) when is_binary(matrix) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 
@@ -774,12 +730,10 @@ defmodule Matrex do
   """
   @spec zeros(integer, integer) :: binary
   def zeros(rows, cols) when is_integer(rows) and is_integer(cols) do
-    # excoveralls ignore
     :erlang.nif_error(:nif_library_not_loaded)
 
-    # excoveralls ignore
     random_size = :rand.uniform(2)
-    # excoveralls ignore
+
     <<1::size(random_size)>>
   end
 

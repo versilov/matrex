@@ -1,5 +1,7 @@
 {
   "custom_stop_words": [
-    ".*# excoveralls ignore"
+    ":erlang\\.nif_error\\(:nif_library_not_loaded\\)",
+    "random_size = :rand\\.uniform\\(2\\)",
+    "<<1::size\\(random_size\\)>>"
   ]
 }
