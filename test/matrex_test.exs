@@ -92,6 +92,10 @@ defmodule MatrexTest do
     assert_raise ArgumentError, fn ->
       Matrex.at(matrix, 0, 3)
     end
+
+    assert_raise ArgumentError, fn ->
+      Matrex.at(matrix, -2, 1)
+    end
   end
 
   test "#column returns column of the matrix" do
@@ -105,6 +109,19 @@ defmodule MatrexTest do
       ])
 
     assert Matrex.column(matrix, 3) == Matrex.new([[7], [13], [19], [25], [1]])
+  end
+
+  test "#column_as_list returns column of matrix" do
+    matrix =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    assert Matrex.column_as_list(matrix, 2) == [5, 6, 12, 18, 24]
   end
 
   test "#divide divides two matrices" do
@@ -397,6 +414,9 @@ defmodule MatrexTest do
                [1, 1, 1, 1, 1, 1, 1],
                [1, 1, 1, 1, 1, 1, 1]
              ])
+
+    ones_not_square_matrix = Matrex.ones(3, 4)
+    assert ones_not_square_matrix == Matrex.new([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
   end
 
   test "#random creates matrix of random values" do
@@ -415,6 +435,19 @@ defmodule MatrexTest do
       ])
 
     assert Matrex.row(matrix, 3) == Matrex.new([[9, 11, 18, 25, 2]])
+  end
+
+  test "#row_as_list returns row of a matrix" do
+    matrix =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    assert Matrex.row_as_list(matrix, 2) == [3, 10, 12, 19, 21]
   end
 
   test "#row_to_list get row of a matrix" do
