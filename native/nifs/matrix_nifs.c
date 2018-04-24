@@ -647,8 +647,14 @@ static ErlNifFunc nif_functions[] = {
   {"zeros",                2, zeros,                0}
 };
 
+// Solely to silence coveralls.travis task errors on Travis CI
 int
 upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM load_info) {
+  // Silence "unused var" warnings.
+  (void)(env);
+  (void)(priv_data);
+  (void)(old_priv_data);
+  (void)(load_info);
   return 0;
 }
 
