@@ -26,6 +26,14 @@ defmodule MatrexTest do
     assert Matrex.apply(input, :sqrt) == expected
   end
 
+  test "#apply/2 applies a math function on each element of the matrix larger, than 100_000 elements" do
+    input = Matrex.random(500)
+    output = Matrex.apply(input, :exp)
+
+    assert Float.round(Matrex.at(output, 325, 414), 5) ==
+             Float.round(:math.exp(Matrex.at(input, 325, 414)), 5)
+  end
+
   test "#apply/2 applies a function/1 on each element of the matrix" do
     function = &(&1 + 1)
     input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
@@ -84,6 +92,19 @@ defmodule MatrexTest do
     assert_raise ArgumentError, fn ->
       Matrex.at(matrix, 0, 3)
     end
+  end
+
+  test "#column returns column of the matrix" do
+    matrix =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    assert Matrex.column(matrix, 3) == Matrex.new([[7], [13], [19], [25], [1]])
   end
 
   test "#divide divides two matrices" do
@@ -197,6 +218,12 @@ defmodule MatrexTest do
     assert output == expected
   end
 
+  test "#magic raises error, when too small is requested" do
+    assert_raise ArgumentError, ~r/Magic square less than 3x3 is not possible./, fn ->
+      Matrex.magic(2)
+    end
+  end
+
   test "#magic returns magic square of the given size" do
     magic5 =
       Matrex.new([
@@ -297,6 +324,28 @@ defmodule MatrexTest do
     assert Matrex.new(rows, columns, function) == expected
   end
 
+  test "#new creates a new matrix initialized by a function with (row, col) arguments" do
+    rows = 3
+    columns = 3
+    function = fn row, col -> row * col end
+
+    expected = <<
+      3::unsigned-integer-little-32,
+      3::unsigned-integer-little-32,
+      0::float-little-32,
+      0::float-little-32,
+      0::float-little-32,
+      0::float-little-32,
+      1::float-little-32,
+      2::float-little-32,
+      0::float-little-32,
+      2::float-little-32,
+      4::float-little-32
+    >>
+
+    assert Matrex.new(rows, columns, function) == expected
+  end
+
   test "#new creates a new matrix initialized by a list" do
     rows = 2
     columns = 3
@@ -333,6 +382,39 @@ defmodule MatrexTest do
     >>
 
     assert Matrex.new(list) == expected
+  end
+
+  test "#ones creates matrix filled with ones" do
+    ones_matrix = Matrex.ones(7)
+
+    assert ones_matrix ==
+             Matrex.new([
+               [1, 1, 1, 1, 1, 1, 1],
+               [1, 1, 1, 1, 1, 1, 1],
+               [1, 1, 1, 1, 1, 1, 1],
+               [1, 1, 1, 1, 1, 1, 1],
+               [1, 1, 1, 1, 1, 1, 1],
+               [1, 1, 1, 1, 1, 1, 1],
+               [1, 1, 1, 1, 1, 1, 1]
+             ])
+  end
+
+  test "#random creates matrix of random values" do
+    random_matrix = Matrex.random(10)
+    assert Matrex.at(random_matrix, 5, 7) != Matrex.at(random_matrix, 5, 8)
+  end
+
+  test "#row returns row of the matrix" do
+    matrix =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    assert Matrex.row(matrix, 3) == Matrex.new([[9, 11, 18, 25, 2]])
   end
 
   test "#row_to_list get row of a matrix" do
