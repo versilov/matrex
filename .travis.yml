@@ -1,3 +1,6 @@
 language: elixir
 elixir: '1.4'
 otp_release: '19.0'
+
+before_install:
+  - sudo apt-get install build-essentials erlang-dev libblas-dev
