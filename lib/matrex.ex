@@ -22,9 +22,60 @@ defmodule Matrex do
     :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
   end
 
+  @enforce_keys [:data]
+  defstruct [:rows, :columns, :data]
+  @type t :: %Matrex{data: binary}
+
+  @behaviour Access
+
+  @impl Access
+  # Horizontal vector
+  def fetch(
+        %Matrex{
+          data:
+            <<
+              rows::unsigned-integer-little-32,
+              _columns::unsigned-integer-little-32,
+              _rest::binary
+            >> = data
+        },
+        key
+      )
+      when is_integer(key) and rows == 1,
+      do: {:ok, at(data, 0, key - 1)}
+
+  # Vertical vector
+  def fetch(
+        %Matrex{
+          data:
+            <<
+              _rows::unsigned-integer-little-32,
+              columns::unsigned-integer-little-32,
+              _rest::binary
+            >> = data
+        },
+        key
+      )
+      when is_integer(key) and columns == 1,
+      do: {:ok, at(data, key - 1, 0)}
+
+  def fetch(
+        %Matrex{
+          data: data
+        },
+        key
+      )
+      when is_integer(key),
+      do: {:ok, %Matrex{data: row(data, key - 1)}}
+
+  def fetch(matrex, :rows), do: {:ok, size(matrex.data) |> elem(0)}
+  def fetch(matrex, :cols), do: {:ok, size(matrex.data) |> elem(1)}
+
   @doc """
   Adds two matrices
   """
+  def addm(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: add(first, second)}
+
   @spec add(binary, binary) :: binary
   def add(first, second)
       when is_binary(first) and is_binary(second) do
@@ -384,7 +435,7 @@ defmodule Matrex do
         >> = matrix,
         full \\ false
       ) do
-    IO.puts("Rows: #{trunc(rows)} Columns: #{trunc(columns)}")
+    IO.puts("Rows: #{rows} Columns: #{columns}")
 
     inspect_element(1, columns, rest, full)
 
