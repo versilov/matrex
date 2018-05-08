@@ -83,7 +83,7 @@ defmodule MatrexTest do
   test "#at returns element at the given position" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
 
-    assert Matrex.at(matrix, 0, 2) == 3
+    assert Matrex.at(matrix, 1, 3) == 3
   end
 
   test "#at raises when position is out of range" do
@@ -108,7 +108,7 @@ defmodule MatrexTest do
         [15, 17, 24, 1, 8]
       ])
 
-    assert Matrex.column(matrix, 3) == Matrex.new([[7], [13], [19], [25], [1]])
+    assert Matrex.column(matrix, 4) == Matrex.new([[7], [13], [19], [25], [1]])
   end
 
   test "#column_as_list returns column of matrix" do
@@ -121,7 +121,7 @@ defmodule MatrexTest do
         [15, 17, 24, 1, 8]
       ])
 
-    assert Matrex.column_as_list(matrix, 2) == [5, 6, 12, 18, 24]
+    assert Matrex.column_as_list(matrix, 3) == [5, 6, 12, 18, 24]
   end
 
   test "#divide divides two matrices" do
@@ -442,7 +442,7 @@ defmodule MatrexTest do
         [15, 17, 24, 1, 8]
       ])
 
-    assert Matrex.row(matrix, 3) == Matrex.new([[9, 11, 18, 25, 2]])
+    assert Matrex.row(matrix, 4) == Matrex.new([[9, 11, 18, 25, 2]])
   end
 
   test "#row_as_list returns row of a matrix" do
@@ -455,7 +455,7 @@ defmodule MatrexTest do
         [15, 17, 24, 1, 8]
       ])
 
-    assert Matrex.row_as_list(matrix, 2) == [3, 10, 12, 19, 21]
+    assert Matrex.row_as_list(matrix, 3) == [3, 10, 12, 19, 21]
   end
 
   test "#row_to_list get row of a matrix" do
@@ -519,5 +519,22 @@ defmodule MatrexTest do
   test "#zeros/2 returns zero filled matrix" do
     zero_matrix = Matrex.new([[0, 0, 0], [0, 0, 0]])
     assert Matrex.zeros(2, 3) == zero_matrix
+  end
+
+  test "#[]/1 returns row of a matrix" do
+    matrix = Matrex.new([[2, 23, 20], [2, 67, 9], [9, 18, 0]])
+    assert matrix[2] == Matrex.new([[2, 67, 9]])
+  end
+
+  test "#[][] returns element of a matrix" do
+    matrix = Matrex.new([[2, 23, 20], [2, 67, 9], [9, 18, 0]])
+    assert matrix[3][2] == 18
+  end
+
+  test "#inspect/1 inspects matrix" do
+    matrix = Matrex.ones(10, 1)
+
+    assert Inspect.inspect(matrix, %{width: 80}) ==
+             "\e[37m#Matrex\e[97m[\e[33m10\e[97m×\e[33m1\e[97m]\n\e[37m┌         ┐\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0 \e[37m│\n└         ┘"
   end
 end

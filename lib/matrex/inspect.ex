@@ -14,7 +14,7 @@ defimpl Inspect, for: Matrex do
       for(
         row <- 1..rows,
         do:
-          Matrex.row_as_list(matrex, row - 1)
+          Matrex.row_as_list(matrex, row)
           |> Enum.map(&format_float(&1))
           |> Enum.join()
       )
@@ -32,13 +32,12 @@ defimpl Inspect, for: Matrex do
 
   def inspect(
         %Matrex{
-          data:
-            <<
-              rows::unsigned-integer-little-32,
-              columns::unsigned-integer-little-32,
-              body::binary
-            >> = matrix
-        },
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            body::binary
+          >>
+        } = matrex,
         %{width: screen_width} = _opts
       )
       when columns >= screen_width / 8 or rows > 50 do
@@ -46,7 +45,7 @@ defimpl Inspect, for: Matrex do
 
     rows_as_strings =
       for row <- displayable_rows(rows),
-          do: format_row(matrix, row, rows, columns, suffix_size, prefix_size)
+          do: format_row(matrex, row, rows, columns, suffix_size, prefix_size)
 
     rows_as_strings =
       case suffix_size + prefix_size < columns do
@@ -75,30 +74,31 @@ defimpl Inspect, for: Matrex do
   end
 
   defp displayable_rows(rows) when rows > 50,
-    do: Enum.to_list(0..25) ++ [-1] ++ Enum.to_list((rows - 25)..(rows - 1))
+    do: Enum.to_list(1..25) ++ [-1] ++ Enum.to_list((rows - 25)..rows)
 
-  defp displayable_rows(rows), do: 0..(rows - 1)
+  defp displayable_rows(rows), do: 1..rows
 
   # Put the vertical ellipsis marker, which we will use later to insert full ellipsis row
   defp format_row(_matrix, -1, _rows, _columns, _, _), do: "⋮"
 
-  defp format_row(matrix, row, rows, columns, suffix_size, prefix_size)
-       when row == rows - 1 and suffix_size + prefix_size < columns do
+  defp format_row(%Matrex{data: matrix}, row, rows, columns, suffix_size, prefix_size)
+       when row == rows and suffix_size + prefix_size < columns do
     n = chunk_offset(row, columns, suffix_size)
 
     binary_part(matrix, n, suffix_size * @element_byte_size)
     |> format_row_head_tail(suffix_size, 0)
   end
 
-  defp format_row(matrix, row, _rows, columns, suffix_size, prefix_size)
+  defp format_row(%Matrex{} = matrex, row, _rows, columns, suffix_size, prefix_size)
        when suffix_size + prefix_size >= columns do
-    matrix
+    matrex
     |> Matrex.row_as_list(row)
     |> Enum.map(&format_float(&1))
     |> Enum.join()
   end
 
-  defp format_row(matrix, row, _rows, columns, suffix_size, prefix_size) do
+  defp format_row(%Matrex{data: matrix}, row, _rows, columns, suffix_size, prefix_size)
+       when is_binary(matrix) do
     n = chunk_offset(row, columns, suffix_size)
 
     binary_part(matrix, n, (suffix_size + prefix_size) * @element_byte_size)
@@ -106,7 +106,7 @@ defimpl Inspect, for: Matrex do
   end
 
   defp chunk_offset(row, columns, suffix_size),
-    do: (2 + (row * columns + (columns - suffix_size))) * @element_byte_size
+    do: (2 + ((row - 1) * columns + (columns - suffix_size))) * @element_byte_size
 
   defp format_row_head_tail(<<>>, _, _), do: <<>>
 

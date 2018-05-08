@@ -9,49 +9,79 @@ defmodule Matrex do
   defstruct [:data]
   @type t :: %Matrex{data: binary}
 
+  @compile {:inline,
+            add: 2,
+            argmax: 1,
+            at: 3,
+            divide: 2,
+            dot: 2,
+            dot_and_add: 3,
+            dot_nt: 2,
+            dot_tn: 2,
+            eye: 1,
+            fill: 3,
+            fill: 2,
+            first: 1,
+            max: 1,
+            multiply: 2,
+            multiply_with_scalar: 2,
+            ones: 2,
+            ones: 1,
+            random: 2,
+            random: 1,
+            row_to_list: 2,
+            row: 2,
+            row_as_list: 2,
+            size: 1,
+            substract: 2,
+            substract_inverse: 2,
+            sum: 1,
+            to_list: 1,
+            to_list_of_lists: 1,
+            transpose: 1,
+            zeros: 2,
+            zeros: 1}
+
   @behaviour Access
 
   # Horizontal vector
   @impl Access
   def fetch(
         %Matrex{
-          data:
-            <<
-              rows::unsigned-integer-little-32,
-              _columns::unsigned-integer-little-32,
-              _rest::binary
-            >> = data
-        },
+          data: <<
+            rows::unsigned-integer-little-32,
+            _columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = matrex,
         key
       )
-      when is_integer(key) and rows == 1,
-      do: {:ok, at(data, 0, key - 1)}
+      when is_integer(key) and key > 0 and rows == 1,
+      do: {:ok, at(matrex, 1, key)}
 
   # Vertical vector
   @impl Access
   def fetch(
         %Matrex{
-          data:
-            <<
-              _rows::unsigned-integer-little-32,
-              columns::unsigned-integer-little-32,
-              _rest::binary
-            >> = data
-        },
+          data: <<
+            _rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = matrex,
         key
       )
-      when is_integer(key) and columns == 1,
-      do: {:ok, at(data, key - 1, 0)}
+      when is_integer(key) and key > 0 and columns == 1,
+      do: {:ok, at(matrex, key, 1)}
 
+  # Return a row
   @impl Access
   def fetch(
-        %Matrex{
-          data: data
-        },
+        %Matrex{} = matrex,
         key
       )
-      when is_integer(key),
-      do: {:ok, %Matrex{data: row(data, key - 1)}}
+      when is_integer(key) and key > 0,
+      do: {:ok, row(matrex, key)}
 
   @impl Access
   def fetch(
@@ -283,7 +313,7 @@ defmodule Matrex do
   def argmax(%Matrex{data: data}), do: NIFs.argmax(data)
 
   @doc """
-  Get element of a matrix at given zero-based position.
+  Get element of a matrix at given one-based position.
   """
   @spec at(Matrex.t(), non_neg_integer, non_neg_integer) :: float
   def at(
@@ -298,18 +328,18 @@ defmodule Matrex do
         col
       )
       when is_integer(row) and is_integer(col) do
-    if row < 0 or row >= rows,
+    if row < 1 or row > rows,
       do: raise(ArgumentError, message: "Row position out of range: #{row}")
 
-    if col < 0 or col >= columns,
+    if col < 1 or col > columns,
       do: raise(ArgumentError, message: "Column position out of range: #{col}")
 
-    <<elem::float-little-32>> = binary_part(data, (row * columns + col) * 4, 4)
+    <<elem::float-little-32>> = binary_part(data, ((row - 1) * columns + (col - 1)) * 4, 4)
     elem
   end
 
   @doc """
-  Get column of matrix as matrix (vector) in binary form.
+  Get column of matrix as matrix (vector) in matrex form. One-based.
   """
   @spec column(Matrex.t(), non_neg_integer) :: Matrex.t()
   def column(
@@ -322,14 +352,14 @@ defmodule Matrex do
         },
         col
       )
-      when is_integer(col) and col < columns do
+      when is_integer(col) and col > 0 and col <= columns do
     column = <<rows::unsigned-integer-little-32, 1::unsigned-integer-little-32>>
 
     %Matrex{
       data:
         0..(rows - 1)
         |> Enum.reduce(column, fn row, acc ->
-          <<acc::binary, binary_part(data, (row * columns + col) * 4, 4)::binary>>
+          <<acc::binary, binary_part(data, (row * columns + (col - 1)) * 4, 4)::binary>>
         end)
     }
   end
@@ -348,10 +378,10 @@ defmodule Matrex do
         },
         col
       )
-      when is_integer(col) and col < columns do
+      when is_integer(col) and col > 0 and col <= columns do
     0..(rows - 1)
     |> Enum.map(fn row ->
-      <<elem::float-little-32>> = binary_part(data, (row * columns + col) * 4, 4)
+      <<elem::float-little-32>> = binary_part(data, (row * columns + (col - 1)) * 4, 4)
       elem
     end)
   end
@@ -399,15 +429,15 @@ defmodule Matrex do
   @doc """
   Create matrix filled with given value
   """
-  @spec fill(non_neg_integer, non_neg_integer, non_neg_integer) :: Matrex.t()
+  @spec fill(non_neg_integer, non_neg_integer, number) :: Matrex.t()
   def fill(rows, cols, value)
-      when is_integer(rows) and is_integer(cols) and is_integer(value),
+      when is_integer(rows) and is_integer(cols) and is_number(value),
       do: %Matrex{data: NIFs.fill(rows, cols, value)}
 
   @doc """
   Create square matrix filled with given value
   """
-  @spec fill(integer, integer) :: Matrex.t()
+  @spec fill(non_neg_integer, number) :: Matrex.t()
   def fill(size, value), do: fill(size, size, value)
 
   @doc """
@@ -597,7 +627,7 @@ defmodule Matrex do
     do: NIFs.row_to_list(matrix, row)
 
   @doc """
-  Get row of matrix as matrix (vector) in binary form.
+  Get row of matrix as matrix (vector) in matrex form. One-based.
   """
   @spec row(Matrex.t(), non_neg_integer) :: Matrex.t()
   def row(
@@ -610,15 +640,15 @@ defmodule Matrex do
         },
         row
       )
-      when is_integer(row) and row < rows,
+      when is_integer(row) and row > 0 and row <= rows,
       do: %Matrex{
         data:
           <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-            binary_part(data, row * columns * 4, columns * 4)::binary>>
+            binary_part(data, (row - 1) * columns * 4, columns * 4)::binary>>
       }
 
   @doc """
-  Get row of matrix as list of floats
+  Get row of matrix as list of floats. One based.
   """
   @spec row_as_list(Matrex.t(), non_neg_integer) :: list(float)
   def row_as_list(
@@ -631,8 +661,8 @@ defmodule Matrex do
         },
         row
       )
-      when is_integer(row) and row < rows,
-      do: binary_part(data, row * columns * 4, columns * 4) |> to_list_of_floats()
+      when is_integer(row) and row > 0 and row <= rows,
+      do: binary_part(data, (row - 1) * columns * 4, columns * 4) |> to_list_of_floats()
 
   @doc """
   Return size of matrix as {rows, cols}
