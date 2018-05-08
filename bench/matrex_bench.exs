@@ -78,81 +78,81 @@ defmodule MatrexBench do
   # @random_a_vlarge random(400, 400, 100)
   # @random_b_vlarge random(400, 400, 100)
 
-  bench "transpose a 50x50 matrix" do
-    transpose(@random_a)
-  end
-
-  bench "transpose a 100x100 matrix" do
-    transpose(@random_a_large)
-  end
-
-  bench "transpose a 200x200 matrix" do
-    transpose(@random_a_qlarge)
-  end
-
-  bench "transpose a 400x400 matrix" do
-    transpose(@random_a_vlarge)
-  end
-
-  bench "50x50 matrices dot product" do
-    dot(@random_a, @random_b)
-  end
-
-  bench "100x100 matrices dot product" do
-    dot(@random_a_large, @random_b_large)
-  end
-
-  bench "200x200 matrices dot product" do
-    dot(@random_a_qlarge, @random_b_qlarge)
-  end
-
-  bench "400x400 matrices dot product" do
-    dot(@random_a_vlarge, @random_b_vlarge)
-  end
-
-  bench "1000x1000 matrices dot product" do
-    dot(@random_a_xlarge, @random_b_xlarge)
-  end
-
-  bench "400x400 matrix exponent" do
-    Matrex.apply(@random_a_vlarge, :exp)
-  end
-
-  bench "300x300 zeros matrix creation" do
-    zeros(300)
-  end
+  # bench "transpose a 50x50 matrix" do
+  #   transpose(@random_a)
+  # end
+  #
+  # bench "transpose a 100x100 matrix" do
+  #   transpose(@random_a_large)
+  # end
+  #
+  # bench "transpose a 200x200 matrix" do
+  #   transpose(@random_a_qlarge)
+  # end
+  #
+  # bench "transpose a 400x400 matrix" do
+  #   transpose(@random_a_vlarge)
+  # end
+  #
+  # bench "50x50 matrices dot product" do
+  #   dot(@random_a, @random_b)
+  # end
+  #
+  # bench "100x100 matrices dot product" do
+  #   dot(@random_a_large, @random_b_large)
+  # end
+  #
+  # bench "200x200 matrices dot product" do
+  #   dot(@random_a_qlarge, @random_b_qlarge)
+  # end
+  #
+  # bench "400x400 matrices dot product" do
+  #   dot(@random_a_vlarge, @random_b_vlarge)
+  # end
+  #
+  # bench "1000x1000 matrices dot product" do
+  #   dot(@random_a_xlarge, @random_b_xlarge)
+  # end
+  #
+  # bench "400x400 matrix exponent" do
+  #   Matrex.apply(@random_a_vlarge, :exp)
+  # end
+  #
+  # bench "300x300 zeros matrix creation" do
+  #   zeros(300)
+  # end
+  #
+  # bench "300x300 fill matrix" do
+  #   fill(300, 0)
+  # end
+  #
+  # bench "300x300 eye matrix creation" do
+  #   eye(300)
+  # end
+  #
+  # bench "400x400 matrix sum" do
+  #   sum(@random_a_vlarge)
+  # end
+  #
+  # bench "1000x1000 matrix add" do
+  #   add(@random_a_xlarge, @random_b_xlarge)
+  # end
+  #
+  # bench "400x400 matrix to list" do
+  #   to_list(@random_a_vlarge)
+  # end
+  #
+  # bench "400x400 matrix to list of lists" do
+  #   to_list_of_lists(@random_a_vlarge)
+  # end
+  #
+  # bench "get element of a matrix" do
+  #   at(@random_a_vlarge, :rand.uniform(399), :rand.uniform(399))
+  #   0
+  # end
 
   bench "400x400 random matrix creation" do
-    random(400)
-    0
-  end
-
-  bench "300x300 fill matrix" do
-    fill(300, 0)
-  end
-
-  bench "300x300 eye matrix creation" do
-    eye(300)
-  end
-
-  bench "400x400 matrix sum" do
-    sum(@random_a_vlarge)
-  end
-
-  bench "1000x1000 matrix add" do
-    add(@random_a_xlarge, @random_b_xlarge)
-  end
-
-  bench "400x400 matrix to list" do
-    to_list(@random_a_vlarge)
-  end
-
-  bench "400x400 matrix to list of lists" do
-    to_list_of_lists(@random_a_vlarge)
-  end
-
-  bench "get element of a matrix" do
-    at(@random_a_vlarge, :rand.uniform(399), :rand.uniform(399))
+    randomm(100)
     0
   end
 end

@@ -423,6 +423,24 @@ multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary) {
+  // we make an empty erlang/elixir map object
+  ERL_NIF_TERM matrex = enif_make_new_map(env);
+
+  enif_make_map_put(env, matrex,
+                      enif_make_atom(env, "__struct__"),
+                      enif_make_atom(env, "Elixir.Matrex"),
+                      &matrex);
+
+  enif_make_map_put(env, matrex,
+                      enif_make_atom(env, "data"),
+                      matrix_binary,
+                      &matrex);
+
+  return matrex;
+}
+
+static ERL_NIF_TERM
 random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   long rows, cols;
@@ -443,6 +461,7 @@ random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   matrix_random(result_data);
 
   return result;
+  // return wrap_matrex(env, result);
 }
 
 static ERL_NIF_TERM
@@ -658,4 +677,4 @@ upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM loa
   return 0;
 }
 
-ERL_NIF_INIT(Elixir.Matrex, nif_functions, NULL, NULL, upgrade, NULL)
+ERL_NIF_INIT(Elixir.Matrex.NIFs, nif_functions, NULL, NULL, upgrade, NULL)

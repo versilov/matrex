@@ -3,33 +3,16 @@ defmodule Matrex do
   Performs fast operations on matrices using native C code and CBLAS library.
   """
 
-  @on_load :load_nifs
-
-  @doc false
-  @spec load_nifs :: :ok
-  def load_nifs do
-    priv_dir =
-      case :code.priv_dir(__MODULE__) do
-        {:error, _} ->
-          ebin_dir = :code.which(__MODULE__) |> :filename.dirname()
-          app_path = :filename.dirname(ebin_dir)
-          :filename.join(app_path, "priv")
-
-        path ->
-          path
-      end
-
-    :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
-  end
+  alias Matrex.NIFs
 
   @enforce_keys [:data]
-  defstruct [:rows, :columns, :data]
+  defstruct [:data]
   @type t :: %Matrex{data: binary}
 
   @behaviour Access
 
-  @impl Access
   # Horizontal vector
+  @impl Access
   def fetch(
         %Matrex{
           data:
@@ -45,6 +28,7 @@ defmodule Matrex do
       do: {:ok, at(data, 0, key - 1)}
 
   # Vertical vector
+  @impl Access
   def fetch(
         %Matrex{
           data:
@@ -59,6 +43,7 @@ defmodule Matrex do
       when is_integer(key) and columns == 1,
       do: {:ok, at(data, key - 1, 0)}
 
+  @impl Access
   def fetch(
         %Matrex{
           data: data
@@ -68,115 +53,135 @@ defmodule Matrex do
       when is_integer(key),
       do: {:ok, %Matrex{data: row(data, key - 1)}}
 
-  def fetch(matrex, :rows), do: {:ok, size(matrex.data) |> elem(0)}
-  def fetch(matrex, :cols), do: {:ok, size(matrex.data) |> elem(1)}
+  @impl Access
+  def fetch(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            _columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        },
+        :rows
+      ),
+      do: {:ok, rows}
+
+  @impl Access
+  def fetch(
+        %Matrex{
+          data: <<
+            _rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        },
+        :cols
+      ),
+      do: {:ok, columns}
 
   @doc """
   Adds two matrices
   """
-  def addm(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: add(first, second)}
-
-  @spec add(binary, binary) :: binary
-  def add(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
 
   @doc """
   Apply C math function to matrix elementwise.
   """
-  @spec apply(binary, atom) :: binary
-  def apply(matrix, function)
-      when is_binary(matrix) and
-             function in [
-               :exp,
-               :exp2,
-               :sigmoid,
-               :expm1,
-               :log,
-               :log2,
-               :sqrt,
-               :cbrt,
-               :ceil,
-               :floor,
-               :trunc,
-               :round,
-               :sin,
-               :cos,
-               :tan,
-               :asin,
-               :acos,
-               :atan,
-               :sinh,
-               :cosh,
-               :tanh,
-               :asinh,
-               :acosh,
-               :atanh,
-               :erf,
-               :erfc,
-               :tgamma,
-               :lgamma
-             ] do
+  @spec apply(Matrex.t(), atom) :: Matrex.t()
+  def apply(%Matrex{data: data} = matrix, function)
+      when function in [
+             :exp,
+             :exp2,
+             :sigmoid,
+             :expm1,
+             :log,
+             :log2,
+             :sqrt,
+             :cbrt,
+             :ceil,
+             :floor,
+             :trunc,
+             :round,
+             :sin,
+             :cos,
+             :tan,
+             :asin,
+             :acos,
+             :atan,
+             :sinh,
+             :cosh,
+             :tanh,
+             :asinh,
+             :acosh,
+             :atanh,
+             :erf,
+             :erfc,
+             :tgamma,
+             :lgamma
+           ] do
     {rows, cols} = size(matrix)
 
-    if rows * cols < 100_000,
-      do: apply_math(matrix, function),
-      else: apply_parallel_math(matrix, function)
+    %Matrex{
+      data:
+        if(
+          rows * cols < 100_000,
+          do: NIFs.apply_math(data, function),
+          else: NIFs.apply_parallel_math(data, function)
+        )
+    }
   end
 
   @doc """
   Applies the given function on each element of the matrix
   """
-  @spec apply(binary, function) :: binary
-  def apply(matrix, function)
-      when is_binary(matrix) and is_function(function, 1) do
-    <<
-      rows::unsigned-integer-little-32,
-      columns::unsigned-integer-little-32,
-      data::binary
-    >> = matrix
-
+  @spec apply(Matrex.t(), function) :: Matrex.t()
+  def apply(
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+              data::binary>>
+        },
+        function
+      )
+      when is_function(function, 1) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
-    apply_on_matrix(data, function, initial)
+    %Matrex{data: apply_on_matrix(data, function, initial)}
   end
 
-  @spec apply(binary, function) :: binary
-  def apply(matrix, function)
-      when is_binary(matrix) and is_function(function, 2) do
-    <<
-      rows::unsigned-integer-little-32,
-      columns::unsigned-integer-little-32,
-      data::binary
-    >> = matrix
-
+  @spec apply(Matrex.t(), function) :: Matrex.t()
+  def apply(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
+        function
+      )
+      when is_function(function, 2) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
     size = rows * columns
 
-    apply_on_matrix(data, function, 1, size, initial)
+    %Matrex{data: apply_on_matrix(data, function, 1, size, initial)}
   end
 
-  @spec apply(binary, function) :: binary
-  def apply(matrix, function)
-      when is_binary(matrix) and is_function(function, 3) do
-    <<
-      rows::unsigned-integer-little-32,
-      columns::unsigned-integer-little-32,
-      data::binary
-    >> = matrix
-
+  @spec apply(Matrex.t(), function) :: Matrex.t()
+  def apply(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
+        function
+      )
+      when is_function(function, 3) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
-    apply_on_matrix(data, function, 1, 1, columns, initial)
-  end
-
-  defp apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
-
-  defp apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function) do
-    :erlang.nif_error(:nif_library_not_loaded)
+    %Matrex{data: apply_on_matrix(data, function, 1, 1, columns, initial)}
   end
 
   defp apply_on_matrix(<<>>, _, accumulator), do: accumulator
@@ -232,23 +237,28 @@ defmodule Matrex do
   @doc """
   Applies function to elements of two matrices and returns matrix of function results.
   """
-  @spec apply(binary, binary, function) :: binary
+  @spec apply(Matrex.t(), Matrex.t(), function) :: Matrex.t()
   def apply(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          first_data::binary
-        >>,
-        <<
-          _::unsigned-integer-little-32,
-          _::unsigned-integer-little-32,
-          second_data::binary
-        >>,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            first_data::binary
+          >>
+        },
+        %Matrex{
+          data: <<
+            _::unsigned-integer-little-32,
+            _::unsigned-integer-little-32,
+            second_data::binary
+          >>
+        },
         function
-      ) do
+      )
+      when is_function(function, 2) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
-    apply_on_matrices(first_data, second_data, function, initial)
+    %Matrex{data: apply_on_matrices(first_data, second_data, function, initial)}
   end
 
   defp apply_on_matrices(<<>>, <<>>, _, accumulator), do: accumulator
@@ -269,21 +279,21 @@ defmodule Matrex do
   @doc """
   Returns the index of the biggest element.
   """
-  @spec argmax(binary) :: non_neg_integer
-  def argmax(_matrix) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec argmax(Matrex.t()) :: non_neg_integer
+  def argmax(%Matrex{data: data}), do: NIFs.argmax(data)
 
   @doc """
   Get element of a matrix at given zero-based position.
   """
-  @spec at(binary, integer, integer) :: float
+  @spec at(Matrex.t(), non_neg_integer, non_neg_integer) :: float
   def at(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          data::binary
-        >>,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
         row,
         col
       )
@@ -301,35 +311,44 @@ defmodule Matrex do
   @doc """
   Get column of matrix as matrix (vector) in binary form.
   """
-  @spec column(binary, integer) :: binary
+  @spec column(Matrex.t(), non_neg_integer) :: Matrex.t()
   def column(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          data::binary
-        >>,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
         col
-      ) do
+      )
+      when is_integer(col) and col < columns do
     column = <<rows::unsigned-integer-little-32, 1::unsigned-integer-little-32>>
 
-    0..(rows - 1)
-    |> Enum.reduce(column, fn row, acc ->
-      <<acc::binary, binary_part(data, (row * columns + col) * 4, 4)::binary>>
-    end)
+    %Matrex{
+      data:
+        0..(rows - 1)
+        |> Enum.reduce(column, fn row, acc ->
+          <<acc::binary, binary_part(data, (row * columns + col) * 4, 4)::binary>>
+        end)
+    }
   end
 
   @doc """
   Get column of matrix as list of floats
   """
-  @spec column_as_list(binary, integer) :: list(float)
+  @spec column_as_list(Matrex.t(), non_neg_integer) :: list(float)
   def column_as_list(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          data::binary
-        >>,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
         col
-      ) do
+      )
+      when is_integer(col) and col < columns do
     0..(rows - 1)
     |> Enum.map(fn row ->
       <<elem::float-little-32>> = binary_part(data, (row * columns + col) * 4, 4)
@@ -340,106 +359,92 @@ defmodule Matrex do
   @doc """
   Divides two matrices
   """
-  @spec divide(binary, binary) :: binary
-  def divide(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec divide(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def divide(%Matrex{data: dividend}, %Matrex{data: divisor}),
+    do: %Matrex{data: NIFs.divide(dividend, divisor)}
 
   @doc """
   Matrix multiplication
   """
-  @spec dot(binary, binary) :: binary
-  def dot(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec dot(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def dot(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.dot(first, second)}
 
   @doc """
-  Matrix multiplication
+  Matrix multiplication with addition of thitd matrix
   """
-  @spec dot_and_add(binary, binary, binary) :: binary
-  def dot_and_add(first, second, third)
-      when is_binary(first) and is_binary(second) and is_binary(third) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec dot_and_add(Matrex.t(), Matrex.t(), Matrex.t()) :: Matrex.t()
+  def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
+    do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
 
   @doc """
   Matrix multiplication where the second matrix needs to be transposed.
   """
-  @spec dot_nt(binary, binary) :: binary
-  def dot_nt(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec dot_nt(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def dot_nt(%Matrex{data: first}, %Matrex{data: second}),
+    do: %Matrex{data: NIFs.dot_nt(first, second)}
 
   @doc """
   Matrix multiplication where the first matrix needs to be transposed.
   """
-  @spec dot_tn(binary, binary) :: binary
-  def dot_tn(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec dot_tn(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def dot_tn(%Matrex{data: first}, %Matrex{data: second}),
+    do: %Matrex{data: NIFs.dot_tn(first, second)}
 
   @doc """
   Create eye square matrix of given size
   """
-  @spec eye(integer) :: binary
-  def eye(size)
-      when is_integer(size) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec eye(non_neg_integer) :: Matrix.t()
+  def eye(size) when is_integer(size), do: %Matrex{data: NIFs.eye(size)}
 
   @doc """
   Create matrix filled with given value
   """
-  @spec fill(integer, integer, integer) :: binary
+  @spec fill(non_neg_integer, non_neg_integer, non_neg_integer) :: Matrex.t()
   def fill(rows, cols, value)
-      when is_integer(rows) and is_integer(cols) and is_integer(value) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+      when is_integer(rows) and is_integer(cols) and is_integer(value),
+      do: %Matrex{data: NIFs.fill(rows, cols, value)}
 
   @doc """
   Create square matrix filled with given value
   """
-  @spec fill(integer, integer) :: binary
+  @spec fill(integer, integer) :: Matrex.t()
   def fill(size, value), do: fill(size, size, value)
 
   @doc """
   Return first element of a matrix.
   """
-  @spec first(binary) :: float
-  def first(matrix) do
-    <<
-      _rows::unsigned-integer-little-32,
-      _columns::unsigned-integer-little-32,
-      element::float-little-32,
-      _rest::binary
-    >> = matrix
-
-    element
-  end
+  @spec first(Matrex.t()) :: float
+  def first(%Matrex{
+        data: <<
+          _rows::unsigned-integer-little-32,
+          _columns::unsigned-integer-little-32,
+          element::float-little-32,
+          _rest::binary
+        >>
+      }),
+      do: element
 
   @doc """
   Displays a visualization of the matrix.
   Set the second parameter to true to show full numbers.
   Otherwise, they are truncated.
   """
-  @spec inspect(binary, boolean) :: binary
+  @spec inspect(Matrex.t(), boolean) :: Matrex.t()
   def inspect(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          rest::binary
-        >> = matrix,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            rest::binary
+          >>
+        } = matrex,
         full \\ false
       ) do
     IO.puts("Rows: #{rows} Columns: #{columns}")
 
     inspect_element(1, columns, rest, full)
 
-    matrix
+    matrex
   end
 
   defp inspect_element(_, _, <<>>, _), do: :ok
@@ -468,48 +473,40 @@ defmodule Matrex do
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
   """
-  @spec magic(integer) :: binary
-  def magic(n) when is_integer(n) do
-    Matrex.MagicSquare.new(n) |> new()
-  end
+  @spec magic(non_neg_integer) :: Matrex.t()
+  def magic(n) when is_integer(n), do: Matrex.MagicSquare.new(n) |> new()
 
   @doc """
   Maximum element in a matrix.
   """
-  @spec max(binary) :: number
-  def max(_matrix) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec max(Matrex.t()) :: float
+  def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
 
   @doc """
   Elementwise multiplication of two matrices
   """
-  @spec multiply(binary, binary) :: binary
-  def multiply(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec multiply(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def multiply(%Matrex{data: first}, %Matrex{data: second}),
+    do: %Matrex{data: NIFs.multiply(first, second)}
 
   @doc """
   Elementwise multiplication of a scalar
   """
-  @spec multiply_with_scalar(binary, number) :: binary
-  def multiply_with_scalar(matrix, scalar)
-      when is_binary(matrix) and is_number(scalar) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec multiply_with_scalar(Matrex.t(), number) :: Matrex.t()
+  def multiply_with_scalar(%Matrex{data: matrix}, scalar) when is_number(scalar),
+    do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
 
   @doc """
   Creates a new matrix with values provided by the given function
   """
-  @spec new(non_neg_integer, non_neg_integer, function) :: binary
+  @spec new(non_neg_integer, non_neg_integer, function) :: Matrex.t()
   def new(rows, columns, function) when is_function(function, 0) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     new_matrix_from_function(rows * columns, function, initial)
   end
 
-  @spec new(non_neg_integer, non_neg_integer, function) :: binary
+  @spec new(non_neg_integer, non_neg_integer, function) :: Matrex.t()
   def new(rows, columns, function) when is_function(function, 2) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
     size = rows * columns
@@ -517,29 +514,32 @@ defmodule Matrex do
     new_matrix_from_function(size, rows, columns, function, initial)
   end
 
-  @spec new(non_neg_integer, non_neg_integer, list(list)) :: binary
+  @spec new(non_neg_integer, non_neg_integer, list(list)) :: Matrex.t()
   def new(rows, columns, list_of_lists) when is_list(list_of_lists) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
-    Enum.reduce(list_of_lists, initial, fn list, accumulator ->
-      accumulator <>
-        Enum.reduce(list, <<>>, fn element, partial ->
-          <<partial::binary, element::float-little-32>>
+    %Matrex{
+      data:
+        Enum.reduce(list_of_lists, initial, fn list, accumulator ->
+          accumulator <>
+            Enum.reduce(list, <<>>, fn element, partial ->
+              <<partial::binary, element::float-little-32>>
+            end)
         end)
-    end)
+    }
   end
 
   @doc """
   Creates new matrix from list of lists.
   """
-  @spec new(list(list)) :: binary
+  @spec new(list(list)) :: Matrex.t()
   def new(list_of_lists) when is_list(list_of_lists) do
     rows = length(list_of_lists)
     cols = length(List.first(list_of_lists))
     new(rows, cols, list_of_lists)
   end
 
-  defp new_matrix_from_function(0, _, accumulator), do: accumulator
+  defp new_matrix_from_function(0, _, accumulator), do: %Matrex{data: accumulator}
 
   defp new_matrix_from_function(size, function, accumulator),
     do:
@@ -549,7 +549,7 @@ defmodule Matrex do
         <<accumulator::binary, function.()::float-little-32>>
       )
 
-  defp new_matrix_from_function(0, _, _, _, accumulator), do: accumulator
+  defp new_matrix_from_function(0, _, _, _, accumulator), do: %Matrex{data: accumulator}
 
   defp new_matrix_from_function(size, rows, columns, function, accumulator) do
     {row, col} =
@@ -567,114 +567,110 @@ defmodule Matrex do
   @doc """
   Create matrix filled with ones.
   """
+  @spec ones(non_neg_integer, non_neg_integer) :: Matrex.t()
   def ones(rows, cols) when is_integer(rows) and is_integer(cols), do: fill(rows, cols, 1)
 
   @doc """
   Create square matrix filled with ones.
   """
+  @spec ones(non_neg_integer) :: Matrex.t()
   def ones(size) when is_integer(size), do: fill(size, 1)
 
   @doc """
   Create matrix of random floats in [0, 1] range.
   """
-  @spec random(integer, integer) :: binary
-  def random(rows, cols)
-      when is_integer(rows) and is_integer(cols) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec random(non_neg_integer, non_neg_integer) :: Matrex.t()
+  def random(rows, columns) when is_integer(rows) and is_integer(columns),
+    do: %Matrex{data: NIFs.random(rows, columns)}
 
   @doc """
   Create square matrix of random floats.
   """
+  @spec random(non_neg_integer) :: Matrex.t()
   def random(size) when is_integer(size), do: random(size, size)
 
   @doc """
   Return matrix row as list by zero-based index.
   """
-  @spec row_to_list(binary, integer) :: list(float)
-  def row_to_list(matrix, row) when is_binary(matrix) and is_integer(row) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec row_to_list(Matrex.t(), non_neg_integer) :: list(float)
+  def row_to_list(%Matrex{data: matrix}, row) when is_integer(row),
+    do: NIFs.row_to_list(matrix, row)
 
   @doc """
   Get row of matrix as matrix (vector) in binary form.
   """
-  @spec row(binary, integer) :: binary
+  @spec row(Matrex.t(), non_neg_integer) :: Matrex.t()
   def row(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          data::binary
-        >>,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
         row
       )
-      when row < rows do
-    <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-      binary_part(data, row * columns * 4, columns * 4)::binary>>
-  end
+      when is_integer(row) and row < rows,
+      do: %Matrex{
+        data:
+          <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+            binary_part(data, row * columns * 4, columns * 4)::binary>>
+      }
 
   @doc """
   Get row of matrix as list of floats
   """
-  @spec row_as_list(binary, integer) :: list(float)
+  @spec row_as_list(Matrex.t(), non_neg_integer) :: list(float)
   def row_as_list(
-        <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          data::binary
-        >>,
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
         row
       )
-      when row < rows do
-    binary_part(data, row * columns * 4, columns * 4) |> to_list_of_floats()
-  end
+      when is_integer(row) and row < rows,
+      do: binary_part(data, row * columns * 4, columns * 4) |> to_list_of_floats()
 
   @doc """
   Return size of matrix as {rows, cols}
   """
-  @spec size(binary) :: {integer, integer}
-  def size(
-        <<
+  @spec size(Matrex.t()) :: {non_neg_integer, non_neg_integer}
+  def size(%Matrex{
+        data: <<
           rows::unsigned-integer-little-32,
           cols::unsigned-integer-little-32,
           _rest::binary
-        >> = matrix
-      )
-      when is_binary(matrix),
+        >>
+      }),
       do: {rows, cols}
 
   @doc """
   Substracts two matrices
   """
-  @spec substract(binary, binary) :: binary
-  def substract(first, second)
-      when is_binary(first) and is_binary(second) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec substract(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def substract(%Matrex{data: first}, %Matrex{data: second}),
+    do: %Matrex{data: NIFs.substract(first, second)}
 
   @doc """
   Substracts the second matrix from the first
   """
-  @spec substract_inverse(binary, binary) :: binary
-  def substract_inverse(first, second) do
-    substract(second, first)
-  end
+  @spec substract_inverse(Matrex.t(), Matrex.t()) :: Matrex.t()
+  def substract_inverse(%Matrex{} = first, %Matrex{} = second), do: substract(second, first)
 
   @doc """
   Sums all elements.
   """
-  @spec sum(binary) :: number
-  def sum(_matrix) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec sum(Matrex.t()) :: float
+  def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
 
   @doc """
   Converts to flat list
   """
-  @spec to_list(binary) :: binary
-  def to_list(matrix) when is_binary(matrix) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec to_list(Matrex.t()) :: list(float)
+  def to_list(%Matrex{data: matrix}), do: NIFs.to_list(matrix)
 
   def to_list2(<<_rows::integer-little-32, _cols::integer-little-32, data::binary>>),
     do: to_list_of_floats(data)
@@ -687,30 +683,25 @@ defmodule Matrex do
   @doc """
   Converts to list of lists
   """
-  @spec to_list_of_lists(binary) :: binary
-  def to_list_of_lists(matrix) when is_binary(matrix) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec to_list_of_lists(Matrex.t()) :: list(list(float))
+  def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
 
   @doc """
   Transposes a matrix
   """
-  @spec transpose(binary) :: binary
-  def transpose(matrix) when is_binary(matrix) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec transpose(Matrex.t()) :: Matrex.t()
+  def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
 
   @doc """
   Create matrix of zeros of the specified size.
   """
-  @spec zeros(integer, integer) :: binary
-  def zeros(rows, cols) when is_integer(rows) and is_integer(cols) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
+  @spec zeros(non_neg_integer, non_neg_integer) :: Matrex.t()
+  def zeros(rows, cols) when is_integer(rows) and is_integer(cols),
+    do: %Matrex{data: NIFs.zeros(rows, cols)}
 
   @doc """
   Create square matrix of zeros
   """
-  @spec zeros(integer) :: binary
+  @spec zeros(non_neg_integer) :: Matrex.t()
   def zeros(size), do: zeros(size, size)
 end

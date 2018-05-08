@@ -1,13 +1,12 @@
 defimpl Inspect, for: Matrex do
   def inspect(
         %Matrex{
-          data:
-            <<
-              rows::unsigned-integer-little-32,
-              columns::unsigned-integer-little-32,
-              _rest::binary
-            >> = data
-        },
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = matrex,
         %{width: screen_width} = _opts
       )
       when columns < screen_width / 8 and rows <= 50 do
@@ -15,7 +14,7 @@ defimpl Inspect, for: Matrex do
       for(
         row <- 1..rows,
         do:
-          Matrex.row_as_list(data, row - 1)
+          Matrex.row_as_list(matrex, row - 1)
           |> Enum.map(&format_float(&1))
           |> Enum.join()
       )
