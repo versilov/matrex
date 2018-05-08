@@ -9,7 +9,7 @@ defimpl Inspect, for: Matrex do
         } = matrex,
         %{width: screen_width} = _opts
       )
-      when columns < screen_width / 8 and rows <= 50 do
+      when columns < screen_width / 8 and rows <= 21 do
     rows_as_strings =
       for(
         row <- 1..rows,
@@ -40,7 +40,7 @@ defimpl Inspect, for: Matrex do
         } = matrex,
         %{width: screen_width} = _opts
       )
-      when columns >= screen_width / 8 or rows > 50 do
+      when columns >= screen_width / 8 or rows > 21 do
     suffix_size = prefix_size = div(screen_width, 16)
 
     rows_as_strings =
@@ -73,8 +73,8 @@ defimpl Inspect, for: Matrex do
     "#{header(rows, columns)}\n#{top}#{contents_str}#{bottom}"
   end
 
-  defp displayable_rows(rows) when rows > 50,
-    do: Enum.to_list(1..25) ++ [-1] ++ Enum.to_list((rows - 25)..rows)
+  defp displayable_rows(rows) when rows > 21,
+    do: Enum.to_list(1..10) ++ [-1] ++ Enum.to_list((rows - 9)..rows)
 
   defp displayable_rows(rows), do: 1..rows
 
