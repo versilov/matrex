@@ -125,7 +125,7 @@ defmodule Matrex do
   end
 
   @doc """
-  Adds two matrices. Implemented as NIF.
+  Adds two matrices. NIF.
 
   ## Example
 
@@ -141,8 +141,8 @@ defmodule Matrex do
   def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
 
   @doc """
-  Apply math function to matrix elementwise. Implemented as NIF.
-  Uses several native threads (eight), if matrix size is greater, than 100 000 elements.
+  Apply math function to matrix elementwise. NIF, multithreaded.
+  Uses eight native threads, if matrix size is greater, than 100 000 elements.
 
   ## Example
 
@@ -381,13 +381,45 @@ defmodule Matrex do
   end
 
   @doc """
-  Returns the index of the biggest element.
+  Returns zero-based index of the biggest element. NIF.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.argmax(m)
+      7
+
   """
   @spec argmax(matrex) :: index
   def argmax(%Matrex{data: data}), do: NIFs.argmax(data)
 
   @doc """
-  Get element of a matrix at given one-based position.
+  Get element of a matrix at given one-based (row, column) position.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.at(m, 3, 2)
+      9.0
+
+  You can use `Access` behaviour square brackets for the same purpose,
+  but it will be slower:
+
+      iex> m[3][2]
+      9.0
+
   """
   @spec at(matrex, index, index) :: element
   def at(
@@ -414,6 +446,24 @@ defmodule Matrex do
 
   @doc """
   Get column of matrix as matrix (vector) in matrex form. One-based.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.column(m, 2)
+      #Matrex[3×1]
+      ┌         ┐
+      │     1.0 │
+      │     5.0 │
+      │     9.0 │
+      └         ┘
+
   """
   @spec column(matrex, index) :: matrex
   def column(
@@ -439,41 +489,78 @@ defmodule Matrex do
   end
 
   @doc """
-  Get column of matrix as list of floats. One-based.
+  Get column of matrix as list of floats. One-based, NIF.
+
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.column_to_list(m, 3)
+      [6.0, 7.0, 2.0]
+
   """
   @spec column_to_list(matrex, index) :: [element]
   def column_to_list(%Matrex{data: matrix}, column) when is_integer(column) and column > 0,
     do: NIFs.column_to_list(matrix, column - 1)
 
   @doc """
-  Divides two matrices
+  Divides two matrices element-wise. NIF.
+
+  ## Example
+
+      iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
+      ...> |> Matrex.divide(Matrex.new([[5, 10, 5], [4, 3, 4]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     2.0     2.0     5.0 │
+      │     2.0     3.0     1.0 │
+      └                         ┘
   """
   @spec divide(matrex, matrex) :: matrex
   def divide(%Matrex{data: dividend}, %Matrex{data: divisor}),
     do: %Matrex{data: NIFs.divide(dividend, divisor)}
 
   @doc """
-  Matrix multiplication
+  Matrix multiplication. NIF, via `cblas_sgemm()`.
+
+  Number of columns of the first matrix must be equal to the number of rows of the second matrix.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot(Matrex.new([[1, 2], [3, 4], [5, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
   """
   @spec dot(matrex, matrex) :: matrex
   def dot(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.dot(first, second)}
 
   @doc """
-  Matrix multiplication with addition of thitd matrix
+  Matrix multiplication with addition of thitd matrix.  NIF, via `cblas_sgemm()`.
   """
   @spec dot_and_add(matrex, matrex, matrex) :: matrex
   def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
     do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
 
   @doc """
-  Matrix multiplication where the second matrix needs to be transposed.
+  Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
   """
   @spec dot_nt(matrex, matrex) :: matrex
   def dot_nt(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.dot_nt(first, second)}
 
   @doc """
-  Matrix multiplication where the first matrix needs to be transposed.
+  Matrix multiplication where the first matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
   """
   @spec dot_tn(matrex, matrex) :: matrex
   def dot_tn(%Matrex{data: first}, %Matrex{data: second}),
