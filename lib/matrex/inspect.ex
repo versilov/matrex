@@ -1,4 +1,6 @@
 defmodule Matrex.Inspect do
+  @moduledoc false
+
   def inspect(%Matrex{} = matrex) do
     IO.puts(do_inspect(matrex))
     matrex
@@ -21,7 +23,7 @@ defmodule Matrex.Inspect do
       for(
         row <- 1..rows,
         do:
-          Matrex.row_as_list(matrex, row)
+          Matrex.row_to_list(matrex, row)
           |> Enum.map(&format_float(&1))
           |> Enum.join()
       )
@@ -99,7 +101,7 @@ defmodule Matrex.Inspect do
   defp format_row(%Matrex{} = matrex, row, _rows, columns, suffix_size, prefix_size)
        when suffix_size + prefix_size >= columns do
     matrex
-    |> Matrex.row_as_list(row)
+    |> Matrex.row_to_list(row)
     |> Enum.map(&format_float(&1))
     |> Enum.join()
   end

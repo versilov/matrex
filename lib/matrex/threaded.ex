@@ -1,7 +1,7 @@
 defmodule Matrex.Threaded do
-  @moduledoc """
-  Matrix functions that do their work in several parallel threads for the sake of speed.
-  """
+  @moduledoc false
+
+  # Matrix functions that do their work in several parallel threads for the sake of speed.
 
   @on_load :load_nifs
 

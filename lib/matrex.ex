@@ -7,12 +7,15 @@ defmodule Matrex do
 
   @enforce_keys [:data]
   defstruct [:data]
-  @type t :: %Matrex{data: binary}
+  @type element :: float
+  @type index :: non_neg_integer
+  @type matrex :: %Matrex{data: binary}
 
   @compile {:inline,
             add: 2,
             argmax: 1,
             at: 3,
+            column_to_list: 2,
             divide: 2,
             dot: 2,
             dot_and_add: 3,
@@ -31,7 +34,6 @@ defmodule Matrex do
             random: 1,
             row_to_list: 2,
             row: 2,
-            row_as_list: 2,
             size: 1,
             substract: 2,
             substract_inverse: 2,
@@ -109,20 +111,53 @@ defmodule Matrex do
       ),
       do: {:ok, columns}
 
+  @impl Access
+  def get(%Matrex{} = matrex, key, default) do
+    case fetch(matrex, key) do
+      {:ok, value} -> value
+      :error -> default
+    end
+  end
+
   defimpl Inspect do
     def inspect(%Matrex{} = matrex, %{width: screen_width}),
       do: Matrex.Inspect.do_inspect(matrex, screen_width)
   end
 
   @doc """
-  Adds two matrices
+  Adds two matrices. Implemented as NIF.
+
+  ## Example
+
+      iex> Matrex.add(Matrex.new([[1,2,3],[4,5,6]]), Matrex.new([[7,8,9],[10,11,12]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     8.0    10.0    12.0 │
+      │    14.0    16.0    18.0 │
+      └                         ┘
+
   """
+  @spec add(matrex, matrex) :: matrex
   def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
 
   @doc """
-  Apply C math function to matrix elementwise.
+  Apply math function to matrix elementwise. Implemented as NIF.
+  Uses several native threads (eight), if matrix size is greater, than 100 000 elements.
+
+  ## Example
+
+      iex> Matrex.magic(5) |> Matrex.apply(:sigmoid)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │-0.95766-0.53283 0.28366  0.7539 0.13674 │
+      │-0.99996-0.65364 0.96017 0.90745 0.40808 │
+      │-0.98999-0.83907 0.84385  0.9887-0.54773 │
+      │-0.91113 0.00443 0.66032  0.9912-0.41615 │
+      │-0.75969-0.27516 0.42418  0.5403 -0.1455 │
+      └                                         ┘
+
   """
-  @spec apply(Matrex.t(), atom) :: Matrex.t()
+  @spec apply(matrex, atom) :: matrex
   def apply(%Matrex{data: data} = matrix, function)
       when function in [
              :exp,
@@ -167,9 +202,22 @@ defmodule Matrex do
   end
 
   @doc """
-  Applies the given function on each element of the matrix
+  Applies the given function on each element of the matrix. Implemented in Elixir, so it's not fast.
+
+  ## Example
+
+      iex> Matrex.magic(5) |> Matrex.apply(&:math.cos/1)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │-0.95766-0.53283 0.28366  0.7539 0.13674 │
+      │-0.99996-0.65364 0.96017 0.90745 0.40808 │
+      │-0.98999-0.83907 0.84385  0.9887-0.54773 │
+      │-0.91113 0.00443 0.66032  0.9912-0.41615 │
+      │-0.75969-0.27516 0.42418  0.5403 -0.1455 │
+      └                                         ┘
+
   """
-  @spec apply(Matrex.t(), function) :: Matrex.t()
+  @spec apply(matrex, (element -> element)) :: matrex
   def apply(
         %Matrex{
           data:
@@ -184,7 +232,28 @@ defmodule Matrex do
     %Matrex{data: apply_on_matrix(data, function, initial)}
   end
 
-  @spec apply(Matrex.t(), function) :: Matrex.t()
+  @doc """
+
+  Applies function to each element of the matrix.
+
+  Zero-based index of element in the matix is
+  passed to the function along with the element value.
+
+
+  ## Examples
+
+      iex> Matrex.ones(5) |> Matrex.apply(fn val, index -> val + index end)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │     2.0     3.0     4.0     5.0     6.0 │
+      │     7.0     8.0     9.0    10.0    11.0 │
+      │    12.0    13.0    14.0    15.0    16.0 │
+      │    17.0    18.0    19.0    20.0    21.0 │
+      │    22.0    23.0    24.0    25.0    26.0 │
+      └                                         ┘
+
+  """
+  @spec apply(matrex, (element, index -> element)) :: matrex
   def apply(
         %Matrex{
           data: <<
@@ -202,7 +271,7 @@ defmodule Matrex do
     %Matrex{data: apply_on_matrix(data, function, 1, size, initial)}
   end
 
-  @spec apply(Matrex.t(), function) :: Matrex.t()
+  @spec apply(matrex, (element, index, index -> element)) :: matrex
   def apply(
         %Matrex{
           data: <<
@@ -272,7 +341,7 @@ defmodule Matrex do
   @doc """
   Applies function to elements of two matrices and returns matrix of function results.
   """
-  @spec apply(Matrex.t(), Matrex.t(), function) :: Matrex.t()
+  @spec apply(matrex, matrex, (element, element -> element)) :: matrex
   def apply(
         %Matrex{
           data: <<
@@ -314,13 +383,13 @@ defmodule Matrex do
   @doc """
   Returns the index of the biggest element.
   """
-  @spec argmax(Matrex.t()) :: non_neg_integer
+  @spec argmax(matrex) :: index
   def argmax(%Matrex{data: data}), do: NIFs.argmax(data)
 
   @doc """
   Get element of a matrix at given one-based position.
   """
-  @spec at(Matrex.t(), non_neg_integer, non_neg_integer) :: float
+  @spec at(matrex, index, index) :: element
   def at(
         %Matrex{
           data: <<
@@ -346,7 +415,7 @@ defmodule Matrex do
   @doc """
   Get column of matrix as matrix (vector) in matrex form. One-based.
   """
-  @spec column(Matrex.t(), non_neg_integer) :: Matrex.t()
+  @spec column(matrex, index) :: matrex
   def column(
         %Matrex{
           data: <<
@@ -370,71 +439,56 @@ defmodule Matrex do
   end
 
   @doc """
-  Get column of matrix as list of floats
+  Get column of matrix as list of floats. One-based.
   """
-  @spec column_as_list(Matrex.t(), non_neg_integer) :: list(float)
-  def column_as_list(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        col
-      )
-      when is_integer(col) and col > 0 and col <= columns do
-    0..(rows - 1)
-    |> Enum.map(fn row ->
-      <<elem::float-little-32>> = binary_part(data, (row * columns + (col - 1)) * 4, 4)
-      elem
-    end)
-  end
+  @spec column_to_list(matrex, index) :: [element]
+  def column_to_list(%Matrex{data: matrix}, column) when is_integer(column) and column > 0,
+    do: NIFs.column_to_list(matrix, column - 1)
 
   @doc """
   Divides two matrices
   """
-  @spec divide(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec divide(matrex, matrex) :: matrex
   def divide(%Matrex{data: dividend}, %Matrex{data: divisor}),
     do: %Matrex{data: NIFs.divide(dividend, divisor)}
 
   @doc """
   Matrix multiplication
   """
-  @spec dot(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec dot(matrex, matrex) :: matrex
   def dot(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.dot(first, second)}
 
   @doc """
   Matrix multiplication with addition of thitd matrix
   """
-  @spec dot_and_add(Matrex.t(), Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec dot_and_add(matrex, matrex, matrex) :: matrex
   def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
     do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
 
   @doc """
   Matrix multiplication where the second matrix needs to be transposed.
   """
-  @spec dot_nt(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec dot_nt(matrex, matrex) :: matrex
   def dot_nt(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.dot_nt(first, second)}
 
   @doc """
   Matrix multiplication where the first matrix needs to be transposed.
   """
-  @spec dot_tn(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec dot_tn(matrex, matrex) :: matrex
   def dot_tn(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.dot_tn(first, second)}
 
   @doc """
   Create eye square matrix of given size
   """
-  @spec eye(non_neg_integer) :: Matrix.t()
+  @spec eye(index) :: matrex
   def eye(size) when is_integer(size), do: %Matrex{data: NIFs.eye(size)}
 
   @doc """
   Create matrix filled with given value
   """
-  @spec fill(non_neg_integer, non_neg_integer, number) :: Matrex.t()
+  @spec fill(index, index, number) :: matrex
   def fill(rows, cols, value)
       when is_integer(rows) and is_integer(cols) and is_number(value),
       do: %Matrex{data: NIFs.fill(rows, cols, value)}
@@ -442,13 +496,13 @@ defmodule Matrex do
   @doc """
   Create square matrix filled with given value
   """
-  @spec fill(non_neg_integer, number) :: Matrex.t()
+  @spec fill(index, number) :: matrex
   def fill(size, value), do: fill(size, size, value)
 
   @doc """
   Return first element of a matrix.
   """
-  @spec first(Matrex.t()) :: float
+  @spec first(matrex) :: element
   def first(%Matrex{
         data: <<
           _rows::unsigned-integer-little-32,
@@ -461,10 +515,11 @@ defmodule Matrex do
 
   @doc """
   Displays a visualization of the matrix.
+
   Set the second parameter to true to show full numbers.
   Otherwise, they are truncated.
   """
-  @spec inspect(Matrex.t(), boolean) :: Matrex.t()
+  @spec inspect(matrex, boolean) :: matrex
   def inspect(
         %Matrex{
           data: <<
@@ -508,40 +563,45 @@ defmodule Matrex do
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
   """
-  @spec magic(non_neg_integer) :: Matrex.t()
+  @spec magic(index) :: matrex
   def magic(n) when is_integer(n), do: Matrex.MagicSquare.new(n) |> new()
 
   @doc """
   Maximum element in a matrix.
   """
-  @spec max(Matrex.t()) :: float
+  @spec max(matrex) :: element
   def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
 
   @doc """
   Elementwise multiplication of two matrices
   """
-  @spec multiply(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec multiply(matrex, matrex) :: matrex
   def multiply(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.multiply(first, second)}
 
   @doc """
   Elementwise multiplication of a scalar
   """
-  @spec multiply_with_scalar(Matrex.t(), number) :: Matrex.t()
+  @spec multiply_with_scalar(matrex, number) :: matrex
   def multiply_with_scalar(%Matrex{data: matrix}, scalar) when is_number(scalar),
     do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
 
   @doc """
-  Creates a new matrix with values provided by the given function
+  Creates new matrix with values provided by the given function
   """
-  @spec new(non_neg_integer, non_neg_integer, function) :: Matrex.t()
+  @spec new(index, index, (() -> element)) :: matrex
   def new(rows, columns, function) when is_function(function, 0) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     new_matrix_from_function(rows * columns, function, initial)
   end
 
-  @spec new(non_neg_integer, non_neg_integer, function) :: Matrex.t()
+  @doc """
+  Creates new matrix with values provided by function.
+
+  Row and column of each element are passed to the function.
+  """
+  @spec new(index, index, (index, index -> element)) :: matrex
   def new(rows, columns, function) when is_function(function, 2) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
     size = rows * columns
@@ -549,7 +609,12 @@ defmodule Matrex do
     new_matrix_from_function(size, rows, columns, function, initial)
   end
 
-  @spec new(non_neg_integer, non_neg_integer, list(list)) :: Matrex.t()
+  @doc """
+  Creates new matrix from list of lists, with number of rows and columns given.
+
+  Works faster, than new() without matrix size.
+  """
+  @spec new(index, index, [[element]]) :: matrex
   def new(rows, columns, list_of_lists) when is_list(list_of_lists) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
@@ -567,10 +632,10 @@ defmodule Matrex do
   @doc """
   Creates new matrix from list of lists.
   """
-  @spec new(list(list)) :: Matrex.t()
-  def new(list_of_lists) when is_list(list_of_lists) do
+  @spec new([[element]]) :: matrex
+  def new([first_list | _] = list_of_lists) when is_list(first_list) do
     rows = length(list_of_lists)
-    cols = length(List.first(list_of_lists))
+    cols = length(first_list)
     new(rows, cols, list_of_lists)
   end
 
@@ -602,39 +667,39 @@ defmodule Matrex do
   @doc """
   Create matrix filled with ones.
   """
-  @spec ones(non_neg_integer, non_neg_integer) :: Matrex.t()
+  @spec ones(index, index) :: matrex
   def ones(rows, cols) when is_integer(rows) and is_integer(cols), do: fill(rows, cols, 1)
 
   @doc """
   Create square matrix filled with ones.
   """
-  @spec ones(non_neg_integer) :: Matrex.t()
+  @spec ones(index) :: matrex
   def ones(size) when is_integer(size), do: fill(size, 1)
 
   @doc """
   Create matrix of random floats in [0, 1] range.
   """
-  @spec random(non_neg_integer, non_neg_integer) :: Matrex.t()
+  @spec random(index, index) :: matrex
   def random(rows, columns) when is_integer(rows) and is_integer(columns),
     do: %Matrex{data: NIFs.random(rows, columns)}
 
   @doc """
   Create square matrix of random floats.
   """
-  @spec random(non_neg_integer) :: Matrex.t()
+  @spec random(index) :: matrex
   def random(size) when is_integer(size), do: random(size, size)
 
   @doc """
-  Return matrix row as list by zero-based index.
+  Return matrix row as list by one-based index.
   """
-  @spec row_to_list(Matrex.t(), non_neg_integer) :: list(float)
-  def row_to_list(%Matrex{data: matrix}, row) when is_integer(row),
-    do: NIFs.row_to_list(matrix, row)
+  @spec row_to_list(matrex, index) :: list(element)
+  def row_to_list(%Matrex{data: matrix}, row) when is_integer(row) and row > 0,
+    do: NIFs.row_to_list(matrix, row - 1)
 
   @doc """
   Get row of matrix as matrix (vector) in matrex form. One-based.
   """
-  @spec row(Matrex.t(), non_neg_integer) :: Matrex.t()
+  @spec row(matrex, index) :: matrex
   def row(
         %Matrex{
           data: <<
@@ -653,26 +718,9 @@ defmodule Matrex do
       }
 
   @doc """
-  Get row of matrix as list of floats. One based.
-  """
-  @spec row_as_list(Matrex.t(), non_neg_integer) :: list(float)
-  def row_as_list(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        row
-      )
-      when is_integer(row) and row > 0 and row <= rows,
-      do: binary_part(data, (row - 1) * columns * 4, columns * 4) |> to_list_of_floats()
-
-  @doc """
   Return size of matrix as {rows, cols}
   """
-  @spec size(Matrex.t()) :: {non_neg_integer, non_neg_integer}
+  @spec size(matrex) :: {index, index}
   def size(%Matrex{
         data: <<
           rows::unsigned-integer-little-32,
@@ -685,58 +733,50 @@ defmodule Matrex do
   @doc """
   Substracts two matrices
   """
-  @spec substract(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec substract(matrex, matrex) :: matrex
   def substract(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.substract(first, second)}
 
   @doc """
   Substracts the second matrix from the first
   """
-  @spec substract_inverse(Matrex.t(), Matrex.t()) :: Matrex.t()
+  @spec substract_inverse(matrex, matrex) :: matrex
   def substract_inverse(%Matrex{} = first, %Matrex{} = second), do: substract(second, first)
 
   @doc """
   Sums all elements.
   """
-  @spec sum(Matrex.t()) :: float
+  @spec sum(matrex) :: element
   def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
 
   @doc """
   Converts to flat list
   """
-  @spec to_list(Matrex.t()) :: list(float)
+  @spec to_list(matrex) :: list(element)
   def to_list(%Matrex{data: matrix}), do: NIFs.to_list(matrix)
-
-  def to_list2(<<_rows::integer-little-32, _cols::integer-little-32, data::binary>>),
-    do: to_list_of_floats(data)
-
-  defp to_list_of_floats(<<elem::float-little-32, rest::binary>>),
-    do: [elem | to_list_of_floats(rest)]
-
-  defp to_list_of_floats(<<>>), do: []
 
   @doc """
   Converts to list of lists
   """
-  @spec to_list_of_lists(Matrex.t()) :: list(list(float))
+  @spec to_list_of_lists(matrex) :: list(list(element))
   def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
 
   @doc """
   Transposes a matrix
   """
-  @spec transpose(Matrex.t()) :: Matrex.t()
+  @spec transpose(matrex) :: matrex
   def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
 
   @doc """
   Create matrix of zeros of the specified size.
   """
-  @spec zeros(non_neg_integer, non_neg_integer) :: Matrex.t()
+  @spec zeros(index, index) :: matrex
   def zeros(rows, cols) when is_integer(rows) and is_integer(cols),
     do: %Matrex{data: NIFs.zeros(rows, cols)}
 
   @doc """
   Create square matrix of zeros
   """
-  @spec zeros(non_neg_integer) :: Matrex.t()
+  @spec zeros(index) :: matrex
   def zeros(size), do: zeros(size, size)
 end
