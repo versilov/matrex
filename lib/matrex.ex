@@ -109,6 +109,11 @@ defmodule Matrex do
       ),
       do: {:ok, columns}
 
+  defimpl Inspect do
+    def inspect(%Matrex{} = matrex, %{width: screen_width}),
+      do: Matrex.Inspect.do_inspect(matrex, screen_width)
+  end
+
   @doc """
   Adds two matrices
   """

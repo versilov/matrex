@@ -1,5 +1,12 @@
-defimpl Inspect, for: Matrex do
-  def inspect(
+defmodule Matrex.Inspect do
+  def inspect(%Matrex{} = matrex) do
+    IO.puts(do_inspect(matrex))
+    matrex
+  end
+
+  def do_inspect(matrex, screen_width \\ 80)
+
+  def do_inspect(
         %Matrex{
           data: <<
             rows::unsigned-integer-little-32,
@@ -7,7 +14,7 @@ defimpl Inspect, for: Matrex do
             _rest::binary
           >>
         } = matrex,
-        %{width: screen_width} = _opts
+        screen_width
       )
       when columns < screen_width / 8 and rows <= 21 do
     rows_as_strings =
@@ -30,7 +37,7 @@ defimpl Inspect, for: Matrex do
   @element_byte_size 4
   @element_chars_size 8
 
-  def inspect(
+  def do_inspect(
         %Matrex{
           data: <<
             rows::unsigned-integer-little-32,
@@ -38,7 +45,7 @@ defimpl Inspect, for: Matrex do
             body::binary
           >>
         } = matrex,
-        %{width: screen_width} = _opts
+        screen_width
       )
       when columns >= screen_width / 8 or rows > 21 do
     suffix_size = prefix_size = div(screen_width, 16)
