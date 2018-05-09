@@ -36,6 +36,23 @@ defmodule Matrex.NIFs do
   @spec argmax(binary) :: non_neg_integer
   def argmax(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec column_to_list(binary, non_neg_integer) :: [float]
+  def column_to_list(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        col
+      )
+      when is_integer(col) and col >= 0 and col < columns do
+    0..(rows - 1)
+    |> Enum.map(fn row ->
+      <<elem::float-little-32>> = binary_part(data, (row * columns + col) * 4, 4)
+      elem
+    end)
+  end
+
   @spec divide(binary, binary) :: binary
   def divide(first, second)
       when is_binary(first) and is_binary(second),
@@ -89,9 +106,22 @@ defmodule Matrex.NIFs do
       when is_integer(rows) and is_integer(cols),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec row_to_list(binary, non_neg_integer) :: list(float)
-  def row_to_list(matrix, row) when is_binary(matrix) and is_integer(row),
-    do: :erlang.nif_error(:nif_library_not_loaded)
+  @spec row_to_list(binary, non_neg_integer) :: [float]
+  def row_to_list(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        row
+      )
+      when is_integer(row) and row >= 0 and row < rows,
+      do: binary_part(data, row * columns * 4, columns * 4) |> to_list_of_floats()
+
+  defp to_list_of_floats(<<elem::float-little-32, rest::binary>>),
+    do: [elem | to_list_of_floats(rest)]
+
+  defp to_list_of_floats(<<>>), do: []
 
   @spec substract(binary, binary) :: binary
   def substract(first, second)

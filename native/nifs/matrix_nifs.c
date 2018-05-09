@@ -151,6 +151,36 @@ argmax(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+column_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  float *matrix_data;
+  long column;
+  ERL_NIF_TERM  result;
+  uint32_t rows, cols;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[1], &column);
+
+
+  matrix_data = (float *) matrix.data;
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
+
+  if (column >= cols)
+    return enif_raise_exception(env, enif_make_string(env, "Column index out of bounds.", ERL_NIF_LATIN1));
+
+  result = enif_make_list(env, 0);
+
+  for (int64_t i = (rows-1)*cols + column + 2; i >= (column + 2); i -= cols ) {
+    result = enif_make_list_cell(env, enif_make_double(env, matrix_data[i]), result);
+  }
+
+  return result;
+}
+
+static ERL_NIF_TERM
 divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -487,7 +517,7 @@ row_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   result = enif_make_list(env, 0);
 
-  for (uint64_t i = (row+1)*cols + 2; i-- > row*cols + 2; ) {
+  for (int64_t i = (row+1)*cols + 2; i-- > row*cols + 2; ) {
     result = enif_make_list_cell(env, enif_make_double(env, matrix_data[i]), result);
   }
 
@@ -646,6 +676,7 @@ static ErlNifFunc nif_functions[] = {
   {"apply_math",           2, apply_math,           0},
   {"apply_parallel_math",  2, apply_parallel_math,  0},
   {"argmax",               1, argmax,               0},
+  {"column_to_list",       2, column_to_list,       0},
   {"divide",               2, divide,               0},
   {"dot",                  2, dot,                  0},
   {"dot_and_add",          3, dot_and_add,          0},
