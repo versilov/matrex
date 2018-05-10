@@ -96,6 +96,20 @@ matrix_add(const Matrix first, const Matrix second, Matrix result) {
   }
 }
 
+void
+matrix_add_scalar(
+  const Matrix matrix, const float scalar, Matrix result
+) {
+  uint64_t data_size = MX_LENGTH(matrix);
+
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = matrix[index] + scalar;
+  }
+}
+
 float sigmoidf(float x) {
   return 1.0f/(1.0f + expf(-x));
 }

@@ -38,6 +38,38 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+add_scalar(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  double        large_scalar;
+  float         scalar;
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  if (enif_get_double(env, argv[1], &large_scalar) == 0) {
+    long long_element;
+    enif_get_int64(env, argv[1], &long_element);
+
+    large_scalar = (double) long_element;
+  }
+  scalar = (float) large_scalar;
+
+  matrix_data = (float *) matrix.data;
+  data_size   = MX_LENGTH(matrix_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_add_scalar(matrix_data, scalar, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 apply_math(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
@@ -672,6 +704,7 @@ zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
 static ErlNifFunc nif_functions[] = {
   {"add",                  2, add,                  0},
+  {"add_scalar",           2, add_scalar,           0},
   {"apply_math",           2, apply_math,           0},
   {"apply_parallel_math",  2, apply_parallel_math,  0},
   {"argmax",               1, argmax,               0},

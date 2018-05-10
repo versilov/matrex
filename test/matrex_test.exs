@@ -19,6 +19,14 @@ defmodule MatrexTest do
     end
   end
 
+  test "#add adds scalar to each element of a matrix" do
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    scalar = 3
+    expected = Matrex.new([[4, 5, 6], [7, 8, 9]])
+
+    assert Matrex.add(matrix, scalar) == expected
+  end
+
   test "#apply/2 applies a math function on each element of the matrix" do
     input = Matrex.new([[4, 16, 9], [25, 49, 36]])
     expected = Matrex.new([[2, 4, 3], [5, 7, 6]])

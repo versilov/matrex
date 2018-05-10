@@ -141,7 +141,32 @@ defmodule Matrex do
   def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
 
   @doc """
+  Adds scalar value to each element of the matrix. NIF.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.add(m, 1)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     9.0     2.0     7.0 │
+      │     4.0     6.0     8.0 │
+      │     5.0    10.0     3.0 │
+      └                         ┘
+  """
+  @spec add(matrex, number) :: matrex
+  def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
+    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+
+  @doc """
   Apply math function to matrix elementwise. NIF, multithreaded.
+
   Uses eight native threads, if matrix size is greater, than 100 000 elements.
 
   ## Example
@@ -1193,7 +1218,7 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.zeros(rows, cols)}
 
   @doc """
-  Create square matrix of zeros. Inlined.
+  Create square matrix of size `size` rows × `size` columns, filled with zeros. Inlined.
 
   ## Example
 

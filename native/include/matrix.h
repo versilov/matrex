@@ -48,6 +48,9 @@ matrix_equal(Matrix first, Matrix second);
 void
 matrix_add(const Matrix first, const Matrix second, Matrix result);
 
+void
+matrix_add_scalar(const Matrix first, const float scalar, Matrix result);
+
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result);
 

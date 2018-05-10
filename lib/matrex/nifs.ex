@@ -25,6 +25,27 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec add_scalar(binary, number) :: binary
+  def add_scalar(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >>,
+        scalar
+      )
+      when is_number(scalar) do
+    0..(rows * columns - 1)
+    |> Enum.reduce(
+      <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>,
+      fn index, matrix ->
+        <<elem::float-little-32>> = binary_part(data, index * 4, 4)
+
+        <<matrix::binary, elem + scalar::float-little-32>>
+      end
+    )
+  end
+
   @spec apply_math(binary, atom) :: binary
   def apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function),
     do: :erlang.nif_error(:nif_library_not_loaded)
