@@ -352,15 +352,15 @@ defmodule MatrexTest do
       data: <<
         3::unsigned-integer-little-32,
         3::unsigned-integer-little-32,
-        0::float-little-32,
-        0::float-little-32,
-        0::float-little-32,
-        0::float-little-32,
         1::float-little-32,
         2::float-little-32,
-        0::float-little-32,
+        3::float-little-32,
         2::float-little-32,
-        4::float-little-32
+        4::float-little-32,
+        6::float-little-32,
+        3::float-little-32,
+        6::float-little-32,
+        9::float-little-32
       >>
     }
 

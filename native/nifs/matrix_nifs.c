@@ -491,7 +491,6 @@ random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   matrix_random(result_data);
 
   return result;
-  // return wrap_matrex(env, result);
 }
 
 static ERL_NIF_TERM

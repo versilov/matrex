@@ -8,7 +8,7 @@ defmodule Matrex do
   @enforce_keys [:data]
   defstruct [:data]
   @type element :: float
-  @type index :: non_neg_integer
+  @type index :: pos_integer
   @type matrex :: %Matrex{data: binary}
 
   @compile {:inline,
@@ -512,6 +512,8 @@ defmodule Matrex do
   @doc """
   Divides two matrices element-wise. NIF.
 
+  Raises `ErlangError` if matrices' sizes do not match.
+
   ## Example
 
       iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
@@ -531,6 +533,8 @@ defmodule Matrex do
 
   Number of columns of the first matrix must be equal to the number of rows of the second matrix.
 
+  Raises `ErlangError` if matrices' sizes do not match.
+
   ## Example
 
       iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
@@ -547,6 +551,19 @@ defmodule Matrex do
 
   @doc """
   Matrix multiplication with addition of thitd matrix.  NIF, via `cblas_sgemm()`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot_and_add(Matrex.new([[1, 2], [3, 4], [5, 6]]), Matrex.new([[1, 2], [3, 4]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    23.0    30.0 │
+      │    52.0    68.0 │
+      └                 ┘
+
   """
   @spec dot_and_add(matrex, matrex, matrex) :: matrex
   def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
@@ -554,6 +571,19 @@ defmodule Matrex do
 
   @doc """
   Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot_nt(Matrex.new([[1, 3, 5], [2, 4, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
   """
   @spec dot_nt(matrex, matrex) :: matrex
   def dot_nt(%Matrex{data: first}, %Matrex{data: second}),
@@ -561,6 +591,19 @@ defmodule Matrex do
 
   @doc """
   Matrix multiplication where the first matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 4], [2, 5], [3, 6]]) |>
+      ...> Matrex.dot_tn(Matrex.new([[1, 2], [3, 4], [5, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
   """
   @spec dot_tn(matrex, matrex) :: matrex
   def dot_tn(%Matrex{data: first}, %Matrex{data: second}),
@@ -568,12 +611,33 @@ defmodule Matrex do
 
   @doc """
   Create eye square matrix of given size
+
+  ## Example
+
+      iex> Matrex.eye(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     0.0     0.0 │
+      │     0.0     1.0     0.0 │
+      │     0.0     0.0     1.0 │
+      └                         ┘
   """
   @spec eye(index) :: matrex
   def eye(size) when is_integer(size), do: %Matrex{data: NIFs.eye(size)}
 
   @doc """
-  Create matrix filled with given value
+  Create matrix filled with given value. NIF.
+
+  ## Example
+
+      iex> Matrex.fill(4,3, 55)
+      #Matrex[4×3]
+      ┌                         ┐
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      └                         ┘
   """
   @spec fill(index, index, number) :: matrex
   def fill(rows, cols, value)
@@ -581,13 +645,29 @@ defmodule Matrex do
       do: %Matrex{data: NIFs.fill(rows, cols, value)}
 
   @doc """
-  Create square matrix filled with given value
+  Create square matrix filled with given value. Inlined.
+
+  ## Example
+
+      iex> Matrex.fill(3, 55)
+      #Matrex[3×3]
+      ┌                         ┐
+      │    33.0    33.0    33.0 │
+      │    33.0    33.0    33.0 │
+      │    33.0    33.0    33.0 │
+      └                         ┘
   """
   @spec fill(index, number) :: matrex
   def fill(size, value), do: fill(size, size, value)
 
   @doc """
   Return first element of a matrix.
+
+  ## Example
+
+      iex> Matrex.new([[6,5,4],[3,2,1]]) |> Matrex.first()
+      6.0
+
   """
   @spec first(matrex) :: element
   def first(%Matrex{
@@ -605,6 +685,7 @@ defmodule Matrex do
 
   Set the second parameter to true to show full numbers.
   Otherwise, they are truncated.
+
   """
   @spec inspect(matrex, boolean) :: matrex
   def inspect(
@@ -649,32 +730,91 @@ defmodule Matrex do
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
+
+
+  ## Example
+
+      iex> Matrex.magic(5)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │    16.0    23.0     5.0     7.0    14.0 │
+      │    22.0     4.0     6.0    13.0    20.0 │
+      │     3.0    10.0    12.0    19.0    21.0 │
+      │     9.0    11.0    18.0    25.0     2.0 │
+      │    15.0    17.0    24.0     1.0     8.0 │
+      └                                         ┘
   """
   @spec magic(index) :: matrex
   def magic(n) when is_integer(n), do: Matrex.MagicSquare.new(n) |> new()
 
   @doc """
-  Maximum element in a matrix.
+  Maximum element in a matrix. NIF.
+
+  ## Example
+
+      iex> m = Matrex.magic(5)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │    16.0    23.0     5.0     7.0    14.0 │
+      │    22.0     4.0     6.0    13.0    20.0 │
+      │     3.0    10.0    12.0    19.0    21.0 │
+      │     9.0    11.0    18.0    25.0     2.0 │
+      │    15.0    17.0    24.0     1.0     8.0 │
+      └                                         ┘
+      iex> Matrex.max(m)
+      25.0
+
   """
   @spec max(matrex) :: element
   def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
 
   @doc """
-  Elementwise multiplication of two matrices
+  Elementwise multiplication of two matrices. NIF.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.multiply(Matrex.new([[5, 2, 1], [3, 4, 6]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     5.0     4.0     3.0 │
+      │    12.0    20.0    36.0 │
+      └                         ┘
   """
   @spec multiply(matrex, matrex) :: matrex
   def multiply(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.multiply(first, second)}
 
   @doc """
-  Elementwise multiplication of a scalar
+  Elementwise multiplication of a scalar. NIF.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |> Matrex.multiply_with_scalar(2)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     2.0     4.0     6.0 │
+      │     8.0    10.0    12.0 │
+      └                         ┘
   """
   @spec multiply_with_scalar(matrex, number) :: matrex
   def multiply_with_scalar(%Matrex{data: matrix}, scalar) when is_number(scalar),
     do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
 
   @doc """
-  Creates new matrix with values provided by the given function
+  Creates new matrix with values provided by the given function.
+
+  ## Example
+
+      iex> Matrex.new(3, 3, fn -> :rand.uniform() end)
+      #Matrex[3×3]
+      ┌                         ┐
+      │ 0.45643 0.91533 0.25332 │
+      │ 0.29095 0.21241  0.9776 │
+      │ 0.42451 0.05422 0.92863 │
+      └                         ┘
   """
   @spec new(index, index, (() -> element)) :: matrex
   def new(rows, columns, function) when is_function(function, 0) do
@@ -686,7 +826,17 @@ defmodule Matrex do
   @doc """
   Creates new matrix with values provided by function.
 
-  Row and column of each element are passed to the function.
+  One-based row and column of each element are passed to the function.
+
+  ## Example
+
+      iex> Matrex.new(3, 3, fn row, col -> row*col end)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     2.0     4.0     6.0 │
+      │     3.0     6.0     9.0 │
+      └                         ┘
   """
   @spec new(index, index, (index, index -> element)) :: matrex
   def new(rows, columns, function) when is_function(function, 2) do
@@ -699,7 +849,16 @@ defmodule Matrex do
   @doc """
   Creates new matrix from list of lists, with number of rows and columns given.
 
-  Works faster, than new() without matrix size.
+  Works faster, than new() without matrix size, but it will be noticeable only with big matrices.
+
+  ## Example
+
+      iex> Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
   """
   @spec new(index, index, [[element]]) :: matrex
   def new(rows, columns, list_of_lists) when is_list(list_of_lists) do
@@ -718,6 +877,15 @@ defmodule Matrex do
 
   @doc """
   Creates new matrix from list of lists.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
   """
   @spec new([[element]]) :: matrex
   def new([first_list | _] = list_of_lists) when is_list(first_list) do
@@ -746,7 +914,7 @@ defmodule Matrex do
         {rows - 1 - div(size, columns), columns - rem(size, columns)}
       end
 
-    new_accumulator = <<accumulator::binary, function.(row, col)::float-little-32>>
+    new_accumulator = <<accumulator::binary, function.(row + 1, col + 1)::float-little-32>>
 
     new_matrix_from_function(size - 1, rows, columns, function, new_accumulator)
   end
@@ -759,12 +927,34 @@ defmodule Matrex do
 
   @doc """
   Create square matrix filled with ones.
+
+  ## Example
+
+      iex> Matrex.ones(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     1.0     1.0 │
+      │     1.0     1.0     1.0 │
+      │     1.0     1.0     1.0 │
+      └                         ┘
   """
   @spec ones(index) :: matrex
   def ones(size) when is_integer(size), do: fill(size, 1)
 
   @doc """
-  Create matrix of random floats in [0, 1] range.
+  Create matrix of random floats in [0, 1] range. NIF.
+
+  ## Example
+
+      iex> Matrex.random(4,3)
+      #Matrex[4×3]
+      ┌                         ┐
+      │ 0.32994 0.28736 0.88012 │
+      │ 0.51782 0.68608 0.29976 │
+      │ 0.52953  0.9071 0.26743 │
+      │ 0.82189 0.59311  0.8451 │
+      └                         ┘
+
   """
   @spec random(index, index) :: matrex
   def random(rows, columns) when is_integer(rows) and is_integer(columns),
@@ -772,19 +962,60 @@ defmodule Matrex do
 
   @doc """
   Create square matrix of random floats.
+
+  ## Example
+
+      iex> Matrex.random(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │ 0.66438 0.31026 0.98602 │
+      │ 0.82127 0.04701 0.13278 │
+      │ 0.96935 0.70772 0.98738 │
+      └                         ┘
   """
   @spec random(index) :: matrex
   def random(size) when is_integer(size), do: random(size, size)
 
   @doc """
   Return matrix row as list by one-based index.
+
+  ## Example
+
+      iex> m = Matrex.magic(5)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │    16.0    23.0     5.0     7.0    14.0 │
+      │    22.0     4.0     6.0    13.0    20.0 │
+      │     3.0    10.0    12.0    19.0    21.0 │
+      │     9.0    11.0    18.0    25.0     2.0 │
+      │    15.0    17.0    24.0     1.0     8.0 │
+      └                                         ┘
+      iex> Matrex.row_to_list(m, 3)
+      [3.0, 10.0, 12.0, 19.0, 21.0]
   """
-  @spec row_to_list(matrex, index) :: list(element)
+  @spec row_to_list(matrex, index) :: [element]
   def row_to_list(%Matrex{data: matrix}, row) when is_integer(row) and row > 0,
     do: NIFs.row_to_list(matrix, row - 1)
 
   @doc """
   Get row of matrix as matrix (vector) in matrex form. One-based.
+
+  ## Example
+
+      iex> m = Matrex.magic(5)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │    16.0    23.0     5.0     7.0    14.0 │
+      │    22.0     4.0     6.0    13.0    20.0 │
+      │     3.0    10.0    12.0    19.0    21.0 │
+      │     9.0    11.0    18.0    25.0     2.0 │
+      │    15.0    17.0    24.0     1.0     8.0 │
+      └                                         ┘
+      iex> Matrex.row(m, 4)
+      #Matrex[1×5]
+      ┌                                         ┐
+      │     9.0    11.0    18.0    25.0     2.0 │
+      └                                         ┘
   """
   @spec row(matrex, index) :: matrex
   def row(
@@ -806,6 +1037,17 @@ defmodule Matrex do
 
   @doc """
   Return size of matrix as {rows, cols}
+
+  ## Example
+
+      iex> m = Matrex.random(2,3)
+      #Matrex[2×3]
+      ┌                         ┐
+      │ 0.69745 0.23668 0.36376 │
+      │ 0.63423 0.29651 0.22844 │
+      └                         ┘
+      iex> Matrex.size(m)
+      {2, 3}
   """
   @spec size(matrex) :: {index, index}
   def size(%Matrex{
@@ -818,51 +1060,150 @@ defmodule Matrex do
       do: {rows, cols}
 
   @doc """
-  Substracts two matrices
+  Substracts two matrices element-wise. NIF.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.substract(Matrex.new([[5, 2, 1], [3, 4, 6]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │    -4.0     0.0     2.0 │
+      │     1.0     1.0     0.0 │
+      └                         ┘
   """
   @spec substract(matrex, matrex) :: matrex
   def substract(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.substract(first, second)}
 
   @doc """
-  Substracts the second matrix from the first
+  Substracts the second matrix from the first. Inlined.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.substract_inverse(Matrex.new([[5, 2, 1], [3, 4, 6]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     4.0     0.0    -2.0 │
+      │    -1.0    -1.0     0.0 │
+      └                         ┘
   """
   @spec substract_inverse(matrex, matrex) :: matrex
   def substract_inverse(%Matrex{} = first, %Matrex{} = second), do: substract(second, first)
 
   @doc """
-  Sums all elements.
+  Sums all elements. NIF.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.sum(m)
+      45.0
   """
   @spec sum(matrex) :: element
   def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
 
   @doc """
-  Converts to flat list
+  Converts to flat list. NIF.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.to_list(m)
+      [8.0, 1.0, 6.0, 3.0, 5.0, 7.0, 4.0, 9.0, 2.0]
   """
   @spec to_list(matrex) :: list(element)
   def to_list(%Matrex{data: matrix}), do: NIFs.to_list(matrix)
 
   @doc """
   Converts to list of lists
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.to_list_of_lists(m)
+      [[8.0, 1.0, 6.0], [3.0, 5.0, 7.0], [4.0, 9.0, 2.0]]
   """
   @spec to_list_of_lists(matrex) :: list(list(element))
   def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
 
   @doc """
-  Transposes a matrix
+  Transposes a matrix. NIF.
+
+  ## Example
+
+      iex> m = Matrex.new([[1,2,3],[4,5,6]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+      iex> Matrex.transpose(m)
+      #Matrex[3×2]
+      ┌                 ┐
+      │     1.0     4.0 │
+      │     2.0     5.0 │
+      │     3.0     6.0 │
+      └                 ┘
   """
   @spec transpose(matrex) :: matrex
   def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
 
   @doc """
-  Create matrix of zeros of the specified size.
+  Create matrix of zeros of the specified size. NIF, using `memset()`.
+
+  Faster, than `fill(rows, cols, 0)`.
+
+  ## Example
+
+      iex> Matrex.zeros(4,3)
+      #Matrex[4×3]
+      ┌                         ┐
+      │     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0 │
+      └                         ┘
   """
   @spec zeros(index, index) :: matrex
   def zeros(rows, cols) when is_integer(rows) and is_integer(cols),
     do: %Matrex{data: NIFs.zeros(rows, cols)}
 
   @doc """
-  Create square matrix of zeros
+  Create square matrix of zeros. Inlined.
+
+  ## Example
+
+      iex> Matrex.zeros(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0 │
+      └                         ┘
   """
   @spec zeros(index) :: matrex
   def zeros(size), do: zeros(size, size)
