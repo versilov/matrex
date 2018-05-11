@@ -201,7 +201,6 @@ matrix_argmax(const Matrix matrix) {
       argmax = index;
     }
   }
-
   return argmax - 2;
 }
 
@@ -400,6 +399,21 @@ matrix_multiply_with_scalar(
 }
 
 void
+matrix_neg(
+  const Matrix matrix, Matrix result
+) {
+  uint64_t data_size = MX_LENGTH(matrix);
+
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = -matrix[index];
+  }
+}
+
+
+void
 matrix_substract(const Matrix first, const Matrix second, Matrix result) {
   uint64_t data_size = MX_LENGTH(first);
 
@@ -408,6 +422,18 @@ matrix_substract(const Matrix first, const Matrix second, Matrix result) {
 
   for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] - second[index];
+  }
+}
+
+void
+matrix_substract_from_scalar(const float scalar, const Matrix matrix, Matrix result) {
+  uint64_t data_size = MX_LENGTH(matrix);
+
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = scalar - matrix[index];
   }
 }
 

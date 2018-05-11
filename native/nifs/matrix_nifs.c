@@ -485,6 +485,31 @@ multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+neg(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+  data_size   = MX_LENGTH(matrix_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_neg(matrix_data, result_data);
+
+  return result;
+}
+
+
+
+static ERL_NIF_TERM
 wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary) {
   // we make an empty erlang/elixir map object
   ERL_NIF_TERM matrex = enif_make_new_map(env);
@@ -581,6 +606,38 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
   matrix_substract(first_data, second_data, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
+substract_from_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  double        large_scalar;
+  float         scalar;
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[1], &matrix)) return enif_make_badarg(env);
+  if (enif_get_double(env, argv[0], &large_scalar) == 0) {
+    long long_element;
+    enif_get_int64(env, argv[0], &long_element);
+
+    large_scalar = (double) long_element;
+  }
+  scalar = (float) large_scalar;
+
+  matrix_data = (float *) matrix.data;
+  data_size   = MX_LENGTH(matrix_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_substract_from_scalar(scalar, matrix_data, result_data);
 
   return result;
 }
@@ -719,9 +776,11 @@ static ErlNifFunc nif_functions[] = {
   {"max",                  1, max,                  0},
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},
+  {"neg",                  1, neg,                  0},
   {"random",               2, random_matrix,        0},
   {"row_to_list",          2, row_to_list,          0},
   {"substract",            2, substract,            0},
+  {"substract_from_scalar",2, substract_from_scalar,0},
   {"sum",                  1, sum,                  0},
   {"to_list",              1, to_list,              0},
   {"to_list_of_lists",     1, to_list_of_lists,     0},

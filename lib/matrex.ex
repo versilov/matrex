@@ -164,6 +164,10 @@ defmodule Matrex do
   def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
     do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
 
+  @spec add(number, matrex) :: matrex
+  def add(scalar, %Matrex{data: matrix}) when is_number(scalar),
+    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+
   @doc """
   Apply math function to matrix elementwise. NIF, multithreaded.
 
@@ -873,6 +877,22 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
 
   @doc """
+  Negates each element of the matrix. NIF.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |> Matrex.neg()
+      #Matrex[2×3]
+      ┌                         ┐
+      │    -1.0    -2.0    -3.0 │
+      │    -4.0    -5.0    -6.0 │
+      └                         ┘
+
+  """
+  @spec neg(matrex) :: matrex
+  def neg(%Matrex{data: matrix}), do: %Matrex{data: NIFs.neg(matrix)}
+
+  @doc """
   Creates new matrix with values provided by the given function.
 
   ## Example
@@ -1167,6 +1187,24 @@ defmodule Matrex do
   @spec substract(matrex, matrex) :: matrex
   def substract(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.substract(first, second)}
+
+  @doc """
+  Substracts each element of matrix from scalar. NIF.
+
+  ## Example
+
+      iex> Matrex.substract(1, Matrex.new([[1, 2, 3], [4, 5, 6]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     0.0     -1.0   -2.0 │
+      │    -3.0    -4.0    -5.0 │
+      └                         ┘
+
+  """
+
+  @spec substract(number, matrex) :: matrex
+  def substract(scalar, %Matrex{data: matrix}),
+    do: %Matrex{data: NIFs.substract_from_scalar(scalar, matrix)}
 
   @doc """
   Substracts the second matrix from the first. Inlined.

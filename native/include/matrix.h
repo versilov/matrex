@@ -94,12 +94,16 @@ void
 matrix_multiply(const Matrix first, const Matrix second, Matrix result);
 
 void
-matrix_multiply_with_scalar(
-  const Matrix matrix, const float scalar, Matrix result
-);
+matrix_multiply_with_scalar(const Matrix matrix, const float scalar, Matrix result);
+
+void
+matrix_neg(const Matrix matrix, Matrix result);
 
 void
 matrix_substract(const Matrix first, const Matrix second, Matrix result);
+
+void
+matrix_substract_from_scalar(const float scalar, const Matrix matrix, Matrix result);
 
 double
 matrix_sum(const Matrix matrix);

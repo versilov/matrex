@@ -351,6 +351,13 @@ defmodule MatrexTest do
     assert Matrex.multiply(matrix, scalar) == expected
   end
 
+  test "#neg negates matrix" do
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[-1, -2, -3], [-4, -5, -6]])
+
+    assert Matrex.neg(matrix) == expected
+  end
+
   test "#new creates a new matrix initialized by a function" do
     rows = 2
     columns = 3
@@ -516,6 +523,13 @@ defmodule MatrexTest do
     expected = Matrex.new(2, 3, [[4, 0, -2], [-1, -1, 0]])
 
     assert Matrex.substract_inverse(first, second) == expected
+  end
+
+  test "#substract substracts matrix from scalar" do
+    input = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[0, -1, -2], [-3, -4, -5]])
+
+    assert Matrex.substract(1, input) == expected
   end
 
   test "#sum/1 returns the sum of all elements in the matrix" do

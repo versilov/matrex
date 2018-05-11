@@ -122,6 +122,26 @@ defmodule Matrex.NIFs do
       when is_binary(matrix) and is_number(scalar),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec neg(binary) :: binary
+  def neg(
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >> = matrix
+      )
+      when is_binary(matrix) do
+    0..(rows * columns - 1)
+    |> Enum.reduce(
+      <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>,
+      fn index, matrix ->
+        <<elem::float-little-32>> = binary_part(data, index * 4, 4)
+
+        <<matrix::binary, -elem::float-little-32>>
+      end
+    )
+  end
+
   @spec random(non_neg_integer, non_neg_integer) :: binary
   def random(rows, cols)
       when is_integer(rows) and is_integer(cols),
@@ -148,6 +168,27 @@ defmodule Matrex.NIFs do
   def substract(first, second)
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
+
+  @spec substract_from_scalar(number, binary) :: binary
+  def substract_from_scalar(
+        scalar,
+        <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          data::binary
+        >> = matrix
+      )
+      when is_number(scalar) and is_binary(matrix) do
+    0..(rows * columns - 1)
+    |> Enum.reduce(
+      <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>,
+      fn index, matrix ->
+        <<elem::float-little-32>> = binary_part(data, index * 4, 4)
+
+        <<matrix::binary, scalar - elem::float-little-32>>
+      end
+    )
+  end
 
   @spec sum(binary) :: float
   def sum(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
