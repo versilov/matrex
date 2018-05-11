@@ -1146,6 +1146,45 @@ defmodule Matrex do
   end
 
   @doc """
+  Set element of matrix at the specified position (one-based) to new value.
+
+  ## Example
+
+      iex> m = Matrex.ones(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     1.0     1.0 │
+      │     1.0     1.0     1.0 │
+      │     1.0     1.0     1.0 │
+      └                         ┘
+      iex> Matrex.set(m, 2, 2, 0)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     1.0     1.0 │
+      │     1.0     0.0     1.0 │
+      │     1.0     1.0     1.0 │
+      └                         ┘
+  """
+  @spec set(matrex, index, index, number) :: matrex
+  def set(
+        %Matrex{
+          data:
+            <<
+              rows::unsigned-integer-little-32,
+              cols::unsigned-integer-little-32,
+              _data::binary
+            >> = matrix
+        },
+        row,
+        column,
+        value
+      )
+      when is_number(value) and row > 0 and column > 0 and row <= rows and column <= cols,
+      do: %Matrex{
+        data: NIFs.set(matrix, row - 1, column - 1, value)
+      }
+
+  @doc """
   Return size of matrix as {rows, cols}
 
   ## Example

@@ -164,6 +164,24 @@ defmodule Matrex.NIFs do
 
   defp to_list_of_floats(<<>>), do: []
 
+  @spec set(binary, non_neg_integer, non_neg_integer, number) :: binary
+  def set(
+        <<
+          rows::unsigned-integer-little-32,
+          cols::unsigned-integer-little-32,
+          data::binary
+        >>,
+        row,
+        column,
+        value
+      ) do
+    pos = row * cols + column
+
+    <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32,
+      binary_part(data, 0, pos * 4)::binary, value::float-little-32,
+      binary_part(data, (pos + 1) * 4, (rows * cols - pos - 1) * 4)::binary>>
+  end
+
   @spec substract(binary, binary) :: binary
   def substract(first, second)
       when is_binary(first) and is_binary(second),

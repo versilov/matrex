@@ -500,6 +500,13 @@ defmodule MatrexTest do
     end
   end
 
+  test "#set changes value of one element" do
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[1, 2, 99], [4, 5, 6]])
+
+    assert Matrex.set(matrix, 1, 3, 99) == expected
+  end
+
   test "#substract substracts two matrices" do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 3, [[5, 2, 1], [3, 4, 6]])

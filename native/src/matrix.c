@@ -413,6 +413,16 @@ matrix_neg(
 }
 
 void
+matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result) {
+  // uint64_t data_size = MX_BYTE_SIZE(matrix);
+
+  // memcpy(result, matrix, data_size);
+  cblas_scopy(MX_LENGTH(matrix), matrix, 1, result, 1);
+  result[2 + row*MX_COLS(matrix) + column] = scalar;
+}
+
+
+void
 matrix_substract(const Matrix first, const Matrix second, Matrix result) {
   uint64_t data_size = MX_LENGTH(first);
 

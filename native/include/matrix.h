@@ -100,6 +100,9 @@ void
 matrix_neg(const Matrix matrix, Matrix result);
 
 void
+matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result);
+
+void
 matrix_substract(const Matrix first, const Matrix second, Matrix result);
 
 void
