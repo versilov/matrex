@@ -412,7 +412,6 @@ matrix_neg(
   }
 }
 
-
 void
 matrix_substract(const Matrix first, const Matrix second, Matrix result) {
   uint64_t data_size = MX_LENGTH(first);
