@@ -10,6 +10,7 @@ defmodule Matrex do
   @type element :: float
   @type index :: pos_integer
   @type matrex :: %Matrex{data: binary}
+  @type t :: matrex
 
   @compile {:inline,
             add: 2,
@@ -27,7 +28,6 @@ defmodule Matrex do
             first: 1,
             max: 1,
             multiply: 2,
-            multiply_with_scalar: 2,
             ones: 2,
             ones: 1,
             random: 2,
@@ -261,7 +261,7 @@ defmodule Matrex do
 
   Applies function to each element of the matrix.
 
-  Zero-based index of element in the matix is
+  One-based index of element in the matix is
   passed to the function along with the element value.
 
 
@@ -754,6 +754,46 @@ defmodule Matrex do
   defp undot(f, true) when is_float(f), do: f
 
   @doc """
+  Load matrex from file.
+
+  .csv and .mtx (binary) formats are supported.
+
+  ## Example
+
+      iex> Matrex.load("test/matrex.csv")
+      #Matrex[5×4]
+      ┌                                 ┐
+      │     0.0  4.8e-4-0.00517-0.01552 │
+      │-0.01616-0.01622 -0.0161-0.00574 │
+      │  6.8e-4     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0     0.0 │
+      │     0.0     0.0     0.0     0.0 │
+      └                                 ┘
+  """
+  @spec load(binary) :: matrex
+  def load(file_name) when is_binary(file_name) do
+    cond do
+      :filename.extension(file_name) == ".csv" ->
+        file_name
+        |> File.read!()
+        |> String.split("\n")
+        |> Enum.reject(&(String.length(&1) == 0))
+        |> Enum.map(fn line ->
+          line
+          |> String.split(",")
+          |> Enum.map(fn f -> Float.parse(f) |> elem(0) end)
+        end)
+        |> new()
+
+      :filename.extension(file_name) == ".mtx" ->
+        %Matrex{data: File.read!(file_name)}
+
+      true ->
+        raise "Unknown file format: #{file_name}"
+    end
+  end
+
+  @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
 
 
@@ -817,15 +857,19 @@ defmodule Matrex do
 
   ## Example
 
-      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |> Matrex.multiply_with_scalar(2)
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |> Matrex.multiply(2)
       #Matrex[2×3]
       ┌                         ┐
       │     2.0     4.0     6.0 │
       │     8.0    10.0    12.0 │
       └                         ┘
   """
-  @spec multiply_with_scalar(matrex, number) :: matrex
-  def multiply_with_scalar(%Matrex{data: matrix}, scalar) when is_number(scalar),
+  @spec multiply(matrex, number) :: matrex
+  def multiply(%Matrex{data: matrix}, scalar) when is_number(scalar),
+    do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
+
+  @spec multiply(number, matrex) :: matrex
+  def multiply(scalar, %Matrex{data: matrix}) when is_number(scalar),
     do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
 
   @doc """
@@ -1059,6 +1103,27 @@ defmodule Matrex do
           <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
             binary_part(data, (row - 1) * columns * 4, columns * 4)::binary>>
       }
+
+  @doc """
+  Saves matrex into file.
+
+  Only binary format (.mtx) is supported.
+
+  ## Example
+
+      iex> Matrex.random(5) |> Matrex.save("r.mtx")
+      :ok
+  """
+  @spec save(matrex, binary) :: :ok | :error
+  def save(%Matrex{data: data}, file_name) do
+    cond do
+      :filename.extension(file_name) == ".mtx" ->
+        File.write!(file_name, data)
+
+      true ->
+        raise "Unknown file format suggested: #{file_name}"
+    end
+  end
 
   @doc """
   Return size of matrix as {rows, cols}
