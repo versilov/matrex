@@ -26,6 +26,7 @@ defmodule Matrex do
             fill: 3,
             fill: 2,
             first: 1,
+            fetch: 2,
             max: 1,
             multiply: 2,
             ones: 2,
@@ -89,20 +90,40 @@ defmodule Matrex do
   def fetch(
         %Matrex{
           data: <<
-            _rows::unsigned-integer-little-32,
+            1::unsigned-integer-little-32,
             columns::unsigned-integer-little-32,
             data::binary
           >>
         },
         a..b
       )
-      when b > a and columns == 1,
+      when b > a and b <= columns,
       do:
         {:ok,
          %Matrex{
            data:
-             <<b - a::unsigned-integer-little-32, 1::unsigned-integer-little-32,
-               binary_part(data, a * 4, (b - a) * 4)::binary>>
+             <<1::unsigned-integer-little-32, b - a + 1::unsigned-integer-little-32,
+               binary_part(data, (a - 1) * 4, (b - a + 1) * 4)::binary>>
+         }}
+
+  @impl Access
+  def fetch(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
+        a..b
+      )
+      when b > a and b <= rows,
+      do:
+        {:ok,
+         %Matrex{
+           data:
+             <<b - a + 1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+               binary_part(data, (a - 1) * columns * 4, (b - a + 1) * columns * 4)::binary>>
          }}
 
   @impl Access
@@ -130,6 +151,24 @@ defmodule Matrex do
         :cols
       ),
       do: {:ok, columns}
+
+  @impl Access
+  def fetch(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        },
+        :size
+      ),
+      do: {:ok, {rows, columns}}
+
+  @impl Access
+  def fetch(%Matrex{} = matrex, :sum), do: {:ok, sum(matrex)}
+  def fetch(%Matrex{} = matrex, :max), do: {:ok, max(matrex)}
+  def fetch(%Matrex{} = matrex, :argmax), do: {:ok, argmax(matrex)}
 
   @impl Access
   def get(%Matrex{} = matrex, key, default) do
@@ -718,6 +757,17 @@ defmodule Matrex do
       6.0
 
   """
+  @not_a_number <<0, 0, 192, 255>>
+  def first(%Matrex{
+        data: <<
+          _rows::unsigned-integer-little-32,
+          _columns::unsigned-integer-little-32,
+          @not_a_number::binary,
+          _rest::binary
+        >>
+      }),
+      do: raise(ArithmeticError)
+
   @spec first(matrex) :: element
   def first(%Matrex{
         data: <<
