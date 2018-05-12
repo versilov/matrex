@@ -23,7 +23,7 @@ defmodule Matrex.Inspect do
       for(
         row <- 1..rows,
         do:
-          Matrex.row_to_list(matrex, row)
+          row_to_list_of_binaries(matrex, row)
           |> Enum.map(&format_float(&1))
           |> Enum.join()
       )
@@ -106,6 +106,23 @@ defmodule Matrex.Inspect do
     |> Enum.join()
   end
 
+  defp row_to_list_of_binaries(
+         %Matrex{
+           data: <<
+             rows::unsigned-integer-little-32,
+             columns::unsigned-integer-little-32,
+             data::binary
+           >>
+         },
+         row
+       )
+       when row <= rows do
+    0..(columns - 1)
+    |> Enum.map(fn c ->
+      binary_part(data, ((row - 1) * columns + c) * @element_byte_size, @element_byte_size)
+    end)
+  end
+
   defp format_row(%Matrex{data: matrix}, row, _rows, columns, suffix_size, prefix_size)
        when is_binary(matrix) do
     n = chunk_offset(row, columns, suffix_size)
@@ -139,6 +156,15 @@ defmodule Matrex.Inspect do
     <<format_float(val)::binary,
       format_row_head_tail(rest, suffix_size - 1, prefix_size)::binary>>
   end
+
+  @not_a_number <<0, 0, 192, 255>>
+  @positive_infinity <<0, 0, 128, 127>>
+  @negative_infinity <<0, 0, 128, 255>>
+
+  defp format_float(@not_a_number), do: String.pad_leading("NaN", @element_chars_size)
+  defp format_float(@positive_infinity), do: String.pad_leading("∞", @element_chars_size)
+  defp format_float(@negative_infinity), do: String.pad_leading("-∞", @element_chars_size)
+  defp format_float(<<f::float-little-32>>), do: format_float(f)
 
   defp format_float(f) when is_float(f) do
     f

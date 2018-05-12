@@ -635,6 +635,15 @@ defmodule MatrexTest do
              "\e[37m#Matrex\e[97m[\e[33m10\e[97m×\e[33m1\e[97m]\n\e[37m┌         ┐\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0\e[37m │\n│\e[33m     1.0 \e[37m│\n└         ┘"
   end
 
+  test "#inspect/1 inspects matrix with infinities and NaNs" do
+    one = Matrex.new("1 0 -1; 1 2 3; 4 5 6")
+    two = Matrex.new("0 0 0; 0 1 0; 1 0 1")
+    result = Matrex.divide(one, two)
+
+    assert Matrex.Inspect.do_inspect(result) ==
+             "\e[37m#Matrex\e[97m[\e[33m3\e[97m×\e[33m3\e[97m]\n\e[37m┌                         ┐\n│\e[33m       ∞     NaN      -∞\e[37m │\n│\e[33m       ∞     2.0       ∞\e[37m │\n│\e[33m     4.0       ∞     6.0 \e[37m│\n└                         ┘"
+  end
+
   test "#inspect/1 inspects large matrix, skipping rows" do
     matrix = Matrex.magic(100)
 
