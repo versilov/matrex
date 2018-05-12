@@ -358,6 +358,34 @@ defmodule MatrexTest do
     assert Matrex.neg(matrix) == expected
   end
 
+  test "#new creates matrix from text representation" do
+    from_text =
+      Matrex.new("""
+        1.00000   0.10000   0.60000   1.10000
+        1.00000   0.20000   0.70000   1.20000
+        1.00000   0.30000   0.80000   1.30000
+        1.00000   0.40000   0.90000   1.40000
+        1.00000   0.50000   1.00000   1.50000
+      """)
+
+    expected =
+      Matrex.new([
+        [1.0, 0.1, 0.6, 1.1],
+        [1.0, 0.2, 0.7, 1.2],
+        [1.0, 0.3, 0.8, 1.3],
+        [1.0, 0.4, 0.9, 1.4],
+        [1.0, 0.5, 1.0, 1.5]
+      ])
+
+    assert from_text == expected
+  end
+
+  test "#new creates matirx from one-line text form" do
+    from_line = Matrex.new("1;0;1;0;1")
+    expected = Matrex.new([[1], [0], [1], [0], [1]])
+    assert from_line == expected
+  end
+
   test "#new creates a new matrix initialized by a function" do
     rows = 2
     columns = 3

@@ -89,6 +89,26 @@ defmodule Matrex do
   def fetch(
         %Matrex{
           data: <<
+            _rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            data::binary
+          >>
+        },
+        a..b
+      )
+      when b > a and columns == 1,
+      do:
+        {:ok,
+         %Matrex{
+           data:
+             <<b - a::unsigned-integer-little-32, 1::unsigned-integer-little-32,
+               binary_part(data, a * 4, (b - a) * 4)::binary>>
+         }}
+
+  @impl Access
+  def fetch(
+        %Matrex{
+          data: <<
             rows::unsigned-integer-little-32,
             _columns::unsigned-integer-little-32,
             _rest::binary
@@ -780,13 +800,6 @@ defmodule Matrex do
       :filename.extension(file_name) == ".csv" ->
         file_name
         |> File.read!()
-        |> String.split("\n")
-        |> Enum.reject(&(String.length(&1) == 0))
-        |> Enum.map(fn line ->
-          line
-          |> String.split(",")
-          |> Enum.map(fn f -> Float.parse(f) |> elem(0) end)
-        end)
         |> new()
 
       :filename.extension(file_name) == ".mtx" ->
@@ -981,6 +994,49 @@ defmodule Matrex do
     rows = length(list_of_lists)
     cols = length(first_list)
     new(rows, cols, list_of_lists)
+  end
+
+  @doc """
+  Creates new matrix from text representation (i.e., from MatLab/Octave output).
+
+  ## Examples
+
+      iex> Matrex.new("1;0;1;0;1")
+      #Matrex[5×1]
+      ┌         ┐
+      │     1.0 │
+      │     0.0 │
+      │     1.0 │
+      │     0.0 │
+      │     1.0 │
+      └         ┘
+
+      iex> Matrex.new(\"\"\"
+      ...>         1.00000   0.10000   0.60000   1.10000
+      ...>         1.00000   0.20000   0.70000   1.20000
+      ...>         1.00000   0.30000   0.80000   1.30000
+      ...>         1.00000   0.40000   0.90000   1.40000
+      ...>         1.00000   0.50000   1.00000   1.50000
+      ...>       \"\"\")
+      #Matrex[5×4]
+      ┌                                 ┐
+      │     1.0     0.1     0.6     1.1 │
+      │     1.0     0.2     0.7     1.2 │
+      │     1.0     0.3     0.8     1.3 │
+      │     1.0     0.4     0.9     1.4 │
+      │     1.0     0.5     1.0     1.5 │
+      └                                 ┘
+  """
+  @spec new(binary) :: matrex
+  def new(text) when is_binary(text) do
+    text
+    |> String.split(["\n", ";"], trim: true)
+    |> Enum.map(fn line ->
+      line
+      |> String.split(["\s", ","], trim: true)
+      |> Enum.map(fn f -> Float.parse(f) |> elem(0) end)
+    end)
+    |> new()
   end
 
   defp new_matrix_from_function(0, _, accumulator), do: %Matrex{data: accumulator}
