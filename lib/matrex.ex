@@ -184,9 +184,11 @@ defmodule Matrex do
   end
 
   @doc """
-  Adds two matrices. NIF.
+  Adds two matrices or scalar to each element of matrix. NIF.
 
-  ## Example
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Examples
 
       iex> Matrex.add(Matrex.new([[1,2,3],[4,5,6]]), Matrex.new([[7,8,9],[10,11,12]]))
       #Matrex[2×3]
@@ -194,15 +196,6 @@ defmodule Matrex do
       │     8.0    10.0    12.0 │
       │    14.0    16.0    18.0 │
       └                         ┘
-
-  """
-  @spec add(matrex, matrex) :: matrex
-  def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
-
-  @doc """
-  Adds scalar value to each element of the matrix. NIF.
-
-  ## Example
 
       iex> m = Matrex.magic(3)
       #Matrex[3×3]
@@ -219,6 +212,9 @@ defmodule Matrex do
       │     5.0    10.0     3.0 │
       └                         ┘
   """
+  @spec add(matrex, matrex) :: matrex
+  def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
+
   @spec add(matrex, number) :: matrex
   def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
     do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
