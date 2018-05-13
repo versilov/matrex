@@ -1,3 +1,26 @@
+# Copyright (C) 2001 and 2002 by Carl Edward Rasmussen. Date 2002-02-13
+#
+#
+# (C) Copyright 1999, 2000 & 2001, Carl Edward Rasmussen
+#
+# Permission is granted for anyone to copy, use, or modify these
+# programs and accompanying documents for purposes of research or
+# education, provided this copyright notice is retained, and note is
+# made of any changes that have been made.
+#
+# These programs and documents are distributed without any warranty,
+# express or implied.  As the programs were written for research
+# purposes only, they have not been tested to the degree that would be
+# advisable in any important application.  All use of these programs is
+# entirely at the user's own risk.
+#
+# [ml-class] Changes Made:
+# 1) Function name and argument specifications
+# 2) Output display
+#
+# [versilov] Changes:
+# 1) Ported to Elixir
+
 defmodule Matrex.Algorithms do
   @moduledoc """
   Contains machine learning algorithms using matrices.
@@ -347,5 +370,55 @@ defmodule Matrex.Algorithms do
       z2 ->
         z2
     end
+  end
+
+  def profile_fmincg() do
+    x = Matrex.load("test/X.mtx")
+    y = Matrex.load("test/y.mtx")
+    theta = Matrex.zeros(x[:cols], 1)
+
+    lambda = 0.01
+    iterations = 100
+
+    y3 = Matrex.apply(y, fn val -> if(val == 1, do: 1.0, else: 0.0) end)
+
+    {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
+  end
+
+  defp lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda})
+       when is_number(lambda) do
+    m = y[:rows]
+
+    h = Matrex.dot(x, theta) |> Matrex.apply(:sigmoid)
+    l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
+
+    normalization =
+      Matrex.dot_tn(l, Matrex.multiply(theta, theta))
+      |> Matrex.first()
+      |> Kernel.*(lambda / (2 * m))
+
+    j =
+      y
+      |> Matrex.multiply(-1)
+      |> Matrex.dot_tn(Matrex.apply(h, :log))
+      |> Matrex.substract(
+        Matrex.dot_tn(
+          Matrex.substract(1, y),
+          Matrex.apply(Matrex.substract(1, h), :log)
+        )
+      )
+      |> Matrex.first()
+      |> (fn
+            NaN -> NaN
+            x -> x / m + normalization
+          end).()
+
+    grad =
+      x
+      |> Matrex.dot_tn(Matrex.substract(h, y))
+      |> Matrex.add(Matrex.multiply(Matrex.multiply(theta, l), lambda))
+      |> Matrex.multiply(1 / m)
+
+    {j, grad}
   end
 end

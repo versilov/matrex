@@ -1,6 +1,8 @@
 defmodule Matrex.Inspect do
   @moduledoc false
 
+  @ansi_formatting ~r/\e\[\d{2}m/
+
   def inspect(%Matrex{} = matrex) do
     IO.puts(do_inspect(matrex))
     matrex
@@ -28,11 +30,15 @@ defmodule Matrex.Inspect do
           |> Enum.join()
       )
 
-    top_row_length = String.length(List.first(rows_as_strings) || "") + 1
-    bottom_row_length = String.length(List.last(rows_as_strings) || "") + 1
-    top = "#{IO.ANSI.white()}┌#{String.pad_trailing("", top_row_length)}┐\n│#{IO.ANSI.yellow()}"
-    bottom = " #{IO.ANSI.white()}│\n└#{String.pad_trailing("", bottom_row_length)}┘"
-    contents_str = rows_as_strings |> Enum.join(IO.ANSI.white() <> " │\n│" <> IO.ANSI.yellow())
+    top_row_length =
+      String.length(List.first(rows_as_strings) |> String.replace(@ansi_formatting, "") || "") + 1
+
+    bottom_row_length =
+      String.length(List.last(rows_as_strings) |> String.replace(@ansi_formatting, "") || "") + 1
+
+    top = "#{IO.ANSI.reset()}┌#{String.pad_trailing("", top_row_length)}┐\n│#{IO.ANSI.yellow()}"
+    bottom = " #{IO.ANSI.reset()}│\n└#{String.pad_trailing("", bottom_row_length)}┘"
+    contents_str = rows_as_strings |> Enum.join(IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow())
     "#{header(rows, columns)}\n#{top}#{contents_str}#{bottom}"
   end
 
@@ -71,8 +77,8 @@ defmodule Matrex.Inspect do
 
     row_length = row_length(columns, suffix_size, prefix_size)
     half_row_length = div(row_length, 2)
-    top = "#{IO.ANSI.white()}┌#{String.pad_trailing("", row_length)}┐\n│#{IO.ANSI.yellow()}"
-    bottom = " #{IO.ANSI.white()}│\n└#{String.pad_trailing("", row_length)}┘"
+    top = "#{IO.ANSI.reset()}┌#{String.pad_trailing("", row_length)}┐\n│#{IO.ANSI.yellow()}"
+    bottom = " #{IO.ANSI.reset()}│\n└#{String.pad_trailing("", row_length)}┘"
 
     contents_str =
       rows_as_strings
@@ -160,10 +166,23 @@ defmodule Matrex.Inspect do
   @not_a_number <<0, 0, 192, 255>>
   @positive_infinity <<0, 0, 128, 127>>
   @negative_infinity <<0, 0, 128, 255>>
+  @zero <<0, 0, 0, 0>>
 
-  defp format_float(@not_a_number), do: String.pad_leading("NaN", @element_chars_size)
-  defp format_float(@positive_infinity), do: String.pad_leading("∞", @element_chars_size)
-  defp format_float(@negative_infinity), do: String.pad_leading("-∞", @element_chars_size)
+  defp format_float(@not_a_number),
+    do: "#{IO.ANSI.red()}#{String.pad_leading("NaN ", @element_chars_size)}#{IO.ANSI.yellow()}"
+
+  defp format_float(@positive_infinity),
+    do: "#{IO.ANSI.cyan()}#{String.pad_leading("∞  ", @element_chars_size)}#{IO.ANSI.yellow()}"
+
+  defp format_float(@negative_infinity),
+    do: "#{IO.ANSI.cyan()}#{String.pad_leading("-∞  ", @element_chars_size)}#{IO.ANSI.yellow()}"
+
+  defp format_float(@zero),
+    do:
+      "#{IO.ANSI.light_black()}#{String.pad_leading("0.0", @element_chars_size)}#{
+        IO.ANSI.yellow()
+      }"
+
   defp format_float(<<f::float-little-32>>), do: format_float(f)
 
   defp format_float(f) when is_float(f) do
@@ -213,11 +232,11 @@ defmodule Matrex.Inspect do
   defp joiner(columns, suffix_size, prefix_size) when suffix_size + prefix_size >= columns,
     do: " #{IO.ANSI.white()}│\n│#{IO.ANSI.yellow()}"
 
-  defp joiner(_, _, _), do: IO.ANSI.white() <> "  … " <> IO.ANSI.yellow()
+  defp joiner(_, _, _), do: IO.ANSI.reset() <> "  … " <> IO.ANSI.yellow()
 
   defp header(rows, columns),
     do:
-      "#{IO.ANSI.white()}#Matrex#{IO.ANSI.light_white()}[#{IO.ANSI.yellow()}#{rows}#{
+      "#{IO.ANSI.reset()}#Matrex#{IO.ANSI.light_white()}[#{IO.ANSI.yellow()}#{rows}#{
         IO.ANSI.light_white()
       }×#{IO.ANSI.yellow()}#{columns}#{IO.ANSI.light_white()}]"
 end
