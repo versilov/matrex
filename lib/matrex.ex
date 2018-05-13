@@ -26,7 +26,7 @@ defmodule Matrex do
       └                         ┘
 
 
-  There are also several shortcuts for getting properties of matrix:
+  There are also several shortcuts for getting dimensions of matrix:
 
       iex> m[:rows]
       3
@@ -34,11 +34,22 @@ defmodule Matrex do
       iex> m[:size]
       {3, 3}
 
+  calculating maximum value of the whole matrix:
+
       iex> m[:max]
       9.0
 
+  or just one of it's rows:
+
+      iex> m[2][:max]
+      7.0
+
+  calculating one-based index of the maximum element for the whole matrix:
+
       iex> m[:argmax]
       8
+
+  and a row:
 
       iex> m[2][:argmax]
       3
@@ -46,7 +57,7 @@ defmodule Matrex do
   ## NaN and Infinity
 
   Float special values, like `NaN` and `Inf` live well inside matrices.
-  But when getting them into Elixir they are transferred to `Nan`,`Inf` and `NegInf` atoms,
+  But when getting them into Elixir they are transferred to `NaN`,`Inf` and `NegInf` atoms,
   because BEAM does not accept special values as valid floats.
 
       iex> m = Matrex.eye(3)
@@ -60,9 +71,9 @@ defmodule Matrex do
       iex> n = Matrex.divide(m, Matrex.zeros(3))
       #Matrex[3×3]
       ┌                         ┐
-      │       ∞     NaN     NaN │
-      │     NaN       ∞     NaN │
-      │     NaN     NaN       ∞ │
+      │     ∞      NaN     NaN  │
+      │    NaN      ∞      NaN  │
+      │    NaN     NaN      ∞   │
       └                         ┘
 
       iex> n[1][1]

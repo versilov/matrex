@@ -46,12 +46,24 @@ defmodule Matrex.Algorithms do
   @red 1.0
 
   defmodule FMinCG do
+    @moduledoc false
+
     defstruct ~w(f fParams fX d1 d2 d3 df0 df1 df2 df3 f0 f1 f2 f3 i length limit m s x x0 z1 z2 z3 line_search_failed)a
   end
 
   @doc """
   Minimizes a continuous differentiable multivariate function.
 
+  `f` — cost function, that takes two paramteters: current version of `x` and `fParams`.
+
+  `x` — vector of parameters, which we try to optimize,
+  so that cost function returns the minimum value.
+
+  `fParams` — this value is passed as the second parameter to the cost function.
+
+  `length` — number of iterations to perform.
+
+  Returns column matrix of found solutions, list of cost function values and number of iterations used.
   """
 
   @spec fmincg(
@@ -112,25 +124,25 @@ defmodule Matrex.Algorithms do
     |> iteration()
   end
 
-  def iteration(%FMinCG{i: i, length: length, fX: fX, x: x})
-      when i >= length do
+  defp iteration(%FMinCG{i: i, length: length, fX: fX, x: x})
+       when i >= length do
     IO.puts("Iterations #{i} | Cost: #{List.last(fX)}")
 
     {x, fX, i}
   end
 
-  def iteration(
-        %FMinCG{
-          f: f,
-          fParams: fParams,
-          d1: d1,
-          df1: df1,
-          f1: f1,
-          s: s,
-          x: x,
-          z1: z1
-        } = data
-      ) do
+  defp iteration(
+         %FMinCG{
+           f: f,
+           fParams: fParams,
+           d1: d1,
+           df1: df1,
+           f1: f1,
+           s: s,
+           x: x,
+           z1: z1
+         } = data
+       ) do
     data = %{
       data
       | x0: x,
@@ -163,7 +175,7 @@ defmodule Matrex.Algorithms do
     iteration(%{data | i: data.i + 1})
   end
 
-  def process_result(data, true) do
+  defp process_result(data, true) do
     f1 = data.f2
     fX = data.fX ++ [f1]
 
@@ -209,7 +221,7 @@ defmodule Matrex.Algorithms do
     }
   end
 
-  def process_result(data, false) do
+  defp process_result(data, false) do
     df1 = data.df0
     {df2, df1} = {df1, data.df2}
     s = Matrex.neg(df1)
@@ -239,7 +251,7 @@ defmodule Matrex.Algorithms do
   #
   # def iteration2(%FMinCG{m: 0} = data), do: {false, data}
 
-  def iteration2(%FMinCG{} = data) do
+  defp iteration2(%FMinCG{} = data) do
     data = tighten(data)
 
     cond do
@@ -285,11 +297,11 @@ defmodule Matrex.Algorithms do
     end
   end
 
-  def tighten(%FMinCG{f2: f2, f1: f1, z1: z1, d1: d1, d2: d2, m: m} = data)
-      when not (((f2 != NaN and f2 > f1 + z1 * @rho * d1) or d2 > -@sig * d1) and m > 0),
-      do: data
+  defp tighten(%FMinCG{f2: f2, f1: f1, z1: z1, d1: d1, d2: d2, m: m} = data)
+       when not (((f2 != NaN and f2 > f1 + z1 * @rho * d1) or d2 > -@sig * d1) and m > 0),
+       do: data
 
-  def tighten(%FMinCG{d2: d2, d3: d3, f1: f1, f2: f2, f3: f3, z1: z1, z3: z3} = data) do
+  defp tighten(%FMinCG{d2: d2, d3: d3, f1: f1, f2: f2, f3: f3, z1: z1, z3: z3} = data) do
     # tighten the bracket
 
     data = %{data | limit: z1}
@@ -329,10 +341,10 @@ defmodule Matrex.Algorithms do
     |> tighten()
   end
 
-  def a(d2, d3, f2, f3, z3), do: 6 * (f2 - f3) / z3 + 3 * (d2 + d3)
-  def b(d2, d3, f2, f3, z3), do: 3 * (f3 - f2) - z3 * (d3 + 2 * d2)
+  defp a(d2, d3, f2, f3, z3), do: 6 * (f2 - f3) / z3 + 3 * (d2 + d3)
+  defp b(d2, d3, f2, f3, z3), do: 3 * (f3 - f2) - z3 * (d3 + 2 * d2)
 
-  def z2(%FMinCG{d2: d2, d3: d3, f2: f2, f3: f3, z1: z1, z3: z3}, limit) do
+  defp z2(%FMinCG{d2: d2, d3: d3, f2: f2, f3: f3, z1: z1, z3: z3}, limit) do
     # make cubic extrapolation
 
     try do
@@ -372,7 +384,7 @@ defmodule Matrex.Algorithms do
     end
   end
 
-  def profile_fmincg() do
+  defp profile_fmincg() do
     x = Matrex.load("test/X.mtx")
     y = Matrex.load("test/y.mtx")
     theta = Matrex.zeros(x[:cols], 1)
