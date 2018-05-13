@@ -1145,7 +1145,7 @@ defmodule Matrex do
   end
 
   @spec float_to_binary(element | NaN | Inf | NegInf) :: binary
-  defp float_to_binary(val) when is_float(val), do: <<val::float-little-32>>
+  defp float_to_binary(val) when is_number(val), do: <<val::float-little-32>>
   defp float_to_binary(NaN), do: @not_a_number
   defp float_to_binary(Inf), do: @positive_infinity
   defp float_to_binary(NegInf), do: @negative_infinity
