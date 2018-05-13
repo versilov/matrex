@@ -18,7 +18,7 @@ defmodule AlgorithmsTest do
 
     y_t = Matrex.new("1;0;1;0;1")
     lambda_t = 3
-    {j, grad} = lr_cost_fun(theta_t, {x_t, y_t, lambda_t})
+    {j, grad} = Algorithms.lr_cost_fun(theta_t, {x_t, y_t, lambda_t})
 
     assert j == 2.5348193645477295
 
@@ -42,7 +42,9 @@ defmodule AlgorithmsTest do
         fn digit ->
           y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
 
-          {sX, fX, _i} = Algorithms.fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
+          {sX, fX, _i} =
+            Algorithms.fmincg(&Algorithms.lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
+
           {digit, List.last(fX), sX}
         end,
         max_concurrency: 4
@@ -67,49 +69,5 @@ defmodule AlgorithmsTest do
       |> IO.inspect(label: "Training set accuracy")
 
     assert accuracy > 95
-
-    # for digit <- 1..10 do
-    #   y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
-    #
-    #   {_sX, fX, _i} = Algorithms.fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
-    #   IO.inspect(List.last(fX), label: "#{digit}")
-    # end
-  end
-
-  defp lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda})
-       when is_number(lambda) do
-    m = y[:rows]
-
-    h = Matrex.dot(x, theta) |> Matrex.apply(:sigmoid)
-    l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
-
-    normalization =
-      Matrex.dot_tn(l, Matrex.multiply(theta, theta))
-      |> Matrex.first()
-      |> Kernel.*(lambda / (2 * m))
-
-    j =
-      y
-      |> Matrex.multiply(-1)
-      |> Matrex.dot_tn(Matrex.apply(h, :log))
-      |> Matrex.substract(
-        Matrex.dot_tn(
-          Matrex.substract(1, y),
-          Matrex.apply(Matrex.substract(1, h), :log)
-        )
-      )
-      |> Matrex.first()
-      |> (fn
-            NaN -> NaN
-            x -> x / m + normalization
-          end).()
-
-    grad =
-      x
-      |> Matrex.dot_tn(Matrex.substract(h, y))
-      |> Matrex.add(Matrex.multiply(Matrex.multiply(theta, l), lambda))
-      |> Matrex.divide(m)
-
-    {j, grad}
   end
 end

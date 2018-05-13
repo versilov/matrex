@@ -50,7 +50,7 @@ defmodule Matrex.NIFs do
   def apply_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec apply_math(binary, atom) :: binary
+  @spec apply_parallel_math(binary, atom) :: binary
   def apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
@@ -89,6 +89,11 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec dot_and_apply(binary, binary, atom) :: binary
+  def dot_and_apply(first, second, function)
+      when is_binary(first) and is_binary(second) and is_atom(function),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec dot_and_add(binary, binary, binary) :: binary
   def dot_and_add(first, second, third)
       when is_binary(first) and is_binary(second) and is_binary(third),
@@ -99,10 +104,8 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec dot_tn(binary, binary) :: binary
-  def dot_tn(first, second)
-      when is_binary(first) and is_binary(second),
-      do: :erlang.nif_error(:nif_library_not_loaded)
+  @spec dot_tn(binary, binary, number) :: binary
+  def dot_tn(first, second, aplha), do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec eye(non_neg_integer) :: binary
   def eye(size)

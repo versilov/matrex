@@ -7,6 +7,20 @@
 #define ASSERT_SIZES_MATCH(m1, m2) if (MX_ROWS(m1) != MX_ROWS(m2) || MX_COLS(m1) != MX_COLS(m2)) \
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
+//-----------------------------------------------------------------------------
+// Inner helper functions headers
+//-----------------------------------------------------------------------------
+
+static float
+get_scalar(ErlNifEnv *env, ERL_NIF_TERM arg);
+
+static inline ERL_NIF_TERM
+make_cell_value(ErlNifEnv* env, const float value);
+
+static ERL_NIF_TERM
+wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary);
+
+
 
 //-----------------------------------------------------------------------------
 // Exported nifs
@@ -44,7 +58,6 @@ static ERL_NIF_TERM
 add_scalar(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
-  double        large_scalar;
   float         scalar;
   float        *matrix_data, *result_data;
   uint64_t       data_size;
@@ -53,13 +66,7 @@ add_scalar(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   (void)(argc);
 
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
-  if (enif_get_double(env, argv[1], &large_scalar) == 0) {
-    long long_element;
-    enif_get_int64(env, argv[1], &long_element);
-
-    large_scalar = (double) long_element;
-  }
-  scalar = (float) large_scalar;
+  scalar = get_scalar(env, argv[1]);
 
   matrix_data = (float *) matrix.data;
   data_size   = MX_LENGTH(matrix_data);
@@ -247,7 +254,6 @@ static ERL_NIF_TERM
 divide_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
-  double        large_scalar;
   float         scalar;
   float        *matrix_data, *result_data;
   uint64_t       data_size;
@@ -255,14 +261,8 @@ divide_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 
   (void)(argc);
 
+  scalar = get_scalar(env, argv[0]);
   if (!enif_inspect_binary(env, argv[1], &matrix)) return enif_make_badarg(env);
-  if (enif_get_double(env, argv[0], &large_scalar) == 0) {
-    long long_element;
-    enif_get_int64(env, argv[0], &long_element);
-
-    large_scalar = (double) long_element;
-  }
-  scalar = (float) large_scalar;
 
   matrix_data = (float *) matrix.data;
   data_size   = MX_LENGTH(matrix_data);
@@ -339,6 +339,39 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+dot_and_apply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  first, second;
+  ERL_NIF_TERM  result;
+  float        *first_data, *second_data, *result_data;
+  char function_name[16];
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  if (enif_get_atom(env, argv[2], function_name, 16, ERL_NIF_LATIN1) == 0)
+    return enif_raise_exception(env, enif_make_string(env, "Second argument must be an atom.", ERL_NIF_LATIN1));
+
+
+  first_data  = (float *) first.data;
+  second_data = (float *) second.data;
+
+  if (MX_COLS(first_data) != MX_ROWS(second_data))
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
+
+  data_size   = MX_ROWS(first_data) * MX_COLS(second_data) + 2;
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_dot_and_apply(1.0, first_data, second_data, function_name, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -372,6 +405,7 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
+  float       alpha;
   uint64_t       data_size;
   size_t        result_size;
 
@@ -379,6 +413,7 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
   if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  alpha = get_scalar(env, argv[2]);
 
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
@@ -391,7 +426,7 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_dot_tn(first_data, second_data, result_data);
+  matrix_dot_tn(alpha, first_data, second_data, result_data);
 
   return result;
 }
@@ -420,7 +455,8 @@ eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  unsigned long rows, cols, value;
+  unsigned long rows, cols;
+  float value;
   float *result_data;
   size_t result_size;
 
@@ -428,7 +464,7 @@ fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   enif_get_uint64(env, argv[0], &rows);
   enif_get_uint64(env, argv[1], &cols);
-  enif_get_uint64(env, argv[2], &value);
+  value = get_scalar(env, argv[2]);
 
   result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -439,6 +475,32 @@ fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   matrix_fill(result_data, value);
 
   return result;
+}
+
+// Inner function for getting scalar from args list and casting it to float.
+// Scalars come as doubles or long integers.
+static float
+get_scalar(ErlNifEnv *env, ERL_NIF_TERM arg) {
+  double scalar;
+  if (enif_get_double(env, arg, &scalar) == 0) {
+    long long_scalar;
+    enif_get_int64(env, arg, &long_scalar);
+
+    scalar = (double) long_scalar;
+  }
+  return (float) scalar;
+}
+
+static inline ERL_NIF_TERM
+make_cell_value(ErlNifEnv* env, const float value) {
+  if (isfinite(value))
+    return enif_make_double(env, value);
+  if (isnan(value))
+    return enif_make_atom(env, "Elixir.NaN");
+  else if (isinf(value))
+    return enif_make_atom(env, "Elixir.Inf");
+  else
+    return enif_make_badarg(env);
 }
 
 static ERL_NIF_TERM
@@ -490,7 +552,6 @@ static ERL_NIF_TERM
 multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
-  double        large_scalar;
   float         scalar;
   float        *matrix_data, *result_data;
   uint64_t       data_size;
@@ -499,13 +560,7 @@ multiply_with_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   (void)(argc);
 
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
-  if (enif_get_double(env, argv[1], &large_scalar) == 0) {
-    long long_element;
-    enif_get_int64(env, argv[1], &long_element);
-
-    large_scalar = (double) long_element;
-  }
-  scalar = (float) large_scalar;
+  scalar = get_scalar(env, argv[1]);
 
   matrix_data = (float *) matrix.data;
   data_size   = MX_LENGTH(matrix_data);
@@ -539,26 +594,6 @@ neg(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   matrix_neg(matrix_data, result_data);
 
   return result;
-}
-
-
-
-static ERL_NIF_TERM
-wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary) {
-  // we make an empty erlang/elixir map object
-  ERL_NIF_TERM matrex = enif_make_new_map(env);
-
-  enif_make_map_put(env, matrex,
-                      enif_make_atom(env, "__struct__"),
-                      enif_make_atom(env, "Elixir.Matrex"),
-                      &matrex);
-
-  enif_make_map_put(env, matrex,
-                      enif_make_atom(env, "data"),
-                      matrix_binary,
-                      &matrex);
-
-  return matrex;
 }
 
 static ERL_NIF_TERM
@@ -622,7 +657,6 @@ set(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   uint32_t  result_size;
   unsigned long row;
   unsigned long column;
-  double        large_scalar;
   float         scalar;
   ERL_NIF_TERM  result;
   uint32_t rows, cols;
@@ -632,13 +666,8 @@ set(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
   enif_get_uint64(env, argv[1], &row);
   enif_get_uint64(env, argv[2], &column);
-  if (enif_get_double(env, argv[3], &large_scalar) == 0) {
-    long long_element;
-    enif_get_int64(env, argv[3], &long_element);
 
-    large_scalar = (double) long_element;
-  }
-  scalar = (float) large_scalar;
+  scalar = get_scalar(env, argv[3]);
 
   matrix_data = (float *) matrix.data;
   rows = MX_ROWS(matrix_data);
@@ -688,7 +717,6 @@ static ERL_NIF_TERM
 substract_from_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
-  double        large_scalar;
   float         scalar;
   float        *matrix_data, *result_data;
   uint64_t       data_size;
@@ -697,13 +725,7 @@ substract_from_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   (void)(argc);
 
   if (!enif_inspect_binary(env, argv[1], &matrix)) return enif_make_badarg(env);
-  if (enif_get_double(env, argv[0], &large_scalar) == 0) {
-    long long_element;
-    enif_get_int64(env, argv[0], &long_element);
-
-    large_scalar = (double) long_element;
-  }
-  scalar = (float) large_scalar;
+  scalar = get_scalar(env, argv[0]);
 
   matrix_data = (float *) matrix.data;
   data_size   = MX_LENGTH(matrix_data);
@@ -731,18 +753,6 @@ sum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   sum = matrix_sum(matrix_data);
 
   return enif_make_double(env, sum);
-}
-
-static inline ERL_NIF_TERM
-make_cell_value(ErlNifEnv* env, const float value) {
-  if (isfinite(value))
-    return enif_make_double(env, value);
-  if (isnan(value))
-    return enif_make_atom(env, "Elixir.NaN");
-  else if (isinf(value))
-    return enif_make_atom(env, "Elixir.Inf");
-  else
-    return enif_make_badarg(env);
 }
 
 static ERL_NIF_TERM
@@ -822,6 +832,24 @@ transpose(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary) {
+  // we make an empty erlang/elixir map object
+  ERL_NIF_TERM matrex = enif_make_new_map(env);
+
+  enif_make_map_put(env, matrex,
+                      enif_make_atom(env, "__struct__"),
+                      enif_make_atom(env, "Elixir.Matrex"),
+                      &matrex);
+
+  enif_make_map_put(env, matrex,
+                      enif_make_atom(env, "data"),
+                      matrix_binary,
+                      &matrex);
+
+  return matrex;
+}
+
+static ERL_NIF_TERM
 zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   long rows, cols;
@@ -855,8 +883,9 @@ static ErlNifFunc nif_functions[] = {
   {"divide_scalar",        2, divide_scalar,        0},
   {"dot",                  2, dot,                  0},
   {"dot_and_add",          3, dot_and_add,          0},
+  {"dot_and_apply",        3, dot_and_apply,        0},
   {"dot_nt",               2, dot_nt,               0},
-  {"dot_tn",               2, dot_tn,               0},
+  {"dot_tn",               3, dot_tn,               0},
   {"eye",                  1, eye,                  0},
   {"fill",                 3, fill,                 0},
   {"max",                  1, max,                  0},

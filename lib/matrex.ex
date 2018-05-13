@@ -342,38 +342,40 @@ defmodule Matrex do
       └                                         ┘
 
   """
+  @math_functions [
+    :exp,
+    :exp2,
+    :sigmoid,
+    :expm1,
+    :log,
+    :log2,
+    :sqrt,
+    :cbrt,
+    :ceil,
+    :floor,
+    :trunc,
+    :round,
+    :sin,
+    :cos,
+    :tan,
+    :asin,
+    :acos,
+    :atan,
+    :sinh,
+    :cosh,
+    :tanh,
+    :asinh,
+    :acosh,
+    :atanh,
+    :erf,
+    :erfc,
+    :tgamma,
+    :lgamma
+  ]
+
   @spec apply(matrex, atom) :: matrex
   def apply(%Matrex{data: data} = matrix, function)
-      when function in [
-             :exp,
-             :exp2,
-             :sigmoid,
-             :expm1,
-             :log,
-             :log2,
-             :sqrt,
-             :cbrt,
-             :ceil,
-             :floor,
-             :trunc,
-             :round,
-             :sin,
-             :cos,
-             :tan,
-             :asin,
-             :acos,
-             :atan,
-             :sinh,
-             :cosh,
-             :tanh,
-             :asinh,
-             :acosh,
-             :atanh,
-             :erf,
-             :erfc,
-             :tgamma,
-             :lgamma
-           ] do
+      when function in @math_functions do
     {rows, cols} = size(matrix)
 
     %Matrex{
@@ -785,6 +787,11 @@ defmodule Matrex do
   def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
     do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
 
+  @spec dot_and_apply(matrex, matrex, atom) :: matrex
+  def dot_and_apply(%Matrex{data: first}, %Matrex{data: second}, function)
+      when function in @math_functions,
+      do: %Matrex{data: NIFs.dot_and_apply(first, second, function)}
+
   @doc """
   Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
 
@@ -821,9 +828,9 @@ defmodule Matrex do
       └                 ┘
 
   """
-  @spec dot_tn(matrex, matrex) :: matrex
-  def dot_tn(%Matrex{data: first}, %Matrex{data: second}),
-    do: %Matrex{data: NIFs.dot_tn(first, second)}
+  @spec dot_tn(matrex, matrex, number) :: matrex
+  def dot_tn(%Matrex{data: first}, %Matrex{data: second}, alpha \\ 1.0) when is_number(alpha),
+    do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
 
   @doc """
   Create eye square matrix of given size

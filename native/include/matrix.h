@@ -31,7 +31,7 @@ Matrix
 matrix_new(uint32_t rows, uint32_t columns);
 
 void
-matrix_fill(Matrix matrix, int32_t value);
+matrix_fill(Matrix matrix, const float value);
 
 void
 matrix_random(Matrix matrix);
@@ -40,7 +40,7 @@ void
 matrix_zeros(Matrix matrix);
 
 void
-matrix_eye(Matrix matrix, int32_t value);
+matrix_eye(Matrix matrix, const float value);
 
 int32_t
 matrix_equal(Matrix first, Matrix second);
@@ -56,7 +56,7 @@ matrix_apply(const Matrix matrix, char* function_name, Matrix result);
 
 typedef float (*math_func_ptr_t)(float);
 
-math_func_ptr_t math_func_from_name(char* name);
+math_func_ptr_t math_func_from_name(const char* name);
 
 int32_t
 matrix_argmax(const Matrix matrix);
@@ -76,10 +76,15 @@ matrix_dot_and_add(
 );
 
 void
+matrix_dot_and_apply(
+  const float alpha, const Matrix first, const Matrix second, const char *function_name, Matrix result
+);
+
+void
 matrix_dot_nt(const Matrix first, const Matrix second, Matrix result);
 
 void
-matrix_dot_tn(const Matrix first, const Matrix second, Matrix result);
+matrix_dot_tn(const float alpha, const Matrix first, const Matrix second, Matrix result);
 
 float
 matrix_first(const Matrix matrix);

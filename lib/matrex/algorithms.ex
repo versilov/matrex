@@ -397,11 +397,11 @@ defmodule Matrex.Algorithms do
     {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
   end
 
-  defp lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda})
-       when is_number(lambda) do
+  def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda})
+      when is_number(lambda) do
     m = y[:rows]
 
-    h = Matrex.dot(x, theta) |> Matrex.apply(:sigmoid)
+    h = Matrex.dot_and_apply(x, theta, :sigmoid)
     l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
 
     normalization =
@@ -411,8 +411,7 @@ defmodule Matrex.Algorithms do
 
     j =
       y
-      |> Matrex.multiply(-1)
-      |> Matrex.dot_tn(Matrex.apply(h, :log))
+      |> Matrex.dot_tn(Matrex.apply(h, :log), -1)
       |> Matrex.substract(
         Matrex.dot_tn(
           Matrex.substract(1, y),
@@ -429,7 +428,7 @@ defmodule Matrex.Algorithms do
       x
       |> Matrex.dot_tn(Matrex.substract(h, y))
       |> Matrex.add(Matrex.multiply(Matrex.multiply(theta, l), lambda))
-      |> Matrex.multiply(1 / m)
+      |> Matrex.divide(m)
 
     {j, grad}
   end

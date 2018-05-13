@@ -30,7 +30,7 @@ matrix_new(uint32_t rows, uint32_t columns) {
 }
 
 void
-matrix_fill(Matrix matrix, int32_t value) {
+matrix_fill(Matrix matrix, const float value) {
   uint64_t length = MX_LENGTH(matrix);
 
   for (uint64_t index = 2; index < length; index += 1) {
@@ -50,7 +50,7 @@ matrix_random(Matrix matrix) {
 }
 
 void
-matrix_eye(Matrix matrix, int32_t value) {
+matrix_eye(Matrix matrix, const float value) {
   uint64_t length = MX_DATA_BYTE_SIZE(matrix);
   uint64_t rows = MX_ROWS(matrix);
   uint64_t cols = MX_COLS(matrix);
@@ -114,7 +114,7 @@ float sigmoidf(float x) {
   return 1.0f/(1.0f + expf(-x));
 }
 
-math_func_ptr_t math_func_from_name(char* name) {
+math_func_ptr_t math_func_from_name(const char* name) {
   if (strcmp(name, "exp") == 0)
     return &expf;
   if (strcmp(name, "exp2") == 0)
@@ -284,6 +284,40 @@ matrix_dot_and_add(
 }
 
 void
+matrix_dot_and_apply(
+  const float alpha, const Matrix first, const Matrix second, const char *function_name, Matrix result
+) {
+  math_func_ptr_t func = math_func_from_name(function_name);
+
+  uint64_t data_size = MX_ROWS(first) * MX_COLS(second) + 2;
+
+  MX_SET_ROWS(result, MX_ROWS(first));
+  MX_SET_COLS(result, MX_COLS(second));
+
+  cblas_sgemm(
+    CblasRowMajor,
+    CblasNoTrans,
+    CblasNoTrans,
+    MX_ROWS(first),
+    MX_COLS(second),
+    MX_COLS(first),
+    alpha,
+    first + 2,
+    MX_COLS(first),
+    second + 2,
+    MX_COLS(second),
+    0.0,
+    result + 2,
+    MX_COLS(result)
+  );
+
+  for(uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = func(result[index]);
+  }
+}
+
+
+void
 matrix_dot_nt(const Matrix first, const Matrix second, Matrix result) {
   MX_SET_ROWS(result, MX_ROWS(first));
   MX_SET_COLS(result, MX_ROWS(second));
@@ -307,7 +341,7 @@ matrix_dot_nt(const Matrix first, const Matrix second, Matrix result) {
 }
 
 void
-matrix_dot_tn(const Matrix first, const Matrix second, Matrix result) {
+matrix_dot_tn(const float alpha, const Matrix first, const Matrix second, Matrix result) {
   MX_SET_ROWS(result, MX_COLS(first));
   MX_SET_COLS(result, MX_COLS(second));
 
@@ -318,7 +352,7 @@ matrix_dot_tn(const Matrix first, const Matrix second, Matrix result) {
     MX_COLS(first),
     MX_COLS(second),
     MX_ROWS(first),
-    1.0,
+    alpha,
     first + 2,
     MX_COLS(first),
     second + 2,
