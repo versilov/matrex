@@ -35,18 +35,37 @@ defmodule AlgorithmsTest do
     lambda = 0.01
     iterations = 100
 
-    1..10
-    |> Task.async_stream(
-      fn digit ->
-        y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
+    solutions =
+      1..10
+      |> Task.async_stream(
+        fn digit ->
+          y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
 
-        {_sX, fX, _i} = Algorithms.fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
-        {digit, List.last(fX)}
-      end,
-      max_concurrency: 4
-    )
-    |> Enum.to_list()
-    |> IO.inspect()
+          {sX, fX, _i} = Algorithms.fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
+          {digit, List.last(fX), sX}
+        end,
+        max_concurrency: 4
+      )
+      |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
+      |> Matrex.new()
+      |> IO.inspect()
+
+    predictions =
+      x
+      |> Matrex.dot_nt(solutions)
+      |> Matrex.apply(:sigmoid)
+      |> IO.inspect()
+
+    accuracy =
+      1..predictions[:rows]
+      |> Enum.reduce(0, fn row, acc ->
+        if y[row] == predictions[row][:argmax] + 1, do: acc + 1, else: acc
+      end)
+      |> Kernel./(predictions[:rows])
+      |> Kernel.*(100)
+      |> IO.inspect(label: "Training set accuracy")
+
+    assert accuracy > 95
 
     # for digit <- 1..10 do
     #   y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
