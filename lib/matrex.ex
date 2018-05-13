@@ -43,7 +43,7 @@ defmodule Matrex do
   ## NaN and Infinity
 
   Float special values, like `NaN` and `Inf` live well inside matrices.
-  But when getting them into Elixir they are transferred to `nil` values,
+  But when getting them into Elixir they are transferred to `Nan`,`Inf` and `NegInf` atoms,
   because BEAM does not accept special values as valid floats.
 
       iex> m = Matrex.eye(3)
@@ -54,13 +54,19 @@ defmodule Matrex do
       │     0.0     0.0     1.0 │
       └                         ┘
 
-      iex> Matrex.divide(m, Matrex.zeros(3))
+      iex> n = Matrex.divide(m, Matrex.zeros(3))
       #Matrex[3×3]
       ┌                         ┐
       │       ∞     NaN     NaN │
       │     NaN       ∞     NaN │
       │     NaN     NaN       ∞ │
       └                         ┘
+
+      iex> n[1][1]
+      Inf
+
+      iex> n[1][2]
+      NaN
 
   """
 
@@ -597,9 +603,9 @@ defmodule Matrex do
   end
 
   @spec binary_to_float(<<_::32>>) :: element | nil
-  defp binary_to_float(@not_a_number), do: nil
-  defp binary_to_float(@positive_infinity), do: nil
-  defp binary_to_float(@negative_infinity), do: nil
+  defp binary_to_float(@not_a_number), do: NaN
+  defp binary_to_float(@positive_infinity), do: Inf
+  defp binary_to_float(@negative_infinity), do: NegInf
   defp binary_to_float(<<val::float-little-32>>), do: val
 
   @doc """
@@ -851,27 +857,16 @@ defmodule Matrex do
       6.0
 
   """
-  @spec first(matrex) :: element | nil
+  @spec first(matrex) :: element | NaN | Inf | NegInf
   def first(%Matrex{
         data: <<
           _rows::unsigned-integer-little-32,
           _columns::unsigned-integer-little-32,
-          specl_float::binary-size(4),
-          _rest::binary
-        >>
-      })
-      when specl_float in [@not_a_number, @positive_infinity, @negative_infinity],
-      do: nil
-
-  def first(%Matrex{
-        data: <<
-          _rows::unsigned-integer-little-32,
-          _columns::unsigned-integer-little-32,
-          element::float-little-32,
+          element::binary-4,
           _rest::binary
         >>
       }),
-      do: element
+      do: binary_to_float(element)
 
   @doc """
   Displays a visualization of the matrix.

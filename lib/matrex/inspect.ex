@@ -101,7 +101,7 @@ defmodule Matrex.Inspect do
   defp format_row(%Matrex{} = matrex, row, _rows, columns, suffix_size, prefix_size)
        when suffix_size + prefix_size >= columns do
     matrex
-    |> Matrex.row_to_list(row)
+    |> row_to_list_of_binaries(row)
     |> Enum.map(&format_float(&1))
     |> Enum.join()
   end
@@ -136,13 +136,13 @@ defmodule Matrex.Inspect do
 
   defp format_row_head_tail(<<>>, _, _), do: <<>>
 
-  defp format_row_head_tail(<<val::float-little-32, rest::binary>>, 1, prefix_size)
+  defp format_row_head_tail(<<val::binary-4, rest::binary>>, 1, prefix_size)
        when prefix_size > 0 do
     <<format_float(val) <> IO.ANSI.white() <> " │\n│" <> IO.ANSI.yellow(),
       format_row_head_tail(rest, 0, prefix_size)::binary>>
   end
 
-  defp format_row_head_tail(<<val::float-little-32, rest::binary>>, 0, prefix_size)
+  defp format_row_head_tail(<<val::binary-4, rest::binary>>, 0, prefix_size)
        when prefix_size > 0 do
     <<
       format_float(val)::binary,
@@ -151,7 +151,7 @@ defmodule Matrex.Inspect do
     >>
   end
 
-  defp format_row_head_tail(<<val::float-little-32, rest::binary>>, suffix_size, prefix_size)
+  defp format_row_head_tail(<<val::binary-4, rest::binary>>, suffix_size, prefix_size)
        when suffix_size > 0 do
     <<format_float(val)::binary,
       format_row_head_tail(rest, suffix_size - 1, prefix_size)::binary>>
