@@ -733,6 +733,18 @@ sum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   return enif_make_double(env, sum);
 }
 
+static inline ERL_NIF_TERM
+make_cell_value(ErlNifEnv* env, const float value) {
+  if (isfinite(value))
+    return enif_make_double(env, value);
+  if (isnan(value))
+    return enif_make_atom(env, "Elixir.NaN");
+  else if (isinf(value))
+    return enif_make_atom(env, "Elixir.Inf");
+  else
+    return enif_make_badarg(env);
+}
+
 static ERL_NIF_TERM
 to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   /* to_list(matrix) -> [first row, second row, ...,last row] */
@@ -750,9 +762,8 @@ to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   cols = MX_COLS(matrix_data);
 
   result = enif_make_list(env, 0);
-
   for (uint64_t i = rows*cols + 2; i-- > 2; ) {
-    result = enif_make_list_cell(env, enif_make_double(env, matrix_data[i]), result);
+    result = enif_make_list_cell(env, make_cell_value(env, matrix_data[i]), result);
   }
 
   return result;
@@ -779,7 +790,7 @@ to_list_of_lists(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   for (uint32_t r = rows; r-- > 0; ) {
     ERL_NIF_TERM row = enif_make_list(env, 0);
     for (uint32_t c = cols; c-- > 0; ) {
-      row = enif_make_list_cell(env, enif_make_double(env, matrix_data[2 + cols*r + c]), row);
+      row = enif_make_list_cell(env, make_cell_value(env, matrix_data[2 + cols*r + c]), row);
     }
     result = enif_make_list_cell(env, row, result);
   }
