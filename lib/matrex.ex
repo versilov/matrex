@@ -617,6 +617,24 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.divide(dividend, divisor)}
 
   @doc """
+  Divides every element of matrix by scalar value. NIF.
+
+  ## Example
+
+      iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
+      ...> |> Matrex.divide(2)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     5.0    10.0    12.5 │
+      │     4.0     4.5     2.0 │
+      └                         ┘
+
+  """
+  @spec divide(matrex, number) :: matrex
+  def divide(%Matrex{data: matrix}, scalar) when is_number(scalar),
+    do: %Matrex{data: NIFs.multiply_with_scalar(matrix, 1 / scalar)}
+
+  @doc """
   Matrix multiplication. NIF, via `cblas_sgemm()`.
 
   Number of columns of the first matrix must be equal to the number of rows of the second matrix.
