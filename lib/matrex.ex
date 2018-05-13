@@ -1,6 +1,67 @@
 defmodule Matrex do
   @moduledoc """
   Performs fast operations on matrices using native C code and CBLAS library.
+
+  ## Access behaviour
+
+  Access behaviour is partly implemented for Matrex, so you can do:
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> m[2][3]
+      7.0
+
+  Or even:
+
+      iex> m[1..2]
+      #Matrex[2×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      └                         ┘
+
+
+  There are also several shortcuts for getting properties of matrix:
+
+      iex> m[:rows]
+      3
+
+      iex> m[:size]
+      {3, 3}
+
+      iex> m[:max]
+      9.0
+
+      iex> m[:argmax]
+      7
+
+  ## NaN and Infinity
+
+  Float special values, like `NaN` and `Inf` live well inside matrices.
+  But when getting them into Elixir they are transferred to `nil` values,
+  because BEAM does not accept special values as valid floats.
+
+      iex> m = Matrex.eye(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     0.0     0.0 │
+      │     0.0     1.0     0.0 │
+      │     0.0     0.0     1.0 │
+      └                         ┘
+
+      iex> Matrex.divide(m, Matrex.zeros(3))
+      #Matrex[3×3]
+      ┌                         ┐
+      │       ∞     NaN     NaN │
+      │     NaN       ∞     NaN │
+      │     NaN     NaN       ∞ │
+      └                         ┘
+
   """
 
   alias Matrex.NIFs
@@ -12,10 +73,16 @@ defmodule Matrex do
   @type matrex :: %Matrex{data: binary}
   @type t :: matrex
 
+  # Float special values in binary form
+  @not_a_number <<0, 0, 192, 255>>
+  @positive_infinity <<0, 0, 128, 127>>
+  @negative_infinity <<0, 0, 128, 255>>
+
   @compile {:inline,
             add: 2,
             argmax: 1,
             at: 3,
+            binary_to_float: 1,
             column_to_list: 2,
             divide: 2,
             dot: 2,
@@ -524,9 +591,16 @@ defmodule Matrex do
     if col < 1 or col > columns,
       do: raise(ArgumentError, message: "Column position out of range: #{col}")
 
-    <<elem::float-little-32>> = binary_part(data, ((row - 1) * columns + (col - 1)) * 4, 4)
-    elem
+    data
+    |> binary_part(((row - 1) * columns + (col - 1)) * 4, 4)
+    |> binary_to_float()
   end
+
+  @spec binary_to_float(<<_::32>>) :: element | nil
+  defp binary_to_float(@not_a_number), do: nil
+  defp binary_to_float(@positive_infinity), do: nil
+  defp binary_to_float(@negative_infinity), do: nil
+  defp binary_to_float(<<val::float-little-32>>), do: val
 
   @doc """
   Get column of matrix as matrix (vector) in matrex form. One-based.
@@ -777,18 +851,18 @@ defmodule Matrex do
       6.0
 
   """
-  @not_a_number <<0, 0, 192, 255>>
+  @spec first(matrex) :: element | nil
   def first(%Matrex{
         data: <<
           _rows::unsigned-integer-little-32,
           _columns::unsigned-integer-little-32,
-          @not_a_number::binary,
+          specl_float::binary-size(4),
           _rest::binary
         >>
-      }),
-      do: raise(ArithmeticError)
+      })
+      when specl_float in [@not_a_number, @positive_infinity, @negative_infinity],
+      do: nil
 
-  @spec first(matrex) :: element
   def first(%Matrex{
         data: <<
           _rows::unsigned-integer-little-32,
