@@ -54,9 +54,20 @@ defmodule Matrex do
       iex> m[2][:argmax]
       3
 
+  ## Saving and loading matrix
+
+  You can save matrix into native binary file format (extra fast)
+  and CSV (slow, especially on large matrices).
+
+  Matrex support loading from CSV (slow) and native binary format (super fast).
+
+  Matrex CSV format is compatible with GNU Octave CSV output,
+  so you can use it to exchange data between two systems.
+
   ## NaN and Infinity
 
-  Float special values, like `NaN` and `Inf` live well inside matrices.
+  Float special values, like `NaN` and `Inf` live well inside matrices,
+  can be loaded from and saved to files.
   But when getting them into Elixir they are transferred to `NaN`,`Inf` and `NegInf` atoms,
   because BEAM does not accept special values as valid floats.
 
@@ -88,7 +99,7 @@ defmodule Matrex do
 
   @enforce_keys [:data]
   defstruct [:data]
-  @type element :: float
+  @type element :: float | NaN | Inf | NegInf
   @type index :: pos_integer
   @type matrex :: %Matrex{data: binary}
   @type t :: matrex
@@ -110,14 +121,17 @@ defmodule Matrex do
             dot_nt: 2,
             dot_tn: 2,
             eye: 1,
+            element_to_string: 1,
             fill: 3,
             fill: 2,
             first: 1,
             fetch: 2,
+            float_to_binary: 1,
             max: 1,
             multiply: 2,
             ones: 2,
             ones: 1,
+            parse_float: 1,
             random: 2,
             random: 1,
             row_to_list: 2,
@@ -1124,11 +1138,17 @@ defmodule Matrex do
         Enum.reduce(list_of_lists, initial, fn list, accumulator ->
           accumulator <>
             Enum.reduce(list, <<>>, fn element, partial ->
-              <<partial::binary, element::float-little-32>>
+              <<partial::binary, float_to_binary(element)::binary>>
             end)
         end)
     }
   end
+
+  @spec float_to_binary(element | NaN | Inf | NegInf) :: binary
+  defp float_to_binary(val) when is_float(val), do: <<val::float-little-32>>
+  defp float_to_binary(NaN), do: @not_a_number
+  defp float_to_binary(Inf), do: @positive_infinity
+  defp float_to_binary(NegInf), do: @negative_infinity
 
   @doc """
   Creates new matrix from list of lists.
@@ -1167,17 +1187,17 @@ defmodule Matrex do
       iex> Matrex.new(\"\"\"
       ...>         1.00000   0.10000   0.60000   1.10000
       ...>         1.00000   0.20000   0.70000   1.20000
-      ...>         1.00000   0.30000   0.80000   1.30000
-      ...>         1.00000   0.40000   0.90000   1.40000
-      ...>         1.00000   0.50000   1.00000   1.50000
+      ...>         1.00000       NaN   0.80000   1.30000
+      ...>             Inf   0.40000   0.90000   1.40000
+      ...>         1.00000   0.50000    NegInf   1.50000
       ...>       \"\"\")
       #Matrex[5×4]
       ┌                                 ┐
       │     1.0     0.1     0.6     1.1 │
       │     1.0     0.2     0.7     1.2 │
-      │     1.0     0.3     0.8     1.3 │
-      │     1.0     0.4     0.9     1.4 │
-      │     1.0     0.5     1.0     1.5 │
+      │     1.0    NaN      0.8     1.3 │
+      │     ∞       0.4     0.9     1.4 │
+      │     1.0     0.5    -∞       1.5 │
       └                                 ┘
   """
   @spec new(binary) :: matrex
@@ -1187,10 +1207,17 @@ defmodule Matrex do
     |> Enum.map(fn line ->
       line
       |> String.split(["\s", ","], trim: true)
-      |> Enum.map(fn f -> Float.parse(f) |> elem(0) end)
+      |> Enum.map(fn f -> parse_float(f) end)
     end)
     |> new()
   end
+
+  @spec parse_float(binary) :: element | NaN | Inf | NegInf
+  defp parse_float("NaN"), do: NaN
+  defp parse_float("Inf"), do: Inf
+  defp parse_float("-Inf"), do: NegInf
+  defp parse_float("NegInf"), do: NegInf
+  defp parse_float(string), do: Float.parse(string) |> elem(0)
 
   defp new_matrix_from_function(0, _, accumulator), do: %Matrex{data: accumulator}
 
@@ -1336,7 +1363,7 @@ defmodule Matrex do
   @doc """
   Saves matrex into file.
 
-  Only binary format (.mtx) is supported.
+  Only binary format (.mtx) is supported currently.
 
   ## Example
 
@@ -1344,15 +1371,64 @@ defmodule Matrex do
       :ok
   """
   @spec save(matrex, binary) :: :ok | :error
-  def save(%Matrex{data: data}, file_name) do
+  def save(
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, data::binary>> =
+              matrix
+        },
+        file_name
+      )
+      when is_binary(file_name) do
     cond do
       :filename.extension(file_name) == ".mtx" ->
-        File.write!(file_name, data)
+        File.write!(file_name, matrix)
+
+      :filename.extension(file_name) == ".csv" ->
+        # csv = to_csv(data, cols, cols, "")
+        csv =
+          matrix
+          |> NIFs.to_list_of_lists()
+          |> Enum.reduce("", fn row_list, acc ->
+            acc <>
+              Enum.reduce(row_list, "", fn elem, line ->
+                line <> element_to_string(elem) <> ","
+              end) <> "\n"
+          end)
+
+        File.write!(file_name, csv)
 
       true ->
-        raise "Unknown file format suggested: #{file_name}"
+        raise "Unknown file format: #{file_name}"
     end
   end
+
+  defp to_csv(<<>>, _col, _total_csolumns, csv), do: csv
+
+  defp to_csv(<<elem::binary-4, rest::binary>>, 1, total_columns, csv) do
+    new_csv = csv <> float_to_string(elem) <> "\n"
+    to_csv(rest, total_columns, total_columns, new_csv)
+  end
+
+  defp to_csv(<<elem::binary-4, rest::binary>>, col, total_columns, csv) do
+    new_csv = csv <> float_to_string(elem) <> ","
+    to_csv(rest, col - 1, total_columns, new_csv)
+  end
+
+  @spec element_to_string(element) :: binary
+  # Save zero values without fraction part to save space
+  defp element_to_string(0.0), do: "0"
+  defp element_to_string(val) when is_float(val), do: Float.to_string(val)
+  defp element_to_string(NaN), do: "NaN"
+  defp element_to_string(Inf), do: "Inf"
+  defp element_to_string(NegInf), do: "-Inf"
+
+  @spec float_to_string(binary) :: binary
+  defp float_to_string(<<0::float-little-32>>), do: "0"
+  defp float_to_string(<<val::float-little-32>>), do: Float.to_string(val)
+  defp float_to_string(@not_a_number), do: "NaN"
+  defp float_to_string(@positive_infinity), do: "Inf"
+  defp float_to_string(@negative_infinity), do: "-Inf"
 
   @doc """
   Set element of matrix at the specified position (one-based) to new value.
@@ -1511,7 +1587,7 @@ defmodule Matrex do
   @doc """
   Converts to list of lists
 
-  ## Example
+  ## Examples
 
       iex> m = Matrex.magic(3)
       #Matrex[3×3]
@@ -1522,6 +1598,17 @@ defmodule Matrex do
       └                         ┘
       iex> Matrex.to_list_of_lists(m)
       [[8.0, 1.0, 6.0], [3.0, 5.0, 7.0], [4.0, 9.0, 2.0]]
+
+      iex> r = Matrex.divide(Matrex.eye(3), Matrex.zeros(3))
+      #Matrex[3×3]
+      ┌                         ┐
+      │     ∞      NaN     NaN  │
+      │    NaN      ∞      NaN  │
+      │    NaN     NaN      ∞   │
+      └                         ┘
+      iex> Matrex.to_list_of_lists(r)
+      [[Inf, NaN, NaN], [NaN, Inf, NaN], [NaN, NaN, Inf]]
+
   """
   @spec to_list_of_lists(matrex) :: list(list(element))
   def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
