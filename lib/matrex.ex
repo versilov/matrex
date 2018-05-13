@@ -598,11 +598,11 @@ defmodule Matrex do
     do: NIFs.column_to_list(matrix, column - 1)
 
   @doc """
-  Divides two matrices element-wise. NIF.
+  Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF.
 
   Raises `ErlangError` if matrices' sizes do not match.
 
-  ## Example
+  ## Examples
 
       iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
       ...> |> Matrex.divide(Matrex.new([[5, 10, 5], [4, 3, 4]]))
@@ -611,15 +611,6 @@ defmodule Matrex do
       │     2.0     2.0     5.0 │
       │     2.0     3.0     1.0 │
       └                         ┘
-  """
-  @spec divide(matrex, matrex) :: matrex
-  def divide(%Matrex{data: dividend}, %Matrex{data: divisor}),
-    do: %Matrex{data: NIFs.divide(dividend, divisor)}
-
-  @doc """
-  Divides every element of matrix by scalar value. NIF.
-
-  ## Example
 
       iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
       ...> |> Matrex.divide(2)
@@ -629,10 +620,25 @@ defmodule Matrex do
       │     4.0     4.5     2.0 │
       └                         ┘
 
+      iex> Matrex.divide(100, Matrex.new([[10, 20, 25], [8, 16, 4]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │    10.0     5.0     4.0 │
+      │    12.5    6.25    25.0 │
+      └                         ┘
+
   """
+  @spec divide(matrex, matrex) :: matrex
+  def divide(%Matrex{data: dividend}, %Matrex{data: divisor}),
+    do: %Matrex{data: NIFs.divide(dividend, divisor)}
+
   @spec divide(matrex, number) :: matrex
   def divide(%Matrex{data: matrix}, scalar) when is_number(scalar),
     do: %Matrex{data: NIFs.multiply_with_scalar(matrix, 1 / scalar)}
+
+  @spec divide(number, matrex) :: matrex
+  def divide(scalar, %Matrex{data: matrix}) when is_number(scalar),
+    do: %Matrex{data: NIFs.divide_scalar(scalar, matrix)}
 
   @doc """
   Matrix multiplication. NIF, via `cblas_sgemm()`.

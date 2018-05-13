@@ -65,6 +65,9 @@ void
 matrix_divide(const Matrix first, const Matrix second, Matrix result);
 
 void
+matrix_divide_scalar(const float scalar, const Matrix divisor, Matrix result);
+
+void
 matrix_dot(const Matrix first, const Matrix second, Matrix result);
 
 void

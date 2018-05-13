@@ -147,6 +147,13 @@ defmodule MatrexTest do
     assert Matrex.divide(dividend, 2) == expected
   end
 
+  test "#divide divides scalar by matrix" do
+    matrix = Matrex.new([[10, 20, 25], [8, 16, 4]])
+    expected = Matrex.new("10.0 5.0 4.0; 12.5 6.25 25.0")
+
+    assert Matrex.divide(100, matrix) == expected
+  end
+
   test "#divide raises when sizes do not match" do
     first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     second = Matrex.new(2, 2, [[5, 2], [3, 4]])

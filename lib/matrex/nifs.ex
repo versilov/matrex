@@ -79,6 +79,11 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec divide_scalar(number, binary) :: binary
+  def divide_scalar(scalar, matrix)
+      when is_number(scalar) and is_binary(matrix),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec dot(binary, binary) :: binary
   def dot(first, second)
       when is_binary(first) and is_binary(second),
