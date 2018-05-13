@@ -1,4 +1,5 @@
 defmodule AlgorithmsTest do
+  ExUnit.start()
   use ExUnit.Case, async: true
 
   alias Matrex.Algorithms
@@ -27,7 +28,7 @@ defmodule AlgorithmsTest do
              )
   end
 
-  test "#fmincg" do
+  test "#fmincg does linear regression" do
     x = Matrex.load("test/X.mtx")
     y = Matrex.load("test/y.mtx")
     theta = Matrex.zeros(x[:cols], 1)
@@ -48,18 +49,18 @@ defmodule AlgorithmsTest do
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
       |> Matrex.new()
-      |> IO.inspect()
+      |> IO.inspect(label: "Solutions")
 
     predictions =
       x
       |> Matrex.dot_nt(solutions)
       |> Matrex.apply(:sigmoid)
-      |> IO.inspect()
+      |> IO.inspect(label: "Predictions")
 
     accuracy =
       1..predictions[:rows]
       |> Enum.reduce(0, fn row, acc ->
-        if y[row] == predictions[row][:argmax] + 1, do: acc + 1, else: acc
+        if y[row] == predictions[row][:argmax], do: acc + 1, else: acc
       end)
       |> Kernel./(predictions[:rows])
       |> Kernel.*(100)
@@ -107,7 +108,7 @@ defmodule AlgorithmsTest do
       x
       |> Matrex.dot_tn(Matrex.substract(h, y))
       |> Matrex.add(Matrex.multiply(Matrex.multiply(theta, l), lambda))
-      |> Matrex.multiply(1 / m)
+      |> Matrex.divide(m)
 
     {j, grad}
   end
