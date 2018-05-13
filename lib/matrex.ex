@@ -99,7 +99,7 @@ defmodule Matrex do
 
   @enforce_keys [:data]
   defstruct [:data]
-  @type element :: float | NaN | Inf | NegInf
+  @type element :: number | NaN | Inf | NegInf
   @type index :: pos_integer
   @type matrex :: %Matrex{data: binary}
   @type t :: matrex
