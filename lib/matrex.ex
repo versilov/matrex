@@ -38,7 +38,10 @@ defmodule Matrex do
       9.0
 
       iex> m[:argmax]
-      7
+      8
+
+      iex> m[2][:argmax]
+      3
 
   ## NaN and Infinity
 
@@ -538,7 +541,7 @@ defmodule Matrex do
   end
 
   @doc """
-  Returns zero-based index of the biggest element. NIF.
+  Returns one-based index of the biggest element. NIF.
 
   ## Example
 
@@ -554,7 +557,7 @@ defmodule Matrex do
 
   """
   @spec argmax(matrex) :: index
-  def argmax(%Matrex{data: data}), do: NIFs.argmax(data)
+  def argmax(%Matrex{data: data}), do: NIFs.argmax(data) + 1
 
   @doc """
   Get element of a matrix at given one-based (row, column) position.
