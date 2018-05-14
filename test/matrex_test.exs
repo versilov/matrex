@@ -536,6 +536,11 @@ defmodule MatrexTest do
     assert Matrex.at(random_matrix, 5, 7) != Matrex.at(random_matrix, 5, 8)
   end
 
+  test "#random does not generate the same matrix twice" do
+    result = Matrex.divide(Matrex.random(100), Matrex.random(100))
+    assert not Enum.any?(result, &(&1 == 1.0))
+  end
+
   test "#row returns row of the matrix" do
     matrix =
       Matrex.new([
