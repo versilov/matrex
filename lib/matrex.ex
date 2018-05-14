@@ -56,10 +56,8 @@ defmodule Matrex do
 
   ## Saving and loading matrix
 
-  You can save matrix into native binary file format (extra fast)
+  You can save/load matrix with native binary file format (extra fast)
   and CSV (slow, especially on large matrices).
-
-  Matrex support loading from CSV (slow) and native binary format (super fast).
 
   Matrex CSV format is compatible with GNU Octave CSV output,
   so you can use it to exchange data between two systems.
@@ -282,6 +280,29 @@ defmodule Matrex do
   defimpl Inspect do
     def inspect(%Matrex{} = matrex, %{width: screen_width}),
       do: Matrex.Inspect.do_inspect(matrex, screen_width)
+  end
+
+  defimpl Enumerable do
+    def reduce(
+          %Matrex{
+            data:
+              <<_rows::unsigned-integer-little-32, _cols::unsigned-integer-little-32,
+                body::binary>>
+          },
+          {:cont, acc},
+          fun
+        ),
+        do: reduce(body, {:cont, acc}, fun)
+
+    def reduce(_, {:halt, acc}, _fun), do: {:halted, acc}
+
+    def reduce(<<matrix::binary>>, {:suspend, acc}, fun),
+      do: {:suspended, acc, &reduce(matrix, &1, fun)}
+
+    def reduce(<<elem::binary-4, rest::binary>>, {:cont, acc}, fun),
+      do: reduce(rest, fun.(Matrex.binary_to_float(elem), acc), fun)
+
+    def reduce(<<>>, {:cont, acc}, _fun), do: {:done, acc}
   end
 
   @doc """
@@ -632,11 +653,12 @@ defmodule Matrex do
     |> binary_to_float()
   end
 
-  @spec binary_to_float(<<_::32>>) :: element | nil
-  defp binary_to_float(@not_a_number), do: NaN
-  defp binary_to_float(@positive_infinity), do: Inf
-  defp binary_to_float(@negative_infinity), do: NegInf
-  defp binary_to_float(<<val::float-little-32>>), do: val
+  @doc false
+  @spec binary_to_float(<<_::32>>) :: element | NaN | Inf | NegInf
+  def binary_to_float(@not_a_number), do: NaN
+  def binary_to_float(@positive_infinity), do: Inf
+  def binary_to_float(@negative_infinity), do: NegInf
+  def binary_to_float(<<val::float-little-32>>), do: val
 
   @doc """
   Get column of matrix as matrix (vector) in matrex form. One-based.
@@ -735,7 +757,7 @@ defmodule Matrex do
 
   """
   @spec divide(matrex, matrex) :: matrex
-  def divide(%Matrex{data: dividend}, %Matrex{data: divisor}),
+  def divide(%Matrex{data: dividend} = _dividend, %Matrex{data: divisor} = _divisor),
     do: %Matrex{data: NIFs.divide(dividend, divisor)}
 
   @spec divide(matrex, number) :: matrex
@@ -768,7 +790,7 @@ defmodule Matrex do
   def dot(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.dot(first, second)}
 
   @doc """
-  Matrix multiplication with addition of thitd matrix.  NIF, via `cblas_sgemm()`.
+  Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
 
   Raises `ErlangError` if matrices' sizes do not match.
 
@@ -787,6 +809,20 @@ defmodule Matrex do
   def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
     do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
 
+  @doc """
+  Computes dot product of two matrices, then applies math function to each element
+  of the resulting matrix.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot_and_add(Matrex.new([[1, 2], [3, 4], [5, 6]]), :sqrt)
+      #Matrex[2×2]
+      ┌                 ┐
+      │ 4.69042  5.2915 │
+      │     7.0     8.0 │
+      └                 ┘
+  """
   @spec dot_and_apply(matrex, matrex, atom) :: matrex
   def dot_and_apply(%Matrex{data: first}, %Matrex{data: second}, function)
       when function in @math_functions,
@@ -1285,6 +1321,8 @@ defmodule Matrex do
   @doc """
   Create matrix of random floats in [0, 1] range. NIF.
 
+  C language RNG is re-seeded on each function call with `srandom(time(NULL) + clock())`.
+
   ## Example
 
       iex> Matrex.random(4,3)
@@ -1303,6 +1341,8 @@ defmodule Matrex do
 
   @doc """
   Create square matrix of random floats.
+
+  See `random/2` for details.
 
   ## Example
 
@@ -1341,6 +1381,8 @@ defmodule Matrex do
   @doc """
   Get row of matrix as matrix (vector) in matrex form. One-based.
 
+  You can use shorter `matrex[n]` syntax for the same result.
+
   ## Example
 
       iex> m = Matrex.magic(5)
@@ -1353,6 +1395,11 @@ defmodule Matrex do
       │    15.0    17.0    24.0     1.0     8.0 │
       └                                         ┘
       iex> Matrex.row(m, 4)
+      #Matrex[1×5]
+      ┌                                         ┐
+      │     9.0    11.0    18.0    25.0     2.0 │
+      └                                         ┘
+      iex> m[4]
       #Matrex[1×5]
       ┌                                         ┐
       │     9.0    11.0    18.0    25.0     2.0 │
@@ -1379,7 +1426,9 @@ defmodule Matrex do
   @doc """
   Saves matrex into file.
 
-  Only binary format (.mtx) is supported currently.
+  Binary (.mtx) and CSV formats are supported currently.
+
+  Format is defined by the extension of the filename.
 
   ## Example
 
@@ -1389,9 +1438,7 @@ defmodule Matrex do
   @spec save(matrex, binary) :: :ok | :error
   def save(
         %Matrex{
-          data:
-            <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, data::binary>> =
-              matrix
+          data: matrix
         },
         file_name
       )
