@@ -153,4 +153,9 @@ defmodule MatrexBench do
   bench "Linear regression cost function on 5_000 MNIST digits" do
     Matrex.Algorithms.lr_cost_fun(@theta, {@x, @y, 0.01})
   end
+
+  bench "fmincg(20)" do
+    Matrex.Algorithms.fmincg(&Matrex.Algorithms.lr_cost_fun/2, @theta, {@x, @y, 0.01}, 20)
+    true
+  end
 end

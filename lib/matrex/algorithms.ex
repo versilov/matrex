@@ -23,7 +23,7 @@
 
 defmodule Matrex.Algorithms do
   @moduledoc """
-  Contains machine learning algorithms using matrices.
+  Machine learning algorithms using matrices.
   """
 
   # a bunch of constants for line searches
@@ -54,7 +54,9 @@ defmodule Matrex.Algorithms do
   @doc """
   Minimizes a continuous differentiable multivariate function.
 
-  `f` — cost function, that takes two paramteters: current version of `x` and `fParams`.
+  Ported to Elixir from Octave version, found in Andre Ng's course, (c) Carl Edward Rasmussen.
+
+  `f` — cost function, that takes two paramteters: current version of `x` and `fParams`. For example, `lr_cost_fun/2`.
 
   `x` — vector of parameters, which we try to optimize,
   so that cost function returns the minimum value.
@@ -64,6 +66,15 @@ defmodule Matrex.Algorithms do
   `length` — number of iterations to perform.
 
   Returns column matrix of found solutions, list of cost function values and number of iterations used.
+
+  Starting point is given by `x` (D by 1), and the function `f`, must
+  return a function value and a vector of partial derivatives. The Polack-Ribiere
+  flavour of conjugate gradients is used to compute search directions,
+  and a line search using quadratic and cubic polynomial approximations and the
+  Wolfe-Powell stopping criteria is used together with the slope ratio method
+  for guessing initial step sizes. Additionally a bunch of checks are made to
+  make sure that exploration is taking place and that extrapolation will not
+  be unboundedly large.
   """
 
   @spec fmincg(
@@ -126,7 +137,7 @@ defmodule Matrex.Algorithms do
 
   defp iteration(%FMinCG{i: i, length: length, fX: fX, x: x})
        when i >= length do
-    IO.puts("Iterations #{i} | Cost: #{List.last(fX)}")
+    IO.puts(legend(i, List.last(fX)))
 
     {x, fX, i}
   end
@@ -175,11 +186,17 @@ defmodule Matrex.Algorithms do
     iteration(%{data | i: data.i + 1})
   end
 
+  defp legend(iterations, cost),
+    do:
+      "Iterations #{IO.ANSI.yellow()}#{iterations}#{IO.ANSI.reset()} | Cost: #{IO.ANSI.yellow()}#{
+        cost
+      }#{IO.ANSI.reset()}"
+
   defp process_result(data, true) do
     f1 = data.f2
     fX = data.fX ++ [f1]
 
-    IO.write("Iteration #{data.i} | Cost: #{f1}\r")
+    IO.write(legend(data.i, f1) <> "\r")
 
     s =
       Matrex.substract(
@@ -384,27 +401,32 @@ defmodule Matrex.Algorithms do
     end
   end
 
-  defp profile_fmincg() do
-    x = Matrex.load("test/X.mtx")
-    y = Matrex.load("test/y.mtx")
-    theta = Matrex.zeros(x[:cols], 1)
+  @doc """
+  Linear regression cost and gradient function with regularization from Andrew Ng's course (ex3).
 
-    lambda = 0.01
-    iterations = 100
+  Computes the cost of using `theta` as the parameter for regularized logistic regression and the
+  gradient of the cost w.r.t. to the parameters.
 
-    y3 = Matrex.apply(y, fn val -> if(val == 1, do: 1.0, else: 0.0) end)
+  Compatible with `fmincg/4` algorithm from thise module.
 
-    {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
-  end
+  `theta`  — parameters, to compute cost for
 
-  def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda})
+  `X`  — training data input.
+
+  `y`  — training data output.
+
+  `lambda`  — regularization parameter.
+
+  """
+  @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number}) :: {float, Matrex.t()}
+  def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
       when is_number(lambda) do
     m = y[:rows]
 
     h = Matrex.dot_and_apply(x, theta, :sigmoid)
     l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
 
-    normalization =
+    regularization =
       Matrex.dot_tn(l, Matrex.multiply(theta, theta))
       |> Matrex.first()
       |> Kernel.*(lambda / (2 * m))
@@ -421,7 +443,7 @@ defmodule Matrex.Algorithms do
       |> Matrex.first()
       |> (fn
             NaN -> NaN
-            x -> x / m + normalization
+            x -> x / m + regularization
           end).()
 
     grad =
@@ -431,5 +453,18 @@ defmodule Matrex.Algorithms do
       |> Matrex.divide(m)
 
     {j, grad}
+  end
+
+  defp profile_fmincg() do
+    x = Matrex.load("test/X.mtx")
+    y = Matrex.load("test/y.mtx")
+    theta = Matrex.zeros(x[:cols], 1)
+
+    lambda = 0.01
+    iterations = 100
+
+    y3 = Matrex.apply(y, fn val -> if(val == 1, do: 1.0, else: 0.0) end)
+
+    {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
   end
 end
