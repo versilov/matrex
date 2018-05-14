@@ -918,4 +918,17 @@ upgrade(ErlNifEnv* env, void** priv_data, void** old_priv_data, ERL_NIF_TERM loa
   return 0;
 }
 
-ERL_NIF_INIT(Elixir.Matrex.NIFs, nif_functions, NULL, NULL, upgrade, NULL)
+// Used for RNG initialization.
+int
+load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info) {
+  // Silence "unused var" warnings.
+  (void)(env);
+  (void)(priv_data);
+  (void)(load_info);
+
+  srandom(time(NULL) + clock());
+
+  return 0;
+}
+
+ERL_NIF_INIT(Elixir.Matrex.NIFs, nif_functions, load, NULL, upgrade, NULL)

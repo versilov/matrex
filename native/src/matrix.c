@@ -446,7 +446,7 @@ void
 matrix_random(Matrix matrix) {
   uint64_t length = MX_LENGTH(matrix);
 
-  srandom(time(NULL) + clock());
+  // RNG is initialized in ELR_NIF_INIT load function.
 
   for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = (float)random()/(float)RAND_MAX;
