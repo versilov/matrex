@@ -257,27 +257,6 @@ defmodule MatrexTest do
     assert output == expected
   end
 
-  test "#load loads matrex from CSV" do
-    m = Matrex.load("test/matrex.csv")
-
-    expected =
-      Matrex.new([
-        [0, 0.0004825367647058945, -0.005166973039215696, -0.01552127919774978],
-        [-0.01616482843137255, -0.01621783088235294, -0.01609620098039215, -0.005737132352941162],
-        [0.0006824018588724531, 0, 0, 0],
-        [0, 0, 0, 0],
-        [1.153158165611269e-31, 3.785249770368984e-18, 0, 0]
-      ])
-
-    assert m == expected
-  end
-
-  test "#load raises, when format is unkonwn" do
-    assert_raise RuntimeError, fn ->
-      Matrex.load("test/matrex.txt")
-    end
-  end
-
   test "#max returns the maximum element from the matrix" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
     expected = 6
@@ -341,12 +320,6 @@ defmodule MatrexTest do
       ])
 
     assert Matrex.row_to_list(matrix, 3) == [3, 10, 12, 19, 21]
-  end
-
-  test "#save raises, when file format is unkonwn" do
-    assert_raise RuntimeError, fn ->
-      Matrex.random(3) |> Matrex.save("m.txt")
-    end
   end
 
   test "#set changes value of one element" do

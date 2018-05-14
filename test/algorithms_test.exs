@@ -34,7 +34,7 @@ defmodule AlgorithmsTest do
     theta = Matrex.zeros(x[:cols], 1)
 
     lambda = 0.01
-    iterations = 100
+    iterations = 70
 
     solutions =
       1..10
@@ -51,13 +51,15 @@ defmodule AlgorithmsTest do
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
       |> Matrex.new()
-      |> IO.inspect(label: "Solutions")
+
+    # |> IO.inspect(label: "Solutions")
 
     predictions =
       x
       |> Matrex.dot_nt(solutions)
       |> Matrex.apply(:sigmoid)
-      |> IO.inspect(label: "Predictions")
+
+    # |> IO.inspect(label: "Predictions")
 
     accuracy =
       1..predictions[:rows]
@@ -66,7 +68,7 @@ defmodule AlgorithmsTest do
       end)
       |> Kernel./(predictions[:rows])
       |> Kernel.*(100)
-      |> IO.inspect(label: "Training set accuracy")
+      |> IO.inspect(label: "\rTraining set accuracy")
 
     assert accuracy > 95
   end
