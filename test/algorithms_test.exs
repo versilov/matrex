@@ -34,7 +34,7 @@ defmodule AlgorithmsTest do
     theta = Matrex.zeros(x[:cols], 1)
 
     lambda = 0.01
-    iterations = 70
+    iterations = 100
 
     solutions =
       1..10
