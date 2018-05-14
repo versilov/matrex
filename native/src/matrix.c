@@ -29,47 +29,6 @@ matrix_new(uint32_t rows, uint32_t columns) {
   return result;
 }
 
-void
-matrix_fill(Matrix matrix, const float value) {
-  uint64_t length = MX_LENGTH(matrix);
-
-  for (uint64_t index = 2; index < length; index += 1) {
-    matrix[index] = value;
-  }
-}
-
-void
-matrix_random(Matrix matrix) {
-  uint64_t length = MX_LENGTH(matrix);
-
-  srandom(time(NULL));
-
-  for (uint64_t index = 2; index < length; index += 1) {
-    matrix[index] = (float)random()/(float)RAND_MAX;
-  }
-}
-
-void
-matrix_eye(Matrix matrix, const float value) {
-  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
-  uint64_t rows = MX_ROWS(matrix);
-  uint64_t cols = MX_COLS(matrix);
-
-  // Set it all to zeros
-  memset((void*)&matrix[2], 0, length);
-
-  // Now set the diagonal
-  for (uint64_t x = 0, y = 0; x < cols && y < rows; x++, y++) {
-    matrix[2 + y*cols + x] = value;
-  }
-}
-
-void
-matrix_zeros(Matrix matrix) {
-  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
-  memset((void*)&matrix[2], 0, length);
-}
-
 int32_t
 matrix_equal(const Matrix first, const Matrix second) {
   if (MX_ROWS(first) != MX_ROWS(second)) return 0;
@@ -363,6 +322,30 @@ matrix_dot_tn(const float alpha, const Matrix first, const Matrix second, Matrix
   );
 }
 
+void
+matrix_eye(Matrix matrix, const float value) {
+  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
+  uint64_t rows = MX_ROWS(matrix);
+  uint64_t cols = MX_COLS(matrix);
+
+  // Set it all to zeros
+  memset((void*)&matrix[2], 0, length);
+
+  // Now set the diagonal
+  for (uint64_t x = 0, y = 0; x < cols && y < rows; x++, y++) {
+    matrix[2 + y*cols + x] = value;
+  }
+}
+
+void
+matrix_fill(Matrix matrix, const float value) {
+  uint64_t length = MX_LENGTH(matrix);
+
+  for (uint64_t index = 2; index < length; index += 1) {
+    matrix[index] = value;
+  }
+}
+
 float
 matrix_first(const Matrix matrix) {
   return matrix[2];
@@ -460,6 +443,17 @@ matrix_neg(
 }
 
 void
+matrix_random(Matrix matrix) {
+  uint64_t length = MX_LENGTH(matrix);
+
+  srandom(time(NULL));
+
+  for (uint64_t index = 2; index < length; index += 1) {
+    matrix[index] = (float)random()/(float)RAND_MAX;
+  }
+}
+
+void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result) {
   // uint64_t data_size = MX_BYTE_SIZE(matrix);
 
@@ -518,4 +512,11 @@ matrix_transpose(const Matrix matrix, Matrix result) {
       result[result_index] = matrix[matrix_index];
     }
   }
+}
+
+
+void
+matrix_zeros(Matrix matrix) {
+  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
+  memset((void*)&matrix[2], 0, length);
 }

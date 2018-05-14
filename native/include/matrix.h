@@ -30,18 +30,6 @@ matrix_free(Matrix *matrix);
 Matrix
 matrix_new(uint32_t rows, uint32_t columns);
 
-void
-matrix_fill(Matrix matrix, const float value);
-
-void
-matrix_random(Matrix matrix);
-
-void
-matrix_zeros(Matrix matrix);
-
-void
-matrix_eye(Matrix matrix, const float value);
-
 int32_t
 matrix_equal(Matrix first, Matrix second);
 
@@ -86,6 +74,12 @@ matrix_dot_nt(const Matrix first, const Matrix second, Matrix result);
 void
 matrix_dot_tn(const float alpha, const Matrix first, const Matrix second, Matrix result);
 
+void
+matrix_eye(Matrix matrix, const float value);
+
+void
+matrix_fill(Matrix matrix, const float value);
+
 float
 matrix_first(const Matrix matrix);
 
@@ -108,6 +102,9 @@ void
 matrix_neg(const Matrix matrix, Matrix result);
 
 void
+matrix_random(Matrix matrix);
+
+void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result);
 
 void
@@ -121,4 +118,8 @@ matrix_sum(const Matrix matrix);
 
 void
 matrix_transpose(const Matrix matrix, Matrix result);
+
+void
+matrix_zeros(Matrix matrix);
+
 #endif

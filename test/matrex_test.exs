@@ -233,6 +233,32 @@ defmodule MatrexTest do
     end
   end
 
+  test "#eye creates a diagonal square matirx" do
+    expected =
+      Matrex.new([
+        [1, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 1]
+      ])
+
+    assert Matrex.eye(5) == expected
+  end
+
+  test "#eye creates a diagonal square matrix of arbitrary value" do
+    expected =
+      Matrex.new([
+        [7.39, 0, 0, 0, 0],
+        [0, 7.39, 0, 0, 0],
+        [0, 0, 7.39, 0, 0],
+        [0, 0, 0, 7.39, 0],
+        [0, 0, 0, 0, 7.39]
+      ])
+
+    assert Matrex.eye(5, 7.39) == expected
+  end
+
   test "#first returns the first element of the matrix" do
     matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
 

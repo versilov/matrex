@@ -107,9 +107,9 @@ defmodule Matrex.NIFs do
   @spec dot_tn(binary, binary, number) :: binary
   def dot_tn(first, second, aplha), do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec eye(non_neg_integer) :: binary
-  def eye(size)
-      when is_integer(size),
+  @spec eye(pos_integer, number) :: binary
+  def eye(size, value)
+      when is_integer(size) and is_number(value),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec fill(non_neg_integer, non_neg_integer, non_neg_integer) :: binary

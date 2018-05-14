@@ -835,7 +835,7 @@ defmodule Matrex do
   @doc """
   Create eye square matrix of given size
 
-  ## Example
+  ## Examples
 
       iex> Matrex.eye(3)
       #Matrex[3×3]
@@ -844,9 +844,18 @@ defmodule Matrex do
       │     0.0     1.0     0.0 │
       │     0.0     0.0     1.0 │
       └                         ┘
+
+      iex> Matrex.eye(3, 2.95)
+      #Matrex[3×3]
+      ┌                         ┐
+      │    2.95     0.0     0.0 │
+      │     0.0    2.95     0.0 │
+      │     0.0     0.0    2.95 │
+      └                         ┘
   """
-  @spec eye(index) :: matrex
-  def eye(size) when is_integer(size), do: %Matrex{data: NIFs.eye(size)}
+  @spec eye(index, element) :: matrex
+  def eye(size, value \\ 1.0) when is_integer(size) and is_number(value),
+    do: %Matrex{data: NIFs.eye(size, value)}
 
   @doc """
   Create matrix filled with given value. NIF.

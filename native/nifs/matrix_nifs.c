@@ -435,19 +435,22 @@ static ERL_NIF_TERM
 eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   unsigned long size;
+  float value;
   float *result_data;
   size_t result_size;
 
   (void)(argc);
 
   enif_get_uint64(env, argv[0], &size);
+  value = get_scalar(env, argv[1]);
+
 
   result_size = (size*size + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
   MX_SET_ROWS(result_data, size);
   MX_SET_COLS(result_data, size);
-  matrix_eye(result_data, 1);
+  matrix_eye(result_data, value);
 
   return result;
 }
@@ -886,7 +889,7 @@ static ErlNifFunc nif_functions[] = {
   {"dot_and_apply",        3, dot_and_apply,        0},
   {"dot_nt",               2, dot_nt,               0},
   {"dot_tn",               3, dot_tn,               0},
-  {"eye",                  1, eye,                  0},
+  {"eye",                  2, eye,                  0},
   {"fill",                 3, fill,                 0},
   {"max",                  1, max,                  0},
   {"multiply",             2, multiply,             0},
