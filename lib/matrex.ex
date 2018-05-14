@@ -833,7 +833,7 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
 
   @doc """
-  Create eye square matrix of given size
+  Create eye (identity) square matrix of given size.
 
   ## Examples
 
