@@ -1,7 +1,7 @@
 defmodule Matrex.Inspect do
   @moduledoc false
 
-  @ansi_formatting ~r/\e\[\d{2}m/
+  @ansi_formatting ~r/\e\[(\d{1,2};?)+m/
 
   def inspect(%Matrex{} = matrex) do
     IO.puts(do_inspect(matrex))
@@ -144,7 +144,7 @@ defmodule Matrex.Inspect do
 
   defp format_row_head_tail(<<val::binary-4, rest::binary>>, 1, prefix_size)
        when prefix_size > 0 do
-    <<format_float(val) <> IO.ANSI.white() <> " │\n│" <> IO.ANSI.yellow(),
+    <<format_float(val) <> IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow(),
       format_row_head_tail(rest, 0, prefix_size)::binary>>
   end
 
@@ -179,7 +179,7 @@ defmodule Matrex.Inspect do
 
   defp format_float(@zero),
     do:
-      "#{IO.ANSI.light_black()}#{String.pad_leading("0.0", @element_chars_size)}#{
+      "#{IO.ANSI.color(2, 2, 2)}#{String.pad_leading("0.0", @element_chars_size)}#{
         IO.ANSI.yellow()
       }"
 
@@ -236,7 +236,7 @@ defmodule Matrex.Inspect do
 
   defp header(rows, columns),
     do:
-      "#{IO.ANSI.reset()}#Matrex#{IO.ANSI.light_white()}[#{IO.ANSI.yellow()}#{rows}#{
-        IO.ANSI.light_white()
-      }×#{IO.ANSI.yellow()}#{columns}#{IO.ANSI.light_white()}]"
+      "#{IO.ANSI.reset()}#Matrex[#{IO.ANSI.yellow()}#{rows}#{IO.ANSI.reset()}×#{IO.ANSI.yellow()}#{
+        columns
+      }#{IO.ANSI.reset()}]"
 end
