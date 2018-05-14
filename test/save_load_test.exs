@@ -29,6 +29,7 @@ defmodule SaveLoadTest do
   end
 
   @test_file_name_mtx "_test_m.mtx"
+  @test_file_name_csv "_test_m.csv"
   test "Saves to and loads from binary .mtx format" do
     m = Matrex.random(100)
     Matrex.save(m, @test_file_name_mtx)
@@ -43,5 +44,21 @@ defmodule SaveLoadTest do
     l = Matrex.load(@test_file_name_mtx)
     assert l == m
     assert File.rm(@test_file_name_mtx) == :ok
+  end
+
+  test "Saves to and loads from .csv format" do
+    m = Matrex.random(100)
+    Matrex.save(m, @test_file_name_csv)
+    l = Matrex.load(@test_file_name_csv)
+    assert l == m
+    assert File.rm(@test_file_name_csv) == :ok
+  end
+
+  test "Saves to and loads from CSV matirx with special values." do
+    m = Matrex.divide(Matrex.eye(50), Matrex.zeros(50))
+    Matrex.save(m, @test_file_name_csv)
+    l = Matrex.load(@test_file_name_csv)
+    assert l == m
+    assert File.rm(@test_file_name_csv) == :ok
   end
 end

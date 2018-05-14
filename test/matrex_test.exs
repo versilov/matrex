@@ -25,6 +25,7 @@ defmodule MatrexTest do
     expected = Matrex.new([[4, 5, 6], [7, 8, 9]])
 
     assert Matrex.add(matrix, scalar) == expected
+    assert Matrex.add(scalar, matrix) == expected
   end
 
   test "#apply/2 applies a math function on each element of the matrix" do
@@ -94,7 +95,7 @@ defmodule MatrexTest do
     assert Matrex.at(matrix, 1, 3) == 3
   end
 
-  test "#at raises when position is out of range" do
+  test "#at raises when row position is out of range" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
 
     assert_raise ArgumentError, fn ->
@@ -103,6 +104,18 @@ defmodule MatrexTest do
 
     assert_raise ArgumentError, fn ->
       Matrex.at(matrix, -2, 1)
+    end
+  end
+
+  test "#at raises when column position is out of range" do
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
+
+    assert_raise ArgumentError, fn ->
+      Matrex.at(matrix, 2, 5)
+    end
+
+    assert_raise ArgumentError, fn ->
+      Matrex.at(matrix, 1, -1)
     end
   end
 
@@ -373,6 +386,18 @@ defmodule MatrexTest do
     expected = 1000 * 1000 * 10_000
 
     assert Matrex.sum(input) == expected
+  end
+
+  test "#to_list returs whole matrix as a list" do
+    matrex = Matrex.new("1 2 3; 4 5 6; 7 8 9;")
+    expected = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
+    assert Matrex.to_list(matrex) == expected
+  end
+
+  test "#to_list_of_lists returs whole matrix as a list" do
+    matrex = Matrex.magic(3)
+    expected = [[8.0, 1.0, 6.0], [3.0, 5.0, 7.0], [4.0, 9.0, 2.0]]
+    assert Matrex.to_list_of_lists(matrex) == expected
   end
 
   test "#transpose transposes a matrix" do

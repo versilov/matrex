@@ -21,8 +21,12 @@ defmodule EnumerableTest do
     assert Enum.sort(matrex) == Enum.to_list(1..49)
   end
 
-  test "#slice gives part of matrix", %{matrex: matrex} do
+  test "#slice gives part of matrix by range of indexes", %{matrex: matrex} do
     assert Enum.slice(matrex, 7..10) == [39.0, 48.0, 1.0, 10.0]
+  end
+
+  test "#slice gives part of matrix by offset and length", %{matrex: matrex} do
+    assert Enum.slice(matrex, 7, 4) == [39.0, 48.0, 1.0, 10.0]
   end
 
   test "#max gives maximum element", %{matrex: matrex} do
