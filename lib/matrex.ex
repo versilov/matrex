@@ -54,6 +54,23 @@ defmodule Matrex do
       iex> m[2][:argmax]
       3
 
+  ## Enumerable protocol
+
+  Matrex implements `Enumerable`, so, all kinds of `Enum` functions are applicable:
+
+      iex> Enum.member?(m, 2.0)
+      true
+
+      iex> Enum.count(m)
+      9
+
+      iex> Enum.sum(m)
+      45
+
+  For functions, that exist both in `Enum` and in `Matrex` it's preferred to use Matrex
+  version, beacuse it's usually much, much faster. I.e., for 1 000 x 1 000 matrix `Matrex.sum/1`
+  and `Matrex.to_list/1` are 438 and 41 times faster, respectively, than their `Enum` counterparts.
+
   ## Saving and loading matrix
 
   You can save/load matrix with native binary file format (extra fast)
@@ -101,6 +118,9 @@ defmodule Matrex do
   @type index :: pos_integer
   @type matrex :: %Matrex{data: binary}
   @type t :: matrex
+
+  # Size of matrix element (float) in bytes
+  @element_size 4
 
   # Float special values in binary form
   @not_a_number <<0, 0, 192, 255>>
@@ -283,6 +303,35 @@ defmodule Matrex do
   end
 
   defimpl Enumerable do
+    # Matrix element size in bytes
+    @element_size 4
+
+    def count(%Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, _body::binary>>
+        }),
+        do: {:ok, rows * cols}
+
+    def member?(%Matrex{data: <<_rows::binary-4, _cols::binary-4, body::binary>>}, element),
+      do: {:ok, member?(body, element)}
+
+    def member?(<<elem::binary-4, rest::binary>>, element),
+      do: if(Matrex.binary_to_float(elem) == element, do: true, else: member?(rest, element))
+
+    def member?(<<>>, _element), do: false
+
+    def slice(%Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, body::binary>>
+        }),
+        do:
+          {:ok, rows * cols,
+           fn start, length ->
+             Matrex.binary_to_list(
+               binary_part(body, start * @element_size, length * @element_size)
+             )
+           end}
+
     def reduce(
           %Matrex{
             data:
@@ -659,6 +708,12 @@ defmodule Matrex do
   def binary_to_float(@positive_infinity), do: Inf
   def binary_to_float(@negative_infinity), do: NegInf
   def binary_to_float(<<val::float-little-32>>), do: val
+
+  @doc false
+  def binary_to_list(<<elem::binary-4, rest::binary>>),
+    do: [binary_to_float(elem) | binary_to_list(rest)]
+
+  def binary_to_list(<<>>), do: []
 
   @doc """
   Get column of matrix as matrix (vector) in matrex form. One-based.

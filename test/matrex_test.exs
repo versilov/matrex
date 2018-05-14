@@ -44,16 +44,16 @@ defmodule MatrexTest do
 
   test "#apply/2 applies a function/1 on each element of the matrix" do
     function = &(&1 + 1)
-    input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    expected = Matrex.new(2, 3, [[2, 3, 4], [5, 6, 7]])
+    input = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[2, 3, 4], [5, 6, 7]])
 
     assert Matrex.apply(input, function) == expected
   end
 
   test "#apply/2 applies a function/2 on each element of the matrix" do
     function = fn element, index -> element + index end
-    input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    expected = Matrex.new(2, 3, [[2, 4, 6], [8, 10, 12]])
+    input = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[2, 4, 6], [8, 10, 12]])
 
     assert Matrex.apply(input, function) == expected
   end
@@ -63,17 +63,17 @@ defmodule MatrexTest do
       element + row_index + column_index
     end
 
-    input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    expected = Matrex.new(2, 3, [[3, 5, 7], [7, 9, 11]])
+    input = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[3, 5, 7], [7, 9, 11]])
 
     assert Matrex.apply(input, function) == expected
   end
 
   test "#apply/3 applies a function on each element of the matrices" do
     function = &(&1 + &2)
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 3, [[2, 3, 4], [5, 6, 7]])
-    expected = Matrex.new(2, 3, [[3, 5, 7], [9, 11, 13]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[2, 3, 4], [5, 6, 7]])
+    expected = Matrex.new([[3, 5, 7], [9, 11, 13]])
 
     assert Matrex.apply(first, second, function) == expected
   end
@@ -89,13 +89,13 @@ defmodule MatrexTest do
   end
 
   test "#at returns element at the given position" do
-    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
 
     assert Matrex.at(matrix, 1, 3) == 3
   end
 
   test "#at raises when position is out of range" do
-    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
 
     assert_raise ArgumentError, fn ->
       Matrex.at(matrix, 0, 3)
@@ -538,7 +538,7 @@ defmodule MatrexTest do
 
   test "#random does not generate the same matrix twice" do
     result = Matrex.divide(Matrex.random(100), Matrex.random(100))
-    assert not Enum.any?(result, &(&1 == 1.0))
+    refute Enum.member?(result, 1.0)
   end
 
   test "#row returns row of the matrix" do
