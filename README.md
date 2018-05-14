@@ -7,7 +7,7 @@
 
 Fast matrix manipulation library for Elixir implemented in C native code with highly optimized CBLAS sgemm() used for matrix multiplication.
 
-Extracted from https://github.com/sdwolfz/exlearn
+Based on matrix code from https://github.com/sdwolfz/exlearn
 
 ## Benchmark
 
@@ -32,7 +32,7 @@ by adding `matrex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:matrex, "~> 0.1"}
+    {:matrex, "~> 0.4"}
   ]
 end
 ```
@@ -40,7 +40,7 @@ On MacOS everything works out of the box, thanks to Accelerate framework.
 
 On Ubuntu you need to install scientific libraries for this package to compile:
 
-```
+```bash
 > sudo apt-get install build-essential erlang-dev libatlas-base-dev
 ```
 ## Matrices
