@@ -37,7 +37,8 @@ defmodule Matrex.Operators do
   defdelegate random(rows, cols), to: Matrex
   defdelegate set(matrex, row, col, val), to: Matrex
   defdelegate size(matrex), to: Matrex
-  defdelegate scalar(matres), to: Matrex
+  defdelegate scalar(matrex), to: Matrex
+  defdelegate pow2(matrex), to: Matrex, as: :square
   defdelegate zeros(size), to: Matrex
   defdelegate zeros(rows, cols), to: Matrex
 end

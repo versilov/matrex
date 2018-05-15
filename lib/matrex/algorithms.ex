@@ -462,7 +462,7 @@ defmodule Matrex.Algorithms do
     h = sigmoid(x * theta)
     l = ones(size(theta)) |> set(1, 1, 0.0)
 
-    j = (-t(y) * log(h) - t(1 - y) * log(1 - h) + lambda / 2 * t(l) * (theta <|> theta)) / m
+    j = (-t(y) * log(h) - t(1 - y) * log(1 - h) + lambda / 2 * t(l) * pow2(theta)) / m
 
     grad = (t(x) * (h - y) + (theta <|> l) * lambda) / m
 
