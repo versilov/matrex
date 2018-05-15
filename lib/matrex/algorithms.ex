@@ -108,11 +108,7 @@ defmodule Matrex.Algorithms do
     s = Matrex.neg(df1)
 
     # the slope
-    d1 =
-      s
-      |> Matrex.multiply(-1)
-      |> Matrex.dot_tn(s)
-      |> Matrex.first()
+    d1 = Matrex.dot_tn(s, s, -1) |> Matrex.scalar()
 
     # d1 = (-s′ <*> s).scalar  # this is the slope
     # initial step is red/(|s|+1)
@@ -159,12 +155,12 @@ defmodule Matrex.Algorithms do
       | x0: x,
         f0: f1,
         df0: df1,
-        x: Matrex.add(x, Matrex.multiply(z1, s))
+        x: Matrex.add(x, s, 1.0, z1)
     }
 
     {f2, df2} = f.(data.x, fParams)
 
-    d2 = Matrex.dot_tn(df2, s) |> Matrex.first()
+    d2 = Matrex.dot_tn(df2, s) |> Matrex.scalar()
 
     # initialize point 3 equal to point 1
     data = %{
@@ -203,19 +199,19 @@ defmodule Matrex.Algorithms do
         Matrex.dot_tn(data.df2, data.df2),
         Matrex.dot_tn(data.df1, data.df2)
       )
-      |> Matrex.first()
-      |> Kernel./(Matrex.dot_tn(data.df1, data.df1) |> Matrex.first())
+      |> Matrex.scalar()
+      |> Kernel./(Matrex.dot_tn(data.df1, data.df1) |> Matrex.scalar())
       |> Matrex.multiply(data.s)
       |> Matrex.substract(data.df2)
 
     {df1, df2} = {data.df2, data.df1}
 
-    d2 = Matrex.dot_tn(df1, s) |> Matrex.first()
+    d2 = Matrex.dot_tn(df1, s) |> Matrex.scalar()
 
     {d2, s} =
       if d2 > 0 do
         s = Matrex.neg(df1)
-        d2 = Matrex.dot_tn(Matrex.neg(s), s) |> Matrex.first()
+        d2 = Matrex.dot_tn(s, s, -1) |> Matrex.scalar()
         {d2, s}
       else
         {d2, s}
@@ -242,7 +238,7 @@ defmodule Matrex.Algorithms do
     df1 = data.df0
     {df2, df1} = {df1, data.df2}
     s = Matrex.neg(df1)
-    d1 = Matrex.dot_tn(Matrex.neg(data.s), data.s) |> Matrex.first()
+    d1 = Matrex.dot_tn(data.s, data.s, -1) |> Matrex.scalar()
     z1 = 1 / (1 - d1)
 
     %FMinCG{
@@ -297,7 +293,7 @@ defmodule Matrex.Algorithms do
             d3: data.d2,
             z3: -z2,
             z1: data.z1 + z2,
-            x: Matrex.add(data.x, Matrex.multiply(data.s, z2))
+            x: Matrex.add(data.x, data.s, 1.0, z2)
         }
 
         {f2, df2} = data.f.(data.x, data.fParams)
@@ -307,7 +303,7 @@ defmodule Matrex.Algorithms do
           | m: data.m - 1,
             f2: f2,
             df2: df2,
-            d2: Matrex.dot_tn(df2, data.s) |> Matrex.first()
+            d2: Matrex.dot_tn(df2, data.s) |> Matrex.scalar()
         }
 
         iteration2(data)
@@ -346,10 +342,10 @@ defmodule Matrex.Algorithms do
 
     # update the step
     z1 = z1 + z2
-    x = Matrex.add(data.x, Matrex.multiply(z2, data.s))
+    x = Matrex.add(data.x, data.s, 1.0, z2)
     {f2, df2} = data.f.(x, data.fParams)
     m = data.m - 1
-    d2 = Matrex.dot_tn(df2, data.s) |> Matrex.first()
+    d2 = Matrex.dot_tn(df2, data.s) |> Matrex.scalar()
 
     # z3 is now relative to the location of z2
     z3 = z3 - z2
@@ -427,7 +423,7 @@ defmodule Matrex.Algorithms do
     l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
 
     regularization =
-      Matrex.dot_tn(l, Matrex.multiply(theta, theta))
+      Matrex.dot_tn(l, Matrex.square(theta))
       |> Matrex.scalar()
       |> Kernel.*(lambda / (2 * m))
 
@@ -449,7 +445,7 @@ defmodule Matrex.Algorithms do
     grad =
       x
       |> Matrex.dot_tn(Matrex.substract(h, y))
-      |> Matrex.add(Matrex.multiply(Matrex.multiply(theta, l), lambda))
+      |> Matrex.add(Matrex.multiply(theta, l), 1.0, lambda)
       |> Matrex.divide(m)
 
     {j, grad}
