@@ -4,7 +4,7 @@ defmodule Matrex.MixProject do
   def project do
     [
       app: :matrex,
-      version: "0.4.0",
+      version: "0.4.2",
       elixir: "~> 1.4",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
