@@ -22,7 +22,16 @@ transpose a 200x200 matrix            50000   66.05 µs/op
 200x200 matrices dot product          10000   126.95 µs/op
 transpose a 400x400 matrix            10000   175.82 µs/op
 400x400 matrices dot product           5000   686.64 µs/op
+
+
 ```
+
+## Visualization
+
+Matrex implements `Inspect` protocol and looks nice in your console:
+
+![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
+
 
 ## Installation
 
