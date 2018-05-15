@@ -54,6 +54,12 @@ defmodule Matrex do
       iex> m[2][:argmax]
       3
 
+  ## Inspect protocol
+
+  Matrex implements `Inspect` and looks nice in your console:
+
+  ![matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/zeros_big.png)
+
   ## Enumerable protocol
 
   Matrex implements `Enumerable`, so, all kinds of `Enum` functions are applicable:
