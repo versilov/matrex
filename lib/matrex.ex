@@ -356,6 +356,19 @@ defmodule Matrex do
   end
 
   @doc """
+  Adds scalar to matrix.
+
+  See `Matrex.add/4` for details.
+  """
+  @spec add(matrex, number) :: matrex
+  def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
+    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+
+  @spec add(number, matrex) :: matrex
+  def add(scalar, %Matrex{data: matrix}) when is_number(scalar),
+    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+
+  @doc """
   Adds two matrices or scalar to each element of matrix. NIF.
 
   Can optionally scale any of the two matrices.
@@ -399,14 +412,6 @@ defmodule Matrex do
       │     26.0    25.0   24.0 │
       └                         ┘
   """
-
-  @spec add(matrex, number) :: matrex
-  def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
-    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
-
-  @spec add(number, matrex) :: matrex
-  def add(scalar, %Matrex{data: matrix}) when is_number(scalar),
-    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
 
   @spec add(matrex, matrex, number, number) :: matrex
   def add(%Matrex{data: first}, %Matrex{data: second}, alpha \\ 1.0, beta \\ 1.0)
