@@ -425,6 +425,7 @@ defmodule Matrex do
     :floor,
     :trunc,
     :round,
+    :abs,
     :sin,
     :cos,
     :tan,

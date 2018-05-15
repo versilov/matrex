@@ -90,6 +90,8 @@ math_func_ptr_t math_func_from_name(const char* name) {
     return &truncf;
   if (strcmp(name, "round") == 0)
     return &roundf;
+  if (strcmp(name, "abs") == 0)
+    return &fabsf;
   if (strcmp(name, "erf") == 0)
     return &erff;
   if (strcmp(name, "erfc") == 0)
