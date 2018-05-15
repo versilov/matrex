@@ -361,12 +361,12 @@ defmodule Matrex do
   See `Matrex.add/4` for details.
   """
   @spec add(matrex, number) :: matrex
-  def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
-    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+  def add(%Matrex{data: matrix} = _a, b) when is_number(b),
+    do: %Matrex{data: NIFs.add_scalar(matrix, b)}
 
   @spec add(number, matrex) :: matrex
-  def add(scalar, %Matrex{data: matrix}) when is_number(scalar),
-    do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+  def add(a, %Matrex{data: matrix} = _b) when is_number(a),
+    do: %Matrex{data: NIFs.add_scalar(matrix, a)}
 
   @doc """
   Adds two matrices or scalar to each element of matrix. NIF.
