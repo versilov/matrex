@@ -187,6 +187,17 @@ matrix_divide_scalar(const float scalar, const Matrix divisor, Matrix result) {
   }
 }
 
+void
+matrix_divide_by_scalar(const Matrix dividend, const float scalar, Matrix result) {
+  uint64_t data_size = MX_LENGTH(dividend);
+
+  MX_SET_ROWS(result, MX_ROWS(dividend));
+  MX_SET_COLS(result, MX_COLS(dividend));
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = dividend[index] / scalar;
+  }
+}
 
 void
 matrix_dot(const Matrix first, const Matrix second, Matrix result) {

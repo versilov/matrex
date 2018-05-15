@@ -275,6 +275,31 @@ divide_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   return result;
 }
 
+static ERL_NIF_TERM
+divide_by_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  float         scalar;
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  scalar = get_scalar(env, argv[1]);
+
+  matrix_data = (float *) matrix.data;
+  data_size   = MX_LENGTH(matrix_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_divide_by_scalar(matrix_data, scalar, result_data);
+
+  return result;
+}
+
 
 static ERL_NIF_TERM
 dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
@@ -884,6 +909,7 @@ static ErlNifFunc nif_functions[] = {
   {"column_to_list",       2, column_to_list,       0},
   {"divide",               2, divide,               0},
   {"divide_scalar",        2, divide_scalar,        0},
+  {"divide_by_scalar",     2, divide_by_scalar,      0},
   {"dot",                  2, dot,                  0},
   {"dot_and_add",          3, dot_and_add,          0},
   {"dot_and_apply",        3, dot_and_apply,        0},

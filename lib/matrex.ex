@@ -817,7 +817,7 @@ defmodule Matrex do
 
   @spec divide(matrex, number) :: matrex
   def divide(%Matrex{data: matrix}, scalar) when is_number(scalar),
-    do: %Matrex{data: NIFs.multiply_with_scalar(matrix, 1 / scalar)}
+    do: %Matrex{data: NIFs.divide_by_scalar(matrix, scalar)}
 
   @spec divide(number, matrex) :: matrex
   def divide(scalar, %Matrex{data: matrix}) when is_number(scalar),
@@ -1354,8 +1354,30 @@ defmodule Matrex do
   @doc """
   Create matrix filled with ones.
   """
+
   @spec ones(index, index) :: matrex
   def ones(rows, cols) when is_integer(rows) and is_integer(cols), do: fill(rows, cols, 1)
+
+  @doc """
+  Create matrex of ones, consuming output of `size/1` function.
+
+  ## Example
+
+      iex> m = Matrex.new("1 2 3; 4 5 6")
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+      iex> Matrex.ones(Matrex.size(m))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     1.0     1.0 │
+      │     1.0     1.0     1.0 │
+      └                         ┘
+  """
+  @spec ones({index, index}) :: matrex
+  def ones({rows, cols}), do: ones(rows, cols)
 
   @doc """
   Create square matrix filled with ones.
@@ -1370,6 +1392,7 @@ defmodule Matrex do
       │     1.0     1.0     1.0 │
       └                         ┘
   """
+
   @spec ones(index) :: matrex
   def ones(size) when is_integer(size), do: fill(size, 1)
 
@@ -1547,6 +1570,23 @@ defmodule Matrex do
   defp float_to_string(@not_a_number), do: "NaN"
   defp float_to_string(@positive_infinity), do: "Inf"
   defp float_to_string(@negative_infinity), do: "-Inf"
+
+  @doc """
+  Transfer one-element matrix to a scalar value.
+
+  ## Example
+
+      iex> Matrex.new([[1.234]]) |> Matrex.scalar()
+      1.234
+
+      iex> Matrex.new([[0]]) |> Matrex.divide(0) |> Matrex.scalar()
+      NaN
+  """
+  @spec scalar(matrex) :: element
+  def scalar(%Matrex{
+        data: <<1::unsigned-integer-little-32, 1::unsigned-integer-little-32, elem::binary-4>>
+      }),
+      do: binary_to_float(elem)
 
   @doc """
   Set element of matrix at the specified position (one-based) to new value.
