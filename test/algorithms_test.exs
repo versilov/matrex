@@ -18,14 +18,23 @@ defmodule AlgorithmsTest do
 
     y_t = Matrex.new("1;0;1;0;1")
     lambda_t = 3
+
+    expected_j = 2.5348193645477295
+
+    expected_grad =
+      Matrex.new(
+        "0.1465613692998886; -0.5485584139823914; 0.7247222661972046; 1.3980028629302979"
+      )
+
     {j, grad} = Algorithms.lr_cost_fun(theta_t, {x_t, y_t, lambda_t})
 
-    assert j == 2.5348193645477295
+    assert grad == expected_grad
+    assert j == expected_j
 
-    assert grad ==
-             Matrex.new(
-               "0.1465613692998886; -0.5485584139823914; 0.7247222661972046; 1.3980029821395874"
-             )
+    {j, grad} = Algorithms.lr_cost_fun_ops(theta_t, {x_t, y_t, lambda_t})
+
+    assert grad == expected_grad
+    assert j == expected_j
   end
 
   test "#fmincg does linear regression" do

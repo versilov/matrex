@@ -428,7 +428,7 @@ defmodule Matrex.Algorithms do
 
     regularization =
       Matrex.dot_tn(l, Matrex.multiply(theta, theta))
-      |> Matrex.first()
+      |> Matrex.scalar()
       |> Kernel.*(lambda / (2 * m))
 
     j =
@@ -440,7 +440,7 @@ defmodule Matrex.Algorithms do
           Matrex.apply(Matrex.substract(1, h), :log)
         )
       )
-      |> Matrex.first()
+      |> Matrex.scalar()
       |> (fn
             NaN -> NaN
             x -> x / m + regularization
@@ -455,16 +455,21 @@ defmodule Matrex.Algorithms do
     {j, grad}
   end
 
-  defp profile_fmincg() do
-    x = Matrex.load("test/X.mtx")
-    y = Matrex.load("test/y.mtx")
-    theta = Matrex.zeros(x[:cols], 1)
+  def lr_cost_fun_ops(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+      when is_number(lambda) do
+    # Turn off original operators
+    import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
+    import Matrex.Operators
 
-    lambda = 0.01
-    iterations = 100
+    m = y[:rows]
 
-    y3 = Matrex.apply(y, fn val -> if(val == 1, do: 1.0, else: 0.0) end)
+    h = sigmoid(x * theta)
+    l = ones(size(theta)) |> set(1, 1, 0.0)
 
-    {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda}, iterations)
+    j = (-t(y) * log(h) - t(1 - y) * log(1 - h) + lambda / 2 * t(l) * (theta <|> theta)) / m
+
+    grad = (t(x) * (h - y) + (theta <|> l) * lambda) / m
+
+    {scalar(j), grad}
   end
 end
