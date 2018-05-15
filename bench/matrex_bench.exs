@@ -158,4 +158,12 @@ defmodule MatrexBench do
     Matrex.Algorithms.fmincg(&Matrex.Algorithms.lr_cost_fun/2, @theta, {@x, @y, 0.01}, 20)
     true
   end
+
+  bench "Add two matrices" do
+    Matrex.add(@random_a_xlarge, @random_b_xlarge)
+  end
+
+  bench "Add two matrices with scaling" do
+    Matrex.add(@random_a_xlarge, @random_b_xlarge, 3.9, 7.5)
+  end
 end
