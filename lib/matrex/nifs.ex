@@ -20,13 +20,8 @@ defmodule Matrex.NIFs do
     :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
   end
 
-  @spec add(binary, binary) :: binary
-  def add(first, second)
-      when is_binary(first) and is_binary(second),
-      do: :erlang.nif_error(:nif_library_not_loaded)
-
-  @spec add_with_scale(binary, binary, number, number) :: binary
-  def add_with_scale(first, second, alpha, beta)
+  @spec add(binary, binary, number, number) :: binary
+  def add(first, second, alpha, beta)
       when is_binary(first) and is_binary(second) and is_number(alpha) and is_number(beta),
       do: :erlang.nif_error(:nif_library_not_loaded)
 

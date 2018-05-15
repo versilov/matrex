@@ -44,19 +44,7 @@ matrix_equal(const Matrix first, const Matrix second) {
 }
 
 void
-matrix_add(const Matrix first, const Matrix second, Matrix result) {
-  uint64_t data_size = MX_LENGTH(first);
-
-  MX_SET_ROWS(result, MX_ROWS(first));
-  MX_SET_COLS(result, MX_COLS(first));
-
-  for (uint64_t index = 2; index < data_size; index += 1) {
-    result[index] = first[index] + second[index];
-  }
-}
-
-void
-matrix_add_with_scale(const Matrix first, const Matrix second,
+matrix_add(const Matrix first, const Matrix second,
   const float alpha, const float beta, Matrix result) {
     uint64_t data_size = MX_LENGTH(first);
 

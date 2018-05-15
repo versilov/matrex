@@ -373,6 +373,8 @@ defmodule Matrex do
       │    14.0    16.0    18.0 │
       └                         ┘
 
+  Adding with scalar:
+
       iex> m = Matrex.magic(3)
       #Matrex[3×3]
       ┌                         ┐
@@ -387,9 +389,16 @@ defmodule Matrex do
       │     4.0     6.0     8.0 │
       │     5.0    10.0     3.0 │
       └                         ┘
+
+  With scaling each matrix:
+
+      iex> Matrex.add(Matrex.new("1 2 3; 4 5 6"), Matrex.new("3 2 1; 6 5 4"), 2, 3)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     11.0    10.0    9.0 │
+      │     26.0    25.0   24.0 │
+      └                         ┘
   """
-  @spec add(matrex, matrex) :: matrex
-  def add(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.add(first, second)}
 
   @spec add(matrex, number) :: matrex
   def add(%Matrex{data: matrix}, scalar) when is_number(scalar),
@@ -400,9 +409,9 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
 
   @spec add(matrex, matrex, number, number) :: matrex
-  def add(%Matrex{data: first}, %Matrex{data: second}, alpha, beta \\ 1.0)
+  def add(%Matrex{data: first}, %Matrex{data: second}, alpha \\ 1.0, beta \\ 1.0)
       when is_number(alpha) and is_number(beta),
-      do: %Matrex{data: NIFs.add_with_scale(first, second, alpha, beta)}
+      do: %Matrex{data: NIFs.add(first, second, alpha, beta)}
 
   @doc """
   Apply math function to matrix elementwise. NIF, multithreaded.
