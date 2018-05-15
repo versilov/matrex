@@ -25,6 +25,11 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec add_with_scale(binary, binary, number, number) :: binary
+  def add_with_scale(first, second, alpha, beta)
+      when is_binary(first) and is_binary(second) and is_number(alpha) and is_number(beta),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec add_scalar(binary, number) :: binary
   def add_scalar(
         <<

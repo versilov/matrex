@@ -155,6 +155,7 @@ defmodule Matrex do
             row_to_list: 2,
             row: 2,
             size: 1,
+            square: 1,
             substract: 2,
             substract_inverse: 2,
             sum: 1,
@@ -357,6 +358,10 @@ defmodule Matrex do
   @doc """
   Adds two matrices or scalar to each element of matrix. NIF.
 
+  Can optionally scale any of the two matrices.
+
+  C = αA + βB
+
   Raises `ErlangError` if matrices' sizes do not match.
 
   ## Examples
@@ -393,6 +398,11 @@ defmodule Matrex do
   @spec add(number, matrex) :: matrex
   def add(scalar, %Matrex{data: matrix}) when is_number(scalar),
     do: %Matrex{data: NIFs.add_scalar(matrix, scalar)}
+
+  @spec add(matrex, matrex, number, number) :: matrex
+  def add(%Matrex{data: first}, %Matrex{data: second}, alpha, beta \\ 1.0)
+      when is_number(alpha) and is_number(beta),
+      do: %Matrex{data: NIFs.add_with_scale(first, second, alpha, beta)}
 
   @doc """
   Apply math function to matrix elementwise. NIF, multithreaded.
@@ -1651,6 +1661,29 @@ defmodule Matrex do
         >>
       }),
       do: {rows, cols}
+
+  @doc """
+  Produces element-wise squared matrix.
+
+
+  ## Example
+
+      iex> m = Matrex.new("1 2 3; 4 5 6")
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+      iex> Matrex.square(m)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     4.0     9.0 │
+      │    16.0    25.0    36.0 │
+      └                         ┘
+
+  """
+  @spec square(matrex) :: matrex
+  def square(%Matrex{data: matrix}), do: %Matrex{data: Matrex.NIFs.multiply(matrix, matrix)}
 
   @doc """
   Substracts two matrices element-wise. NIF.

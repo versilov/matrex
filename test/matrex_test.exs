@@ -28,6 +28,17 @@ defmodule MatrexTest do
     assert Matrex.add(scalar, matrix) == expected
   end
 
+  test "#add/4 scales both operands before adding" do
+    a = Matrex.new("1 2 3; 4 5 6")
+    b = Matrex.new("3 2 1; 6 5 4")
+    alpha = 2
+    beta = 3
+
+    expected = Matrex.new("11 10 9; 26 25 24")
+
+    assert Matrex.add(a, b, alpha, beta) == expected
+  end
+
   test "#apply/2 applies a math function on each element of the matrix" do
     input = Matrex.new([[4, 16, 9], [25, 49, 36]])
     expected = Matrex.new([[2, 4, 3], [5, 7, 6]])

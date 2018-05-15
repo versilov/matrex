@@ -37,6 +37,9 @@ void
 matrix_add(const Matrix first, const Matrix second, Matrix result);
 
 void
+matrix_add_with_scale(const Matrix first, const Matrix second, const float alpha, const float beta, Matrix result);
+
+void
 matrix_add_scalar(const Matrix first, const float scalar, Matrix result);
 
 int

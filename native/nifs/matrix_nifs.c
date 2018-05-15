@@ -55,6 +55,37 @@ add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+add_with_scale(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  first, second;
+  ERL_NIF_TERM  result;
+  float        *first_data, *second_data, *result_data;
+  float         alpha, beta;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  alpha = get_scalar(env, argv[2]);
+  beta = get_scalar(env, argv[3]);
+
+  first_data  = (float *) first.data;
+  second_data = (float *) second.data;
+
+  ASSERT_SIZES_MATCH(first_data, second_data);
+
+  data_size   = MX_LENGTH(first_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_add_with_scale(first_data, second_data, alpha, beta, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 add_scalar(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
@@ -903,13 +934,14 @@ zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ErlNifFunc nif_functions[] = {
   {"add",                  2, add,                  0},
   {"add_scalar",           2, add_scalar,           0},
+  {"add_with_scale",       4, add_with_scale,       0},
   {"apply_math",           2, apply_math,           0},
   {"apply_parallel_math",  2, apply_parallel_math,  0},
   {"argmax",               1, argmax,               0},
   {"column_to_list",       2, column_to_list,       0},
   {"divide",               2, divide,               0},
   {"divide_scalar",        2, divide_scalar,        0},
-  {"divide_by_scalar",     2, divide_by_scalar,      0},
+  {"divide_by_scalar",     2, divide_by_scalar,     0},
   {"dot",                  2, dot,                  0},
   {"dot_and_add",          3, dot_and_add,          0},
   {"dot_and_apply",        3, dot_and_apply,        0},
