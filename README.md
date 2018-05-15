@@ -54,176 +54,108 @@ On Ubuntu you need to install scientific libraries for this package to compile:
 ```
 ## Matrices
 
-For the sake of efficiency matrices are stored as binaries, which are actually arrays of floats. The first two elements of matrix binary are unsinged integer numbers of rows and columns, the rest of the array is the matrix body.
+## Access behaviour
 
-Here is a 3x3 matrix of ones:
+Access behaviour is partly implemented for Matrex, so you can do:
 
-```elixir
-iex> Matrex.ones(3)
-<<3, 0, 0, 0, 3, 0, 0, 0, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0,
-  128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0, 128, 63, 0, 0,
-  128, 63>>
-```
+    iex> m = Matrex.magic(3)
+    #Matrex[3×3]
+    ┌                         ┐
+    │     8.0     1.0     6.0 │
+    │     3.0     5.0     7.0 │
+    │     4.0     9.0     2.0 │
+    └                         ┘
+    iex> m[2][3]
+    7.0
 
-You can convert to more common list of lists at any time:
-```elixir
-iex> Matrex.ones(3) |> Matrex.to_list_of_lists()
-[[1.0, 1.0, 1.0], [1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
-```
+Or even:
 
-## Creation
-
-You can create new matrix in many different ways.
-
-#### new()
-From list of lists:
-```elixir
-iex> Matrex.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]]) |> Matrex.inspect()
-Rows: 3 Columns: 3
-1 2 3
-4 5 6
-7 8 9
-```
-
-From function:
-```elixir
-iex> Matrex.new(3, 3, fn -> :rand.uniform() end) |> Matrex.inspect()
-Rows: 3 Columns: 3
-0.9895256161689758 0.4284432828426361 0.34333840012550354
-0.12773089110851288 0.06270553171634674 0.5848795175552368
-0.6484498977661133 0.49514150619506836 0.9283488988876343
-
-iex> Matrex.new(3, 5, fn row, column -> row*column end) |> Matrex.inspect()
-Rows: 3 Columns: 5
-0 0 0 0 0
-0 1 2 3 4
-0 2 4 6 8
-```
-
-Or you can use functions for creating specific types of matrices.
-
-#### zeros()
-
-Matrix of zeros:
-```elixir
-iex> Matrex.zeros(3) |> Matrex.inspect()
-Rows: 3 Columns: 3
-0 0 0
-0 0 0
-0 0 0
-
-iex> Matrex.zeros(3, 4) |> Matrex.inspect()
-Rows: 3 Columns: 4
-0 0 0 0
-0 0 0 0
-0 0 0 0
-```
-
-#### ones()
-
-Matrix of ones:
-
-```elixir
-iex> Matrex.ones(3) |> Matrex.inspect()
-Rows: 3 Columns: 3
-1 1 1
-1 1 1
-1 1 1
-
-iex> Matrex.ones(3, 4) |> Matrex.inspect()
-Rows: 3 Columns: 4
-1 1 1 1
-1 1 1 1
-1 1 1 1
-```
-
-#### fill()
-
-Create matrix filled by arbitrary value:
-```elixir
-iex> Matrex.fill(3, 25) |> Matrex.inspect()
-Rows: 3 Columns: 3
-25 25 25
-25 25 25
-25 25 25
-
-iex> Matrex.fill(3, 4, 13) |> Matrex.inspect()
-Rows: 3 Columns: 4
-13 13 13 13
-13 13 13 13
-13 13 13 13
-```
-
-#### random()
-
-Create matrix filled by random numbers in [0, 1]:
-```elixir
-iex> Matrex.random(3) |> Matrex.inspect()
-Rows: 3 Columns: 3
-0.9735986590385437 0.27254486083984375 0.6614391207695007
-0.807566225528717 0.765457034111023 0.036448732018470764
-0.5938393473625183 0.6574462056159973 0.6980698704719543
-
-iex> Matrex.random(3, 4) |> Matrex.inspect()
-Rows: 3 Columns: 4
-0.9739038944244385 0.4025186002254486 0.13004669547080994 0.6949213743209839
-0.5433793067932129 0.5758569836616516 0.4285793602466583 0.13317014276981354
-0.19062970578670502 0.9134745001792908 0.7655090093612671 0.910411536693573
-```
-
-#### eye()
-
-Create square identity matrix:
-
-```elixir
-iex> Matrex.eye(5) |> Matrex.inspect()
-Rows: 5 Columns: 5
-1 0 0 0 0
-0 1 0 0 0
-0 0 1 0 0
-0 0 0 1 0
-0 0 0 0 1
-```
-
-#### magic()
-
-Or even a "magic" matrix:
-
-```elixir
-iex> Matrex.magic(5) |> Matrex.inspect()
-Rows: 5 Columns: 5
-16 23 5 7 14
-22 4 6 13 20
-3 10 12 19 21
-9 11 18 25 2
-15 17 24 1 8
-```
+    iex> m[1..2]
+    #Matrex[2×3]
+    ┌                         ┐
+    │     8.0     1.0     6.0 │
+    │     3.0     5.0     7.0 │
+    └                         ┘
 
 
+There are also several shortcuts for getting dimensions of matrix:
 
-## Operations
+    iex> m[:rows]
+    3
 
-#### apply()
-#### add()
-#### substract()
-#### substract_inverse()
-#### multiply()
-#### multiply_with_scalar()
-#### divide()
-#### dot()
-#### dot_and_add()
-#### dot_nt()
-#### dot_tn()
-#### transpose()
+    iex> m[:size]
+    {3, 3}
 
-## Utility
+calculating maximum value of the whole matrix:
 
-#### sum()
-#### max()
-#### argmax()
-#### first()
-#### inspect()
-#### size()
-#### at()
-#### to_list()
-#### to_list_of_lists()
+    iex> m[:max]
+    9.0
+
+or just one of it's rows:
+
+    iex> m[2][:max]
+    7.0
+
+calculating one-based index of the maximum element for the whole matrix:
+
+    iex> m[:argmax]
+    8
+
+and a row:
+
+    iex> m[2][:argmax]
+    3
+
+## Enumerable protocol
+
+Matrex implements `Enumerable`, so, all kinds of `Enum` functions are applicable:
+
+    iex> Enum.member?(m, 2.0)
+    true
+
+    iex> Enum.count(m)
+    9
+
+    iex> Enum.sum(m)
+    45
+
+For functions, that exist both in `Enum` and in `Matrex` it's preferred to use Matrex
+version, beacuse it's usually much, much faster. I.e., for 1 000 x 1 000 matrix `Matrex.sum/1`
+and `Matrex.to_list/1` are 438 and 41 times faster, respectively, than their `Enum` counterparts.
+
+## Saving and loading matrix
+
+You can save/load matrix with native binary file format (extra fast)
+and CSV (slow, especially on large matrices).
+
+Matrex CSV format is compatible with GNU Octave CSV output,
+so you can use it to exchange data between two systems.
+
+## NaN and Infinity
+
+Float special values, like `NaN` and `Inf` live well inside matrices,
+can be loaded from and saved to files.
+But when getting them into Elixir they are transferred to `NaN`,`Inf` and `NegInf` atoms,
+because BEAM does not accept special values as valid floats.
+
+    iex> m = Matrex.eye(3)
+    #Matrex[3×3]
+    ┌                         ┐
+    │     1.0     0.0     0.0 │
+    │     0.0     1.0     0.0 │
+    │     0.0     0.0     1.0 │
+    └                         ┘
+
+    iex> n = Matrex.divide(m, Matrex.zeros(3))
+    #Matrex[3×3]
+    ┌                         ┐
+    │     ∞      NaN     NaN  │
+    │    NaN      ∞      NaN  │
+    │    NaN     NaN      ∞   │
+    └                         ┘
+
+    iex> n[1][1]
+    Inf
+
+    iex> n[1][2]
+    NaN
