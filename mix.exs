@@ -11,7 +11,7 @@ defmodule Matrex.MixProject do
       package: package(),
       compilers: [:elixir_make] ++ Mix.compilers(),
       description:
-        "Fast matrix manipulation library for Elixir with native C implementation using CBLAS.",
+        "Blazing fast matrix manipulation library for Elixir with native C implementation using CBLAS.",
       source_url: "https://github.com/versilov/matrex",
       dialyzer: [
         flags: [
