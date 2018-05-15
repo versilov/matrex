@@ -58,7 +58,7 @@ defmodule Matrex do
 
   Matrex implements `Inspect` and looks nice in your console:
 
-  ![matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/zeros_big.png)
+  ![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
 
   ## Enumerable protocol
 
