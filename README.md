@@ -237,16 +237,16 @@ so you can use it to exchange data between two systems.
     │ 0.33411 0.59648 0.24786 0.27596 0.09082 │
     │ 0.18673 0.18699 0.79753 0.08101 0.47516 │
     └                                         ┘
-    iex> Matrex.eye(5) |> Matrex.divide(Matrex.zeros(5)) |> Matrex.save("nan.csv")
+    iex> Matrex.magic(5) |> Matrex.divide(Matrex.eye(5)) |> Matrex.save("nan.csv")
     :ok
     iex> Matrex.load("nan.csv")
     #Matrex[5×5]
     ┌                                         ┐
-    │     ∞      NaN     NaN     NaN     NaN  │
-    │    NaN      ∞      NaN     NaN     NaN  │
-    │    NaN     NaN      ∞      NaN     NaN  │
-    │    NaN     NaN     NaN      ∞      NaN  │
-    │    NaN     NaN     NaN     NaN      ∞   │
+    │    16.0     ∞       ∞       ∞       ∞   │
+    │     ∞       4.0     ∞       ∞       ∞   │
+    │     ∞       ∞      12.0     ∞       ∞   │
+    │     ∞       ∞       ∞      25.0     ∞   │
+    │     ∞       ∞       ∞       ∞       8.0 │
     └                                         ┘
 ```
 
