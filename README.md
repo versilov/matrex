@@ -43,7 +43,7 @@ Transposing 1000x1000 matrix
 ## Example
 
 Complete example of Matrex library at work:
-[Linear regression on MNIST digits Jupyter notebook](https://github.com/versilov/matrex/blob/master/Matrex.ipynb)
+[Linear regression on MNIST digits (Jupyter notebook)](https://github.com/versilov/matrex/blob/master/Matrex.ipynb)
 
 
 ## Visualization
@@ -65,15 +65,22 @@ def deps do
   ]
 end
 ```
-On MacOS everything works out of the box, thanks to Accelerate framework.
+### MacOS
 
-On Ubuntu you need to install scientific libraries for this package to compile:
+Everything works out of the box, thanks to Accelerate framework.
+
+### Ubuntu
+
+You need to install scientific libraries for this package to compile:
 
 ```bash
 > sudo apt-get install build-essential erlang-dev libatlas-base-dev
 ```
 
-Performs fast operations on matrices using native C code and CBLAS library.
+## Windows
+
+It will definitely work on Windows, but we need a makefile
+and installation instruction. Please, contribute.
 
 ## Access behaviour
 
