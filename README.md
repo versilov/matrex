@@ -40,6 +40,11 @@ Transposing 1000x1000 matrix
 | Matrix       |     8.54 | 50.17x slower       |
 | Numexy       |     6.83 | 62.80x slower       |
 
+## Example
+
+Complete example of Matrex library at work:
+[Linear regression on MNIST digits Jupyter notebook](https://github.com/versilov/matrex/blob/master/Matrex.ipynb)
+
 
 ## Visualization
 
