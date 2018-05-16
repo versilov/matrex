@@ -34,6 +34,7 @@ matrex-*.tar
 
 /bench/graphs
 /bench/snapshots
+/bench/output
 
 .DS_Store
 
