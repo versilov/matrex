@@ -7,6 +7,8 @@
 
 Fast matrix manipulation library for Elixir implemented in C native code with highly optimized CBLAS sgemm() used for matrix multiplication.
 
+For example, vectorized linear regression is about 13 times faster, than Octave single threaded implementation.
+
 It's also memory efficient, so you can work with large matrices,
 about billion of elements in size.
 
@@ -14,20 +16,30 @@ Based on matrix code from https://github.com/sdwolfz/exlearn
 
 ## Benchmark
 
+#### Comparison with pure Elixir libararies
+
+
 2015 MacBook Pro, 2.2 GHz Core i7, 16 GB RAM
 
-```
-benchmark name                iterations   average time
-50x50 matrices dot product           500000   6.54 µs/op
-transpose a 100x100 matrix           100000   12.40 µs/op
-100x100 matrices dot product          50000   37.82 µs/op
-transpose a 200x200 matrix            50000   66.05 µs/op
-200x200 matrices dot product          10000   126.95 µs/op
-transpose a 400x400 matrix            10000   175.82 µs/op
-400x400 matrices dot product           5000   686.64 µs/op
+![Dot product of 500x500 matrices]()
+
+| Library      | Ops/sec  | Compared to Matrex  |
+| ------------ | -------- | ------------------- |
+| Matrex       | 674.70   |                     |
+| Matrix       | 0.0923   | 7 312.62x slower     |
+| Numexy       | 0.0173   | 38 906.14x slower    |
+| ExMatrix     | 0.0129   | 52 327.40x slower    |
 
 
-```
+Transposing 1000x1000 matrix
+
+| Library      | Ops/sec  | Compared to Matrex  |
+| ------------ | -------- | ------------------- |
+| Matrex       |   409.66 |                     |
+| ExMatrix     |     9.04 | 45.32x slower       |
+| Matrix       |     7.82 | 52.28x slower       |
+| Numexy       |     4.73 | 86.70x slower       |
+
 
 ## Visualization
 

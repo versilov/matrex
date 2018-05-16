@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Benchee Report</title>
+  <meta charset="utf-8">
+  <meta http-equiv="content-type" content="text/html; charset=utf8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/benchee.css">
+    <link rel="stylesheet" type="text/css" href="assets/fontello/css/fontello.css">
+  
+</head>
+
+  <body>
+
+    <div class="header">
+  <h1>benchee report</h1>
+  
+  <span class="input-label">
+    1000x1000
+  </span>
+
+
+  <span class="version-note">
+  <a href="javascript:toggleSystemDataInfo();" title="Click to toggle system info">System info</a>
+</span>
+
+</div>
+
+
+    <article id="system-info" class="benchee-systeminfo" >
+  <h3>System info</h3>
+  <ul class="benchee-systeminfo-list">
+    <li>Elixir: 1.6.4</li>
+    <li>Erlang: 20.3.4</li>
+    <li>Operating system: macOS</li>
+    <li>Available memory: 16 GB</li>
+    <li>CPU Information: Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz</li>
+    <li>Number of Available Cores: 8</li>
+  </ul>
+</article>
+
+
+    <article>
+      <h2>
+        <a name="Matrix"></a>
+        Matrix
+        <a href="https://github.com/PragTob/benchee_html/wiki/Chart-Types#individual">
+          <i
+            class="benchee-help-icon icon-question-circle-o"
+            title="Graphs showing the individual run time distribution for Matrix.
+Run Times Histogram shows the distribution of occurrences of specific run times in buckets.
+Raw Run Times shows all individual recorded run times in the order they were recorded in."
+          ></i>
+        </a>
+      </h2>
+
+      <section>
+        <h3>Data Table</h3>
+<table>
+  <thead>
+    <tr>
+      <th class="text-left">Name</th>
+      <th>Iterations per Second</th>
+      <th>Average</th>
+      <th>Deviation</th>
+      <th>median</th>
+      <th>minimum</th>
+      <th>maximum</th>
+      <th>Sample size</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+      <tr>
+        
+          <td class="text-left">Matrix</td>
+        
+        <td>7.82</td>
+        <td>127.85 ms</td>
+        <td>±28.57%</td>
+        <td>122.91 ms</td>
+        <td>83.17 ms</td>
+        <td>237.18 ms</td>
+        <td>157</td>
+      </tr>
+    
+  </tbody>
+</table>
+
+      </section>
+
+      <section class="benchee-plot-container">
+        <div id="sorted-run-times" class="plot" data-job-name="Matrix"></div>
+      </section>
+      <section class="benchee-plot-container">
+        <div id="raw-run-times" class="plot" data-job-name="Matrix"></div>
+      </section>
+    </article>
+
+    <footer>
+      <a href="https://github.com/PragTob/benchee" target="blank">benchee version: 0.13.1 </a>
+<br/>
+<a href="https://github.com/PragTob/benchee_html" target="blank">benchee_html version: 0.5.0</a>
+
+
+    </footer>
+
+    
+  <script src="assets/javascripts/plotly-1.30.1.min.js"></script>
+  <script src="assets/javascripts/benchee.js"></script>
+
+
+
+    <script>
+      var measurements = {"run_times":[136586,162095,107277,93740,105306,112328,129844,129349,230325,122700,191241,143423,98006,137533,100224,129956,92112,125878,93017,131995,110722,136112,90272,128830,94856,122908,92358,134525,202330,122811,120453,219352,144008,89075,135491,98833,131882,132238,116744,132645,236047,106302,113026,98140,118322,118293,92325,232287,140589,209356,115683,95219,137253,83172,124154,89169,124852,87153,132094,90482,124681,94740,128923,90356,124046,102310,125132,201547,120833,123244,225393,137609,86423,149049,116116,128216,140214,94837,134204,215903,118616,112787,104885,111786,120670,117258,232199,128508,208231,130438,85501,121828,106945,132924,89882,125848,87522,122446,96891,123281,108380,122425,104929,128488,99038,126265,198438,125203,122439,228933,141673,84524,133188,100252,128240,134416,115361,124128,179279,108438,104409,116592,101545,120584,108845,237184,124598,211091,131331,99059,123434,92189,129794,90675,125889,99887,118361,90354,130447,94865,128103,91513,125950,88989,131830,197582,125976,126252,218322,149132,91151,132009,105772,108143,133886,118899,118665],"statistics":{"average":127852.63694267516,"ips":7.8215046940984605,"maximum":237184,"median":122908.0,"minimum":83172,"mode":null,"percentiles":{"50":122908.0,"99":236524.53999999998},"sample_size":157,"std_dev":36523.081175865795,"std_dev_ips":2.234333664843035,"std_dev_ratio":0.2856654508599734}};
+      var runTimes     = measurements.run_times;
+      var statistics   = measurements.statistics;
+
+      var inputHeadline = " (1000x1000)"
+
+      drawRawRunTimeCharts(runTimes, inputHeadline, statistics);
+      drawRunTimeHistograms(runTimes, inputHeadline);
+    </script>
+  </body>
+</html>

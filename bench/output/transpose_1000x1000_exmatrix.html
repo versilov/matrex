@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Benchee Report</title>
+  <meta charset="utf-8">
+  <meta http-equiv="content-type" content="text/html; charset=utf8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/benchee.css">
+    <link rel="stylesheet" type="text/css" href="assets/fontello/css/fontello.css">
+  
+</head>
+
+  <body>
+
+    <div class="header">
+  <h1>benchee report</h1>
+  
+  <span class="input-label">
+    1000x1000
+  </span>
+
+
+  <span class="version-note">
+  <a href="javascript:toggleSystemDataInfo();" title="Click to toggle system info">System info</a>
+</span>
+
+</div>
+
+
+    <article id="system-info" class="benchee-systeminfo" >
+  <h3>System info</h3>
+  <ul class="benchee-systeminfo-list">
+    <li>Elixir: 1.6.4</li>
+    <li>Erlang: 20.3.4</li>
+    <li>Operating system: macOS</li>
+    <li>Available memory: 16 GB</li>
+    <li>CPU Information: Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz</li>
+    <li>Number of Available Cores: 8</li>
+  </ul>
+</article>
+
+
+    <article>
+      <h2>
+        <a name="ExMatrix"></a>
+        ExMatrix
+        <a href="https://github.com/PragTob/benchee_html/wiki/Chart-Types#individual">
+          <i
+            class="benchee-help-icon icon-question-circle-o"
+            title="Graphs showing the individual run time distribution for ExMatrix.
+Run Times Histogram shows the distribution of occurrences of specific run times in buckets.
+Raw Run Times shows all individual recorded run times in the order they were recorded in."
+          ></i>
+        </a>
+      </h2>
+
+      <section>
+        <h3>Data Table</h3>
+<table>
+  <thead>
+    <tr>
+      <th class="text-left">Name</th>
+      <th>Iterations per Second</th>
+      <th>Average</th>
+      <th>Deviation</th>
+      <th>median</th>
+      <th>minimum</th>
+      <th>maximum</th>
+      <th>Sample size</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+      <tr>
+        
+          <td class="text-left">ExMatrix</td>
+        
+        <td>9.04</td>
+        <td>110.62 ms</td>
+        <td>±19.34%</td>
+        <td>105.80 ms</td>
+        <td>80.79 ms</td>
+        <td>194.50 ms</td>
+        <td>181</td>
+      </tr>
+    
+  </tbody>
+</table>
+
+      </section>
+
+      <section class="benchee-plot-container">
+        <div id="sorted-run-times" class="plot" data-job-name="ExMatrix"></div>
+      </section>
+      <section class="benchee-plot-container">
+        <div id="raw-run-times" class="plot" data-job-name="ExMatrix"></div>
+      </section>
+    </article>
+
+    <footer>
+      <a href="https://github.com/PragTob/benchee" target="blank">benchee version: 0.13.1 </a>
+<br/>
+<a href="https://github.com/PragTob/benchee_html" target="blank">benchee_html version: 0.5.0</a>
+
+
+    </footer>
+
+    
+  <script src="assets/javascripts/plotly-1.30.1.min.js"></script>
+  <script src="assets/javascripts/benchee.js"></script>
+
+
+
+    <script>
+      var measurements = {"run_times":[117392,123682,92064,110826,105855,89565,137521,109465,143526,88916,89261,105345,85773,96253,90197,90158,105602,106699,189180,139521,139447,124681,126581,135193,118564,147144,117774,134711,103058,104217,96511,103181,115069,100296,93043,90082,88549,134046,109454,82776,93616,104758,92158,91948,141757,106001,128319,92315,119652,105803,90193,146512,117778,141250,86766,90831,97256,94615,95292,90662,89466,103080,109512,194495,134397,133009,124723,130255,140995,125161,151487,122937,145528,93686,106695,106167,91840,109788,113326,92304,97477,95622,143220,136718,89302,108833,103726,95787,96604,98162,127073,87535,119993,100685,91523,140622,112931,127282,90555,87756,94845,104502,94486,95430,91140,97350,98995,169245,117090,132575,118856,100475,112935,116611,148288,117941,135116,85749,97329,91182,115244,123318,89585,97929,86381,105205,146398,136812,87419,96689,90951,97534,93649,145145,108875,119216,120040,85996,116797,105291,90037,132938,117214,126724,91165,88674,97938,105890,89786,84095,90903,94800,117327,167393,120471,131598,118546,108616,115352,119441,143821,116315,127794,80787,93628,96840,122528,118129,94032,96281,86615,99538,135352,114180,87802,82947,82143,84846,95117,160345,127460],"statistics":{"average":110623.9723756906,"ips":9.039631994084385,"maximum":194495,"median":105803.0,"minimum":80787,"mode":null,"percentiles":{"50":105803.0,"99":190136.70000000004},"sample_size":181,"std_dev":21398.57443835166,"std_dev_ips":1.7485833672993916,"std_dev_ratio":0.19343523812071997}};
+      var runTimes     = measurements.run_times;
+      var statistics   = measurements.statistics;
+
+      var inputHeadline = " (1000x1000)"
+
+      drawRawRunTimeCharts(runTimes, inputHeadline, statistics);
+      drawRunTimeHistograms(runTimes, inputHeadline);
+    </script>
+  </body>
+</html>

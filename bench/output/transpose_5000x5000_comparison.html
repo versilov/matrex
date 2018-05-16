@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+  <head>
+  <title>Benchee Report</title>
+  <meta charset="utf-8">
+  <meta http-equiv="content-type" content="text/html; charset=utf8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+    <link rel="stylesheet" type="text/css" href="assets/stylesheets/benchee.css">
+    <link rel="stylesheet" type="text/css" href="assets/fontello/css/fontello.css">
+  
+</head>
+
+  <body>
+
+    <div class="header">
+  <h1>benchee report</h1>
+  
+  <span class="input-label">
+    5000x5000
+  </span>
+
+
+  <span class="version-note">
+  <a href="javascript:toggleSystemDataInfo();" title="Click to toggle system info">System info</a>
+</span>
+
+</div>
+
+
+    <article id="system-info" class="benchee-systeminfo" >
+  <h3>System info</h3>
+  <ul class="benchee-systeminfo-list">
+    <li>Elixir: 1.6.4</li>
+    <li>Erlang: 20.3.4</li>
+    <li>Operating system: macOS</li>
+    <li>Available memory: 16 GB</li>
+    <li>CPU Information: Intel(R) Core(TM) i7-4770HQ CPU @ 2.20GHz</li>
+    <li>Number of Available Cores: 8</li>
+  </ul>
+</article>
+
+
+    <article>
+      <h2>
+        Comparison
+        <a href="https://github.com/PragTob/benchee_html/wiki/Chart-Types#comparison">
+          <i
+          class="benchee-help-icon icon-question-circle-o"
+          title="Comparisons of the different benchmarking jobs.
+For Iterations per Second higher is better, the black whiskers denote standard deviation. otherwise it is runtime so lower is better.
+The Box Plot shows a distribution of run times with the median and outliers."
+          ></i>
+        </a>
+      </h2>
+      <section>
+        <h3>Data Table</h3>
+<table>
+  <thead>
+    <tr>
+      <th class="text-left">Name</th>
+      <th>Iterations per Second</th>
+      <th>Average</th>
+      <th>Deviation</th>
+      <th>median</th>
+      <th>minimum</th>
+      <th>maximum</th>
+      <th>Sample size</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+      <tr>
+        
+          <td class="text-left"><a href="transpose_5000x5000_exmatrix.html">ExMatrix</a></td>
+        
+        <td>0.25</td>
+        <td>4.07 s</td>
+        <td>±16.62%</td>
+        <td>4.40 s</td>
+        <td>2.87 s</td>
+        <td>4.44 s</td>
+        <td>5</td>
+      </tr>
+    
+      <tr>
+        
+          <td class="text-left"><a href="transpose_5000x5000_matrex.html">Matrex</a></td>
+        
+        <td>3.27</td>
+        <td>0.31 s</td>
+        <td>±7.26%</td>
+        <td>0.30 s</td>
+        <td>0.28 s</td>
+        <td>0.36 s</td>
+        <td>68</td>
+      </tr>
+    
+      <tr>
+        
+          <td class="text-left"><a href="transpose_5000x5000_matrix.html">Matrix</a></td>
+        
+        <td>0.107</td>
+        <td>9.34 s</td>
+        <td>±2.22%</td>
+        <td>9.32 s</td>
+        <td>9.12 s</td>
+        <td>9.60 s</td>
+        <td>4</td>
+      </tr>
+    
+      <tr>
+        
+          <td class="text-left"><a href="transpose_5000x5000_numexy.html">Numexy</a></td>
+        
+        <td>0.0827</td>
+        <td>12.09 s</td>
+        <td>±1.74%</td>
+        <td>12.17 s</td>
+        <td>11.78 s</td>
+        <td>12.24 s</td>
+        <td>4</td>
+      </tr>
+    
+  </tbody>
+</table>
+
+      </section>
+
+      <section class="benchee-plot-container">
+        <div id="ips-comparison" class="job-count-4 plot"></div>
+      </section>
+
+      <section class="benchee-plot-container">
+        <div id="box-plot" class="job-count-4 plot"></div>
+      </section>
+    </article>
+
+    <footer>
+      <a href="https://github.com/PragTob/benchee" target="blank">benchee version: 0.13.1 </a>
+<br/>
+<a href="https://github.com/PragTob/benchee_html" target="blank">benchee_html version: 0.5.0</a>
+
+
+    </footer>
+
+    
+  <script src="assets/javascripts/plotly-1.30.1.min.js"></script>
+  <script src="assets/javascripts/benchee.js"></script>
+
+
+
+    <script>
+      var suite      = {"run_times":{"ExMatrix":[4395185,4444704,4221967,2872554,4429569],"Matrex":[293667,290401,290916,283741,288282,288756,278109,275852,285570,282483,297614,281377,307954,292712,313020,288095,301680,284526,302899,288389,288411,285468,288208,292772,295579,293482,311777,292212,332258,362508,340104,321970,324630,346096,314056,299657,290636,286037,287338,286466,292127,293633,293486,306466,292479,321264,364955,337063,324152,318058,350188,310290,285736,339811,361468,328851,316831,329530,341283,314614,330221,322564,294210,300124,293545,305414,294132,301266],"Matrix":[9596297,9398931,9115987,9244751],"Numexy":[11778633,12243298,12165975,12172305]},"sort_order":["Matrex","ExMatrix","Matrix","Numexy"],"statistics":{"ExMatrix":{"average":4072795.8,"ips":0.24553158299760575,"maximum":4444704,"median":4395185.0,"minimum":2872554,"mode":null,"percentiles":{"50":4395185.0,"99":4444704.0},"sample_size":5,"std_dev":676825.318512613,"std_dev_ips":0.04080292752886373,"std_dev_ratio":0.16618199186726057},"Matrex":{"average":306168.6617647059,"ips":3.266173599336275,"maximum":364955,"median":296596.5,"minimum":275852,"mode":null,"percentiles":{"50":296596.5,"99":364955.0},"sample_size":68,"std_dev":22242.997235494542,"std_dev_ips":0.23728584735597136,"std_dev_ratio":0.07264949034068202},"Matrix":{"average":9338991.5,"ips":0.107077943051988,"maximum":9596297,"median":9321841.0,"minimum":9115987,"mode":null,"percentiles":{"50":9321841.0,"99":9596297.0},"sample_size":4,"std_dev":206890.5852949009,"std_dev_ips":0.002372142464226449,"std_dev_ratio":0.022153418310199863},"Numexy":{"average":12090052.75,"ips":0.0827126250545102,"maximum":12243298,"median":12169140.0,"minimum":11778633,"mode":null,"percentiles":{"50":12169140.0,"99":12243298.0},"sample_size":4,"std_dev":210551.64688087814,"std_dev_ips":0.0014404634771397258,"std_dev_ratio":0.017415279423067705}}};
+      var runTimes   = suite.run_times;
+      var statistics = suite.statistics;
+      var sortOrder  = suite.sort_order;
+
+      var inputHeadline = " (5000x5000)"
+
+      drawIpsComparisonChart(statistics, sortOrder, inputHeadline);
+      drawComparisonBoxPlot(runTimes, sortOrder, inputHeadline);
+    </script>
+  </body>
+</html>
