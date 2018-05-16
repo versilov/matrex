@@ -53,3 +53,5 @@ matrex-*.tar
 
 .tags
 .tags1
+
+.ipynb_checkpoints
