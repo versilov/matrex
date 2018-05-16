@@ -452,9 +452,9 @@ defmodule Matrex.Algorithms do
   end
 
   @doc """
-  The same cost function, but implemented with the use of overloaded operators from
-  `Matrex.Operators` module for demonstration purposes. Works 2 times slower, than
-  standard implementation. But it's a way more readable.
+  The same cost function, implemented with  operators from `Matrex.Operators` module.
+
+  Works 2 times slower, than standard implementation. But it's a way more readable.
   """
   def lr_cost_fun_ops(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
       when is_number(lambda) do

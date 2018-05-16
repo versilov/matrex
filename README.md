@@ -222,6 +222,35 @@ and CSV (slow, especially on large matrices).
 Matrex CSV format is compatible with GNU Octave CSV output,
 so you can use it to exchange data between two systems.
 
+### Example
+
+```elixir
+
+    iex> Matrex.random(5) |> Matrex.save("rand.mtx")
+    :ok
+    iex> Matrex.load("rand.mtx")
+    #Matrex[5×5]
+    ┌                                         ┐
+    │ 0.05624 0.78819 0.29995 0.25654 0.94082 │
+    │ 0.50225 0.22923 0.31941  0.3329 0.78058 │
+    │ 0.81769 0.66448 0.97414 0.08146 0.21654 │
+    │ 0.33411 0.59648 0.24786 0.27596 0.09082 │
+    │ 0.18673 0.18699 0.79753 0.08101 0.47516 │
+    └                                         ┘
+    iex> Matrex.eye(5) |> Matrex.divide(Matrex.zeros(5)) |> Matrex.save("nan.csv")
+    :ok
+    iex> Matrex.load("nan.csv")
+    #Matrex[5×5]
+    ┌                                         ┐
+    │     ∞      NaN     NaN     NaN     NaN  │
+    │    NaN      ∞      NaN     NaN     NaN  │
+    │    NaN     NaN      ∞      NaN     NaN  │
+    │    NaN     NaN     NaN      ∞      NaN  │
+    │    NaN     NaN     NaN     NaN      ∞   │
+    └                                         ┘
+```
+
+
 ## NaN and Infinity
 
 Float special values, like `NaN` and `Inf` live well inside matrices,

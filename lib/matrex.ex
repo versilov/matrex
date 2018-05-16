@@ -77,7 +77,7 @@ defmodule Matrex do
   and only for increased readability, because using `Matrex` module functions, especially
   ones which do two or more operations at one call, are 2-3 times faster.
 
-  ### Usage example
+  ### Example
 
   ```elixir
 
@@ -168,6 +168,34 @@ defmodule Matrex do
 
   Matrex CSV format is compatible with GNU Octave CSV output,
   so you can use it to exchange data between two systems.
+
+  ### Example
+
+  ```elixir
+
+      iex> Matrex.random(5) |> Matrex.save("rand.mtx")
+      :ok
+      iex> Matrex.load("rand.mtx")
+      #Matrex[5×5]
+      ┌                                         ┐
+      │ 0.05624 0.78819 0.29995 0.25654 0.94082 │
+      │ 0.50225 0.22923 0.31941  0.3329 0.78058 │
+      │ 0.81769 0.66448 0.97414 0.08146 0.21654 │
+      │ 0.33411 0.59648 0.24786 0.27596 0.09082 │
+      │ 0.18673 0.18699 0.79753 0.08101 0.47516 │
+      └                                         ┘
+      iex> Matrex.eye(5) |> Matrex.divide(Matrex.zeros(5)) |> Matrex.save("nan.csv")
+      :ok
+      iex> Matrex.load("nan.csv")
+      #Matrex[5×5]
+      ┌                                         ┐
+      │     ∞      NaN     NaN     NaN     NaN  │
+      │    NaN      ∞      NaN     NaN     NaN  │
+      │    NaN     NaN      ∞      NaN     NaN  │
+      │    NaN     NaN     NaN      ∞      NaN  │
+      │    NaN     NaN     NaN     NaN      ∞   │
+      └                                         ┘
+  ```
 
   ## NaN and Infinity
 
@@ -260,6 +288,7 @@ defmodule Matrex do
   @behaviour Access
 
   # Horizontal vector
+  @doc false
   @impl Access
   def fetch(
         %Matrex{
@@ -382,6 +411,7 @@ defmodule Matrex do
   def fetch(%Matrex{} = matrex, :max), do: {:ok, max(matrex)}
   def fetch(%Matrex{} = matrex, :argmax), do: {:ok, argmax(matrex)}
 
+  @doc false
   @impl Access
   def get(%Matrex{} = matrex, key, default) do
     case fetch(matrex, key) do
@@ -391,6 +421,7 @@ defmodule Matrex do
   end
 
   defimpl Inspect do
+    @doc false
     def inspect(%Matrex{} = matrex, %{width: screen_width}),
       do: Matrex.Inspect.do_inspect(matrex, screen_width)
   end
@@ -399,12 +430,14 @@ defmodule Matrex do
     # Matrix element size in bytes
     @element_size 4
 
+    @doc false
     def count(%Matrex{
           data:
             <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, _body::binary>>
         }),
         do: {:ok, rows * cols}
 
+    @doc false
     def member?(%Matrex{data: <<_rows::binary-4, _cols::binary-4, body::binary>>}, element),
       do: {:ok, member?(body, element)}
 
@@ -413,6 +446,7 @@ defmodule Matrex do
 
     def member?(<<>>, _element), do: false
 
+    @doc false
     def slice(%Matrex{
           data:
             <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, body::binary>>
@@ -425,6 +459,7 @@ defmodule Matrex do
              )
            end}
 
+    @doc false
     def reduce(
           %Matrex{
             data:
