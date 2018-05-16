@@ -21,7 +21,7 @@ Based on matrix code from https://github.com/sdwolfz/exlearn
 
 2015 MacBook Pro, 2.2 GHz Core i7, 16 GB RAM
 
-![Dot product of 500x500 matrices]()
+Dot product of 500x500 matrices
 
 | Library      | Ops/sec  | Compared to Matrex  |
 | ------------ | -------- | ------------------- |
