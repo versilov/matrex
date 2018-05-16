@@ -53,7 +53,7 @@ defmodule Matrex.Operators do
   def a / b when is_number(a) and is_number(b), do: Kernel./(a, b)
   def a / b, do: Matrex.divide(a, b)
 
-  @doc false
+  @doc "Element-wise matrices multiplication. The same as `Matrex.multiply/2`"
   def a <|> b, do: Matrex.multiply(a, b)
 
   # Functions
