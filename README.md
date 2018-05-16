@@ -106,6 +106,75 @@ and a row:
     iex> m[2][:argmax]
     3
 
+## Math operators overloading
+
+`Matrex.Operators` module redefines `Kernel` math operators (+, -, \*, / <|>) and
+defines some convenience functions, so you can write calculations code in more natural way.
+
+It should be used with great caution. We suggest using it only inside specific functions
+and only for increased readability, because using `Matrex` module functions, especially
+ones which do two or more operations at one call, are 2-3 times faster.
+
+### Usage example
+
+    def lr_cost_fun_ops(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+        when is_number(lambda) do
+      # Turn off original operators
+      import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
+      import Matrex.Operators
+
+      m = y[:rows]
+
+      h = sigmoid(x * theta)
+      l = ones(size(theta)) |> set(1, 1, 0.0)
+
+      j = (-t(y) * log(h) - t(1 - y) * log(1 - h) + lambda / 2 * t(l) * pow2(theta)) / m
+
+      grad = (t(x) * (h - y) + (theta <|> l) * lambda) / m
+
+      {scalar(j), grad}
+    end
+
+The same function, coded with module methods calls (2.5 times faster):
+
+    def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+        when is_number(lambda) do
+      m = y[:rows]
+
+      h = Matrex.dot_and_apply(x, theta, :sigmoid)
+      l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
+
+      regularization =
+        Matrex.dot_tn(l, Matrex.square(theta))
+        |> Matrex.scalar()
+        |> Kernel.*(lambda / (2 * m))
+
+      j =
+        y
+        |> Matrex.dot_tn(Matrex.apply(h, :log), -1)
+        |> Matrex.substract(
+          Matrex.dot_tn(
+            Matrex.substract(1, y),
+            Matrex.apply(Matrex.substract(1, h), :log)
+          )
+        )
+        |> Matrex.scalar()
+        |> (fn
+              NaN -> NaN
+              x -> x / m + regularization
+            end).()
+
+      grad =
+        x
+        |> Matrex.dot_tn(Matrex.substract(h, y))
+        |> Matrex.add(Matrex.multiply(theta, l), 1.0, lambda)
+        |> Matrex.divide(m)
+
+      {j, grad}
+    end
+
+
+
 ## Enumerable protocol
 
 Matrex implements `Enumerable`, so, all kinds of `Enum` functions are applicable:
