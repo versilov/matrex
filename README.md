@@ -7,6 +7,9 @@
 
 Fast matrix manipulation library for Elixir implemented in C native code with highly optimized CBLAS sgemm() used for matrix multiplication.
 
+It's also memory efficient, so you can work with large matrices,
+about billion of elements in size.
+
 Based on matrix code from https://github.com/sdwolfz/exlearn
 
 ## Benchmark
@@ -115,11 +118,6 @@ and a row:
     iex> m[2][:argmax]
     3
 ```
-## Inspect protocol
-
-Matrex implements `Inspect` and looks nice in your console:
-
-![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
 
 ## Math operators overloading
 
