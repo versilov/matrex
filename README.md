@@ -52,11 +52,14 @@ On Ubuntu you need to install scientific libraries for this package to compile:
 ```bash
 > sudo apt-get install build-essential erlang-dev libatlas-base-dev
 ```
-## Matrices
+
+Performs fast operations on matrices using native C code and CBLAS library.
 
 ## Access behaviour
 
 Access behaviour is partly implemented for Matrex, so you can do:
+
+```elixir
 
     iex> m = Matrex.magic(3)
     #Matrex[3×3]
@@ -67,8 +70,9 @@ Access behaviour is partly implemented for Matrex, so you can do:
     └                         ┘
     iex> m[2][3]
     7.0
-
+```
 Or even:
+```elixir
 
     iex> m[1..2]
     #Matrex[2×3]
@@ -76,39 +80,50 @@ Or even:
     │     8.0     1.0     6.0 │
     │     3.0     5.0     7.0 │
     └                         ┘
-
+```
 
 There are also several shortcuts for getting dimensions of matrix:
+```elixir
 
     iex> m[:rows]
     3
 
     iex> m[:size]
     {3, 3}
-
+```
 calculating maximum value of the whole matrix:
+```elixir
 
     iex> m[:max]
     9.0
-
+```
 or just one of it's rows:
+```elixir
 
     iex> m[2][:max]
     7.0
-
+```
 calculating one-based index of the maximum element for the whole matrix:
+```elixir
 
     iex> m[:argmax]
     8
-
+```
 and a row:
+```elixir
 
     iex> m[2][:argmax]
     3
+```
+## Inspect protocol
+
+Matrex implements `Inspect` and looks nice in your console:
+
+![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
 
 ## Math operators overloading
 
-`Matrex.Operators` module redefines `Kernel` math operators (+, -, \*, / <|>) and
+`Matrex.Operators` module redefines `Kernel` math operators (+, -, *, / <|>) and
 defines some convenience functions, so you can write calculations code in more natural way.
 
 It should be used with great caution. We suggest using it only inside specific functions
@@ -118,6 +133,7 @@ ones which do two or more operations at one call, are 2-3 times faster.
 ### Usage example
 
 ```elixir
+
     def lr_cost_fun_ops(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
         when is_number(lambda) do
       # Turn off original operators
@@ -136,6 +152,7 @@ ones which do two or more operations at one call, are 2-3 times faster.
       {scalar(j), grad}
     end
 ```
+
 
 The same function, coded with module methods calls (2.5 times faster):
 
@@ -177,11 +194,11 @@ The same function, coded with module methods calls (2.5 times faster):
     end
 ```
 
-
-
 ## Enumerable protocol
 
 Matrex implements `Enumerable`, so, all kinds of `Enum` functions are applicable:
+
+```elixir
 
     iex> Enum.member?(m, 2.0)
     true
@@ -191,6 +208,7 @@ Matrex implements `Enumerable`, so, all kinds of `Enum` functions are applicable
 
     iex> Enum.sum(m)
     45
+```
 
 For functions, that exist both in `Enum` and in `Matrex` it's preferred to use Matrex
 version, beacuse it's usually much, much faster. I.e., for 1 000 x 1 000 matrix `Matrex.sum/1`
@@ -211,6 +229,7 @@ can be loaded from and saved to files.
 But when getting them into Elixir they are transferred to `NaN`,`Inf` and `NegInf` atoms,
 because BEAM does not accept special values as valid floats.
 
+```elixir
     iex> m = Matrex.eye(3)
     #Matrex[3×3]
     ┌                         ┐
@@ -232,3 +251,4 @@ because BEAM does not accept special values as valid floats.
 
     iex> n[1][2]
     NaN
+```
