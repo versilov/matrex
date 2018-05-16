@@ -33,7 +33,6 @@ trans_inputs = [
 
 Benchee.run(
   trans_jobs,
-  parallel: 4,
   inputs: trans_inputs,
   formatters: [
     &Benchee.Formatters.HTML.output/1,

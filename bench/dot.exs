@@ -35,9 +35,6 @@ dot_inputs = [
 
 Benchee.run(
   dot_jobs,
-  parallel: 1,
-  warmup: 2,
-  time: 5,
   inputs: dot_inputs,
   formatters: [
     &Benchee.Formatters.HTML.output/1,

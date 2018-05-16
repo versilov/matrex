@@ -35,10 +35,10 @@ Transposing 1000x1000 matrix
 
 | Library      | Ops/sec  | Compared to Matrex  |
 | ------------ | -------- | ------------------- |
-| Matrex       |   409.66 |                     |
-| ExMatrix     |     9.04 | 45.32x slower       |
-| Matrix       |     7.82 | 52.28x slower       |
-| Numexy       |     4.73 | 86.70x slower       |
+| Matrex       |   428.69 |                     |
+| ExMatrix     |     9.39 | 45.64x slower       |
+| Matrix       |     8.54 | 50.17x slower       |
+| Numexy       |     6.83 | 62.80x slower       |
 
 
 ## Visualization
