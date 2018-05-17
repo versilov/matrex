@@ -157,7 +157,7 @@ ones which do two or more operations at one call, are 2-3 times faster.
 
 ```elixir
 
-    def lr_cost_fun_ops(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+    def lr_cost_fun_ops(%Matrex{} = theta, { %Matrex{} = x, %Matrex{} = y, lambda } = _params)
         when is_number(lambda) do
       # Turn off original operators
       import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
@@ -180,7 +180,7 @@ ones which do two or more operations at one call, are 2-3 times faster.
 The same function, coded with module methods calls (2.5 times faster):
 
 ```elixir
-    def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+    def lr_cost_fun(%Matrex{} = theta, { %Matrex{} = x, %Matrex{} = y, lambda } = _params)
         when is_number(lambda) do
       m = y[:rows]
 
