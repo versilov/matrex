@@ -16,8 +16,9 @@ Based on matrix code from https://github.com/sdwolfz/exlearn
 
 ## Benchmark
 
-#### Comparison with pure Elixir libararies
+#### Comparison with pure Elixir libraries
 
+Slaughter of the innocents, actually.
 
 2015 MacBook Pro, 2.2 GHz Core i7, 16 GB RAM
 
@@ -26,9 +27,9 @@ Dot product of 500x500 matrices
 | Library      | Ops/sec  | Compared to Matrex  |
 | ------------ | -------- | ------------------- |
 | Matrex       | 674.70   |                     |
-| Matrix       | 0.0923   | 7 312.62x slower     |
-| Numexy       | 0.0173   | 38 906.14x slower    |
-| ExMatrix     | 0.0129   | 52 327.40x slower    |
+| Matrix       | 0.0923   | 7 312.62x slower    |
+| Numexy       | 0.0173   | 38 906.14x slower   |
+| ExMatrix     | 0.0129   | 52 327.40x slower   |
 
 
 Transposing 1000x1000 matrix
@@ -77,7 +78,7 @@ You need to install scientific libraries for this package to compile:
 > sudo apt-get install build-essential erlang-dev libatlas-base-dev
 ```
 
-## Windows
+### Windows
 
 It will definitely work on Windows, but we need a makefile
 and installation instruction. Please, contribute.
