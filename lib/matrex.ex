@@ -397,6 +397,19 @@ defmodule Matrex do
   def fetch(
         %Matrex{
           data: <<
+            _rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        },
+        :columns
+      ),
+      do: {:ok, columns}
+
+  @impl Access
+  def fetch(
+        %Matrex{
+          data: <<
             rows::unsigned-integer-little-32,
             columns::unsigned-integer-little-32,
             _rest::binary
@@ -1825,6 +1838,56 @@ defmodule Matrex do
   """
   @spec square(matrex) :: matrex
   def square(%Matrex{data: matrix}), do: %Matrex{data: Matrex.NIFs.multiply(matrix, matrix)}
+
+  @doc """
+  Returns submatrix for a given matrix. NIF.
+
+  Rows and columns ranges are inclusive and one-based.
+
+  ## Example
+
+      iex> m = Matrex.new("1 2 3; 4 5 6; 7 8 9")
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      │     7.0     8.0     9.0 │
+      └                         ┘
+      iex> Matrex.submatrix(m, 2..3, 2..3)
+      #Matrex[2×2]
+      ┌                ┐
+      │    5.0     6.0 │
+      │    8.0     9.0 │
+      └                ┘
+  """
+  @spec submatrix(matrex, Range.t(), Range.t()) :: matrex
+  def submatrix(
+        %Matrex{
+          data:
+            <<
+              rows::unsigned-integer-little-32,
+              cols::unsigned-integer-little-32,
+              _rest::binary
+            >> = data
+        },
+        row_from..row_to,
+        col_from..col_to
+      )
+      when row_from in 1..rows and row_to in row_from..rows and col_from in 1..cols and
+             col_to in col_from..cols,
+      do: %Matrex{data: NIFs.submatrix(data, row_from - 1, row_to - 1, col_from - 1, col_to - 1)}
+
+  def submatrix(%Matrex{} = matrex, rows, cols),
+    do:
+      raise(
+        RuntimeError,
+        message:
+          "Submatrix position out of range or malformed: position is (#{Kernel.inspect(rows)}, #{
+            Kernel.inspect(cols)
+          }), source size is (#{Kernel.inspect(1..matrex[:rows])}, #{
+            Kernel.inspect(1..matrex[:columns])
+          })"
+      )
 
   @doc """
   Substracts two matrices element-wise. NIF.

@@ -13,13 +13,14 @@
 
 typedef float* Matrix;
 
+#define MX_ELEMENT_SIZE 4 // Size of float
 #define MX_ROWS(matrix) (((uint32_t*)matrix)[0])
 #define MX_COLS(matrix) (((uint32_t*)matrix)[1])
 #define MX_SET_ROWS(matrix, rows) ((uint32_t*)matrix)[0] = rows
 #define MX_SET_COLS(matrix, cols) ((uint32_t*)matrix)[1] = cols
 #define MX_LENGTH(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)
-#define MX_BYTE_SIZE(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)*4
-#define MX_DATA_BYTE_SIZE(matrix) (((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1])*4
+#define MX_BYTE_SIZE(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)*MX_ELEMENT_SIZE
+#define MX_DATA_BYTE_SIZE(matrix) (((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1])*MX_ELEMENT_SIZE
 
 void
 matrix_clone(Matrix destination, Matrix source);
@@ -109,6 +110,10 @@ matrix_random(Matrix matrix);
 
 void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result);
+
+void
+matrix_submatrix(const Matrix matrix, const uint32_t row_from, const uint32_t row_to,
+  const uint32_t column_from, const uint32_t column_to, Matrix result);
 
 void
 matrix_substract(const Matrix first, const Matrix second, Matrix result);

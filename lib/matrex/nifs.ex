@@ -1,6 +1,8 @@
 defmodule Matrex.NIFs do
   @moduledoc false
 
+  # All NIFs accept zero-based matrix subscripts, while Matrex module accepts one-based subscripts.
+
   @on_load :load_nifs
 
   @doc false
@@ -177,7 +179,7 @@ defmodule Matrex.NIFs do
 
   defp to_list_of_floats(<<>>), do: []
 
-  @spec set(binary, non_neg_integer, non_neg_integer, number) :: binary
+  @spec set(binary, pos_integer, pos_integer, number) :: binary
   def set(
         <<
           rows::unsigned-integer-little-32,
@@ -194,6 +196,12 @@ defmodule Matrex.NIFs do
       binary_part(data, 0, pos * 4)::binary, value::float-little-32,
       binary_part(data, (pos + 1) * 4, (rows * cols - pos - 1) * 4)::binary>>
   end
+
+  @spec submatrix(binary, pos_integer, pos_integer, pos_integer, pos_integer) :: binary
+  def submatrix(matrex, row_from, row_to, col_from, col_to)
+      when is_binary(matrex) and is_integer(row_from) and is_integer(row_to) and
+             is_integer(col_from) and is_integer(col_to),
+      do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec substract(binary, binary) :: binary
   def substract(first, second)

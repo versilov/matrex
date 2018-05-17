@@ -477,6 +477,22 @@ matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const
   result[2 + row*MX_COLS(matrix) + column] = scalar;
 }
 
+void
+matrix_submatrix(const Matrix matrix, const uint32_t row_from, const uint32_t row_to,
+  const uint32_t column_from, const uint32_t column_to, Matrix result) {
+
+  const uint32_t source_columns = MX_COLS(matrix);
+
+  const uint32_t rows = row_to - row_from + 1;
+  const uint32_t columns = column_to - column_from + 1;
+
+  MX_SET_ROWS(result, rows);
+  MX_SET_COLS(result, columns);
+
+  for (uint32_t row = row_from; row <= row_to; row++)
+    cblas_scopy(columns, &matrix[2 + row*source_columns + column_from], 1,
+                         &result[2 + (row - row_from)*columns], 1);
+}
 
 void
 matrix_substract(const Matrix first, const Matrix second, Matrix result) {

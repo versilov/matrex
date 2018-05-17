@@ -360,6 +360,26 @@ defmodule MatrexTest do
     assert Matrex.set(matrix, 1, 3, 99) == expected
   end
 
+  test "#submatrix returns part of original matrix" do
+    matrix =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    expected =
+      Matrex.new([
+        [6, 13, 20],
+        [12, 19, 21],
+        [18, 25, 2]
+      ])
+
+    assert Matrex.submatrix(matrix, 2..4, 3..5) == expected
+  end
+
   test "#substract substracts two matrices" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2, 1], [3, 4, 6]])
