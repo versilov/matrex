@@ -62,7 +62,7 @@ by adding `matrex` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:matrex, "~> 0.4"}
+    {:matrex, "~> 0.5"}
   ]
 end
 ```
