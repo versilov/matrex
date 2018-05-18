@@ -353,6 +353,13 @@ defmodule MatrexTest do
     assert Matrex.reshape(list, 3, 2) == expected
   end
 
+  test "#reshape respects special float values" do
+    list = Enum.to_list(1..4) ++ [NaN, NegInf]
+    expected = Matrex.new("1 2; 3 4; NaN NegInf")
+
+    assert Matrex.reshape(list, 3, 2) == expected
+  end
+
   test "#reshape raises, when list length and shape do not match" do
     list = Enum.to_list(1..8)
 
