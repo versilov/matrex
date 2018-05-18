@@ -460,13 +460,7 @@ defmodule Matrex do
         do: {:ok, rows * cols}
 
     @doc false
-    def member?(%Matrex{data: <<_rows::binary-4, _cols::binary-4, body::binary>>}, element),
-      do: {:ok, member?(body, element)}
-
-    def member?(<<elem::binary-4, rest::binary>>, element),
-      do: if(Matrex.binary_to_float(elem) == element, do: true, else: member?(rest, element))
-
-    def member?(<<>>, _element), do: false
+    def member?(%Matrex{} = matrex, element), do: {:ok, Matrex.contains?(matrex, element)}
 
     @doc false
     def slice(%Matrex{
