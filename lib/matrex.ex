@@ -1012,7 +1012,7 @@ defmodule Matrex do
   def contains?(%Matrex{} = matrex, value), do: find(matrex, value) != nil
 
   @doc """
-  Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF.
+  Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF through `find/2`.
 
   Raises `ErlangError` if matrices' sizes do not match.
 
@@ -1217,7 +1217,7 @@ defmodule Matrex do
   def fill(size, value), do: fill(size, size, value)
 
   @doc """
-  Find position of the first occurence of the given value in the matrix.
+  Find position of the first occurence of the given value in the matrix. NIF.
 
   Returns {row, column} tuple or nil, if nothing was found. One-based.
 
@@ -1683,7 +1683,7 @@ defmodule Matrex do
 
   """
   @spec reshape([element], index, index) :: matrex
-  @spec reshape(Range.t(), index, index) :: matrex
+  @spec reshape(Enumerable.t(), index, index) :: matrex
   def reshape([], _, _), do: raise(ArgumentError)
 
   def reshape([_ | _] = list, rows, columns),
