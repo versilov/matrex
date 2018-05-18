@@ -167,16 +167,6 @@ matrix_argmax(const Matrix matrix) {
   return argmax - 2;
 }
 
-uint32_t
-matrix_contains(const Matrix matrix, const float value) {
-  uint64_t data_size = MX_LENGTH(matrix);
-
-  for (uint64_t index = 2; index < data_size; index += 1) {
-    if (matrix[index] == value) return 1;
-  }
-  return 0;
-}
-
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result) {
   uint64_t data_size = MX_LENGTH(first);
@@ -371,6 +361,16 @@ matrix_fill(Matrix matrix, const float value) {
   }
 }
 
+int32_t
+matrix_find(const Matrix matrix, const float value) {
+  uint64_t data_size = MX_LENGTH(matrix);
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    if (matrix[index] == value) return index - 2;
+  }
+  return -1;
+}
+
 float
 matrix_first(const Matrix matrix) {
   return matrix[2];
@@ -411,6 +411,20 @@ matrix_inspect_internal(const Matrix matrix, int32_t indentation) {
     printf(" %f", matrix[index]);
   }
   printf(">");
+}
+
+float
+matrix_min(const Matrix matrix) {
+  uint64_t data_size = MX_LENGTH(matrix);
+  float   min       = matrix[2];
+
+  for (uint64_t index = 3; index < data_size; index += 1) {
+    if (min > matrix[index]) {
+      min = matrix[index];
+    }
+  }
+
+  return min;
 }
 
 float

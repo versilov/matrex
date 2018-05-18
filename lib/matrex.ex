@@ -1009,9 +1009,7 @@ defmodule Matrex do
       false
   """
   @spec contains?(matrex, element) :: boolean
-  def contains?(%Matrex{data: matrix}, value)
-      when is_number(value) or value in [NaN, Inf, NegInf],
-      do: NIFs.contains?(matrix, float_to_binary(value))
+  def contains?(%Matrex{} = matrex, value), do: find(matrex, value) != nil
 
   @doc """
   Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF.
@@ -1217,6 +1215,19 @@ defmodule Matrex do
   """
   @spec fill(index, number) :: matrex
   def fill(size, value), do: fill(size, size, value)
+
+  @doc """
+  Find position of the first occurence of the given value in the matrix.
+
+  Returns {row, column} tuple or nil, if nothing was found. One-based.
+
+  ## Example
+
+
+  """
+  @spec find(matrex, element) :: {index, index} | nil
+  def find(%Matrex{data: data}, value) when is_number(value) or value in [NaN, Inf, PosInf],
+    do: NIFs.find(data, float_to_binary(value))
 
   @doc """
   Return first element of a matrix.
@@ -1650,9 +1661,20 @@ defmodule Matrex do
   @doc """
   Reshapes list of values into a matrix of given size.
 
+  Takes a list or anything, that implements `Enumerable.to_list/1`.
+
+  Raises `ArgumentError` if lsit size and given shape do not match.
+
   ## Example
 
-      iex> Enum.to_list(1..6) |> Matrex.reshape(2, 3)
+      iex> [1, 2, 3, 4, 5, 6] |> Matrex.reshape(2, 3)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+
+      iex> Matrex.reshape(1..6, 2, 3)
       #Matrex[2×3]
       ┌                         ┐
       │     1.0     2.0     3.0 │
@@ -1661,9 +1683,10 @@ defmodule Matrex do
 
   """
   @spec reshape([element], index, index) :: matrex
+  @spec reshape(Range.t(), index, index) :: matrex
   def reshape([], _, _), do: raise(ArgumentError)
 
-  def reshape(list, rows, columns) when is_list(list),
+  def reshape([_ | _] = list, rows, columns),
     do: %Matrex{
       data:
         do_reshape(
@@ -1673,6 +1696,8 @@ defmodule Matrex do
           columns
         )
     }
+
+  def reshape(input, rows, columns), do: input |> Enum.to_list() |> reshape(rows, columns)
 
   defp do_reshape(data, [], 1, 0), do: data
 

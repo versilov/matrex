@@ -76,25 +76,6 @@ defmodule Matrex.NIFs do
     end)
   end
 
-  @spec contains?(binary, binary) :: boolean
-  def contains?(
-        <<
-          _rows::binary-4,
-          _columns::binary-4,
-          data::binary
-        >>,
-        <<value::binary-4>>
-      ),
-      do: do_contains?(data, value)
-
-  defp do_contains?(<<>>, <<_value::binary-4>>), do: false
-
-  defp do_contains?(<<elem::binary-4, _rest::binary>>, <<value::binary-4>>) when elem == value,
-    do: true
-
-  defp do_contains?(<<_elem::binary-4, rest::binary>>, <<value::binary-4>>),
-    do: do_contains?(rest, value)
-
   @spec divide(binary, binary) :: binary
   def divide(first, second)
       when is_binary(first) and is_binary(second),
@@ -142,6 +123,26 @@ defmodule Matrex.NIFs do
   def fill(rows, cols, value)
       when is_integer(rows) and is_integer(cols) and is_integer(value),
       do: :erlang.nif_error(:nif_library_not_loaded)
+
+  @spec find(binary, binary) :: {pos_integer, pos_integer} | nil
+  def find(
+        <<
+          _rows::binary-4,
+          columns::binary-4,
+          data::binary
+        >>,
+        <<value::binary-4>>
+      ),
+      do: do_find(data, value, 0, columns)
+
+  defp do_find(<<>>, <<_value::binary-4>>, _, _), do: nil
+
+  defp do_find(<<elem::binary-4, _rest::binary>>, <<value::binary-4>>, index, columns)
+       when elem == value,
+       do: {div(index, columns), rem(index, columns)}
+
+  defp do_find(<<_elem::binary-4, rest::binary>>, <<value::binary-4>>, index, columns),
+    do: do_find(rest, value, index + 1, columns)
 
   @spec max(binary) :: float
   def max(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)

@@ -228,25 +228,6 @@ column_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
-contains(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
-  ErlNifBinary  matrix, element;
-  float        *matrix_data, *element_data;
-
-  UNUSED_VAR(argc);
-
-  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
-  if (!enif_inspect_binary(env, argv[1], &element)) return enif_make_badarg(env);
-
-  matrix_data = (float *) matrix.data;
-  element_data = (float *) element.data;
-
-  if (matrix_contains(matrix_data, *element_data) == 1)
-    return enif_make_atom(env, "true");
-
-  return enif_make_atom(env, "false");
-}
-
-static ERL_NIF_TERM
 divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -527,6 +508,32 @@ fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   matrix_fill(result_data, value);
 
   return result;
+}
+
+static ERL_NIF_TERM
+find(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix, element;
+  float        *matrix_data, *element_data;
+  int32_t index;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &element)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+  element_data = (float *) element.data;
+
+
+  index = matrix_find(matrix_data, *element_data);
+
+  if (index >= 0) {
+    int row = index / MX_COLS(matrix_data) + 1;
+    int column = index % MX_COLS(matrix_data) + 1;
+    return enif_make_tuple2(env, enif_make_int(env, row), enif_make_int(env, column));
+  }
+
+  return enif_make_atom(env, "nil");
 }
 
 // Inner function for getting scalar from args list and casting it to float.
@@ -969,7 +976,6 @@ static ErlNifFunc nif_functions[] = {
   {"apply_parallel_math",  2, apply_parallel_math,  0},
   {"argmax",               1, argmax,               0},
   {"column_to_list",       2, column_to_list,       0},
-  {"contains?",            2, contains,             0},
   {"divide",               2, divide,               0},
   {"divide_scalar",        2, divide_scalar,        0},
   {"divide_by_scalar",     2, divide_by_scalar,     0},
@@ -980,6 +986,7 @@ static ErlNifFunc nif_functions[] = {
   {"dot_tn",               3, dot_tn,               0},
   {"eye",                  2, eye,                  0},
   {"fill",                 3, fill,                 0},
+  {"find",                 2, find,                 0},
   {"max",                  1, max,                  0},
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},

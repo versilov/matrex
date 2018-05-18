@@ -341,6 +341,11 @@ defmodule MatrexTest do
     assert Matrex.neg(matrix) == expected
   end
 
+  test "#reshape consumes any value, convertable to list" do
+    assert Matrex.reshape(1..6, 2, 3) == Matrex.new("1 2 3; 4 5 6")
+    assert Matrex.reshape('abcd', 2, 2) == Matrex.new("97 98; 99 100")
+  end
+
   test "#reshape turns flat list into a matrix" do
     list = Enum.to_list(1..6)
     expected = Matrex.new("1 2; 3 4; 5 6")

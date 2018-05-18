@@ -50,9 +50,6 @@ math_func_ptr_t math_func_from_name(const char* name);
 int32_t
 matrix_argmax(const Matrix matrix);
 
-uint32_t
-matrix_contains(const Matrix matrix, const float value);
-
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result);
 
@@ -87,6 +84,9 @@ matrix_eye(Matrix matrix, const float value);
 void
 matrix_fill(Matrix matrix, const float value);
 
+int32_t
+matrix_find(const Matrix matrix, const float value);
+
 float
 matrix_first(const Matrix matrix);
 
@@ -98,6 +98,9 @@ matrix_inspect_internal(const Matrix matrix, int32_t indentation);
 
 float
 matrix_max(const Matrix matrix);
+
+float
+matrix_min(const Matrix matrix);
 
 void
 matrix_multiply(const Matrix first, const Matrix second, Matrix result);

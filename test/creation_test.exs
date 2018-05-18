@@ -161,8 +161,6 @@ defmodule CreationTest do
   end
 
   test "#new creates a new matrix initialized by a list" do
-    rows = 2
-    columns = 3
     list = [[1, 2, 3], [4, 5, 6]]
 
     expected = %Matrex{
