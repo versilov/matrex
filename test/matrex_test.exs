@@ -309,6 +309,13 @@ defmodule MatrexTest do
     assert Matrex.max(matrix) == expected
   end
 
+  test "#min returns the minimum element from the matrix" do
+    matrix = Matrex.new([[1, 2, 0.5], [4, 5, 6]])
+    expected = 0.5
+
+    assert Matrex.min(matrix) == expected
+  end
+
   test "#multiply performs elementwise multiplication of two matrices" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2, 1], [3, 4, 6]])

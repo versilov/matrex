@@ -429,6 +429,7 @@ defmodule Matrex do
   @impl Access
   def fetch(%Matrex{} = matrex, :sum), do: {:ok, sum(matrex)}
   def fetch(%Matrex{} = matrex, :max), do: {:ok, max(matrex)}
+  def fetch(%Matrex{} = matrex, :min), do: {:ok, min(matrex)}
   def fetch(%Matrex{} = matrex, :argmax), do: {:ok, argmax(matrex)}
 
   @doc false
@@ -1379,6 +1380,28 @@ defmodule Matrex do
   """
   @spec max(matrex) :: element
   def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
+
+  @doc """
+
+  Minimum element in a matrix. NIF.
+
+  ## Example
+
+      iex> m = Matrex.magic(5)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │    16.0    23.0     5.0     7.0    14.0 │
+      │    22.0     4.0     6.0    13.0    20.0 │
+      │     3.0    10.0    12.0    19.0    21.0 │
+      │     9.0    11.0    18.0    25.0     2.0 │
+      │    15.0    17.0    24.0     1.0     8.0 │
+      └                                         ┘
+      iex> Matrex.min(m)
+      1.0
+
+  """
+  @spec min(matrex) :: element
+  def min(%Matrex{data: matrix}), do: NIFs.min(matrix)
 
   @doc """
   Elementwise multiplication of two matrices or matrix and a scalar. NIF.

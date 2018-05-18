@@ -580,6 +580,23 @@ max(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+minimum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  float         min;
+  float        *matrix_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+
+  min = matrix_min(matrix_data);
+
+  return enif_make_double(env, min);
+}
+
+static ERL_NIF_TERM
 multiply(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -988,6 +1005,7 @@ static ErlNifFunc nif_functions[] = {
   {"fill",                 3, fill,                 0},
   {"find",                 2, find,                 0},
   {"max",                  1, max,                  0},
+  {"min",                  1, minimum,              0},
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},
   {"neg",                  1, neg,                  0},
