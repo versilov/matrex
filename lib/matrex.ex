@@ -344,7 +344,7 @@ defmodule Matrex do
          %Matrex{
            data:
              <<1::unsigned-integer-little-32, b - a + 1::unsigned-integer-little-32,
-               binary_part(data, (a - 1) * 4, (b - a + 1) * 4)::binary>>
+               binary_part(data, (a - 1) * @element_size, (b - a + 1) * @element_size)::binary>>
          }}
 
   @impl Access
@@ -364,7 +364,11 @@ defmodule Matrex do
          %Matrex{
            data:
              <<b - a + 1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-               binary_part(data, (a - 1) * columns * 4, (b - a + 1) * columns * 4)::binary>>
+               binary_part(
+                 data,
+                 (a - 1) * columns * @element_size,
+                 (b - a + 1) * columns * @element_size
+               )::binary>>
          }}
 
   @impl Access
@@ -545,7 +549,7 @@ defmodule Matrex do
 
   With scaling each matrix:
 
-      iex> Matrex.add(Matrex.new("1 2 3; 4 5 6"), Matrex.new("3 2 1; 6 5 4"), 2, 3)
+      iex> Matrex.add(Matrex.new("1 2 3; 4 5 6"), Matrex.new("3 2 1; 6 5 4"), 2.0, 3.0)
       #Matrex[2×3]
       ┌                         ┐
       │     11.0    10.0    9.0 │
@@ -574,6 +578,14 @@ defmodule Matrex do
       │-0.91113 0.00443 0.66032  0.9912-0.41615 │
       │-0.75969-0.27516 0.42418  0.5403 -0.1455 │
       └                                         ┘
+
+  The following math functions from C <math.h> are supported, and also a sigmoid function:
+
+  ```elixir
+    :exp, :exp2, :sigmoid, :expm1, :log, :log2, :sqrt, :cbrt, :ceil, :floor, :trunc, :round,
+    :abs, :sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh, :asinh, :acosh, :atanh,
+    :erf, :erfc, :tgamma, :lgamm
+  ```
 
   """
   @math_functions [
@@ -609,16 +621,16 @@ defmodule Matrex do
   ]
 
   @spec apply(matrex, atom) :: matrex
-  def apply(%Matrex{data: data} = matrix, function)
-      when function in @math_functions do
+  def apply(%Matrex{data: data} = matrix, function_atom)
+      when function_atom in @math_functions do
     {rows, cols} = size(matrix)
 
     %Matrex{
       data:
         if(
           rows * cols < 100_000,
-          do: NIFs.apply_math(data, function),
-          else: NIFs.apply_parallel_math(data, function)
+          do: NIFs.apply_math(data, function_atom),
+          else: NIFs.apply_parallel_math(data, function_atom)
         )
     }
   end
@@ -863,7 +875,7 @@ defmodule Matrex do
       do: raise(ArgumentError, message: "Column position out of range: #{col}")
 
     data
-    |> binary_part(((row - 1) * columns + (col - 1)) * 4, 4)
+    |> binary_part(((row - 1) * columns + (col - 1)) * @element_size, @element_size)
     |> binary_to_float()
   end
 
@@ -919,7 +931,8 @@ defmodule Matrex do
       data:
         0..(rows - 1)
         |> Enum.reduce(column, fn row, acc ->
-          <<acc::binary, binary_part(data, (row * columns + (col - 1)) * 4, 4)::binary>>
+          <<acc::binary,
+            binary_part(data, (row * columns + (col - 1)) * @element_size, @element_size)::binary>>
         end)
     }
   end
@@ -1167,6 +1180,12 @@ defmodule Matrex do
         >>
       }),
       do: binary_to_float(element)
+
+  @doc """
+  An alias for `eye/1`.
+  """
+  @spec identity(index) :: matrex
+  defdelegate identity(size), to: __MODULE__, as: :eye
 
   @doc """
   Displays a visualization of the matrix.
@@ -1663,7 +1682,7 @@ defmodule Matrex do
       do: %Matrex{
         data:
           <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-            binary_part(data, (row - 1) * columns * 4, columns * 4)::binary>>
+            binary_part(data, (row - 1) * columns * @element_size, columns * @element_size)::binary>>
       }
 
   @doc """
@@ -1739,6 +1758,9 @@ defmodule Matrex do
   @doc """
   Transfer one-element matrix to a scalar value.
 
+  Differently from `first/1` will not match and throw an error,
+  if matrix contains more than one element.
+
   ## Example
 
       iex> Matrex.new([[1.234]]) |> Matrex.scalar()
@@ -1746,6 +1768,9 @@ defmodule Matrex do
 
       iex> Matrex.new([[0]]) |> Matrex.divide(0) |> Matrex.scalar()
       NaN
+
+      iex> Matrex.new([[1.234, 5.678]]) |> Matrex.scalar()
+      ** (FunctionClauseError) no function clause matching in Matrex.scalar/1
   """
   @spec scalar(matrex) :: element
   def scalar(%Matrex{
@@ -1793,7 +1818,7 @@ defmodule Matrex do
       }
 
   @doc """
-  Return size of matrix as {rows, cols}
+  Return size of matrix as `{rows, cols}`
 
   ## Example
 
