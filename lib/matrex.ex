@@ -288,7 +288,12 @@ defmodule Matrex do
   @doc """
   Checks if given value can be uses as and element of the matrix.
   """
-  defguard is_element(value) when is_number(value) or value in [NaN, Inf, NegInf]
+  if Version.match?(System.version(), "~> 1.5") do
+    defguard is_element(value) when is_number(value) or value in [NaN, Inf, NegInf]
+  else
+    defmacro is_element(value),
+      do: quote(is_number(unquote(value)) or unquote(value) in [NaN, Inf, NegInf])
+  end
 
   @behaviour Access
 
