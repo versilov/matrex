@@ -472,6 +472,11 @@ defmodule Matrex do
 
   def pop(%Matrex{} = matrex, _), do: {nil, matrex}
 
+  # To silence warnings
+  @doc false
+  @impl Access
+  def get_and_update(%Matrex{}, _row, _fun), do: :not_implemented
+
   defimpl Inspect do
     @doc false
     def inspect(%Matrex{} = matrex, %{width: screen_width}),
