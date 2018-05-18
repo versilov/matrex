@@ -178,7 +178,7 @@ defmodule CreationTest do
       >>
     }
 
-    assert Matrex.new(rows, columns, list) == expected
+    assert Matrex.new(list) == expected
   end
 
   test "#new creates a new matrix initialized by a list, without rows and cols specification" do

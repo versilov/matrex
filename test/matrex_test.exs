@@ -165,9 +165,9 @@ defmodule MatrexTest do
   end
 
   test "#divide divides two matrices" do
-    first = Matrex.new(2, 3, [[1, 2, 6], [9, 10, 18]])
-    second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])
-    expected = Matrex.new(2, 3, [[0.5, 1, 2], [3, 2, 3]])
+    first = Matrex.new([[1, 2, 6], [9, 10, 18]])
+    second = Matrex.new([[2, 2, 3], [3, 5, 6]])
+    expected = Matrex.new([[0.5, 1, 2], [3, 2, 3]])
 
     assert Matrex.divide(first, second) == expected
   end
@@ -194,8 +194,8 @@ defmodule MatrexTest do
   end
 
   test "#divide raises when sizes do not match" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[5, 2], [3, 4]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
       Matrex.divide(first, second)
@@ -203,16 +203,16 @@ defmodule MatrexTest do
   end
 
   test "#dot multiplies two matrices" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
-    expected = Matrex.new(2, 2, [[22, 28], [49, 64]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[1, 2], [3, 4], [5, 6]])
+    expected = Matrex.new([[22, 28], [49, 64]])
 
     assert Matrex.dot(first, second) == expected
   end
 
   test "#dot raises when sizes do not match" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[2, 2, 3], [3, 5, 6]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
       Matrex.dot(first, second)
@@ -220,18 +220,18 @@ defmodule MatrexTest do
   end
 
   test "#dot_and_add multiplies two matrices and adds the third" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
-    third = Matrex.new(2, 2, [[1, 2], [3, 4]])
-    expected = Matrex.new(2, 2, [[23, 30], [52, 68]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[1, 2], [3, 4], [5, 6]])
+    third = Matrex.new([[1, 2], [3, 4]])
+    expected = Matrex.new([[23, 30], [52, 68]])
 
     assert Matrex.dot_and_add(first, second, third) == expected
   end
 
   test "#dot_and_add raises when sizes do not match" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
-    third = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[1, 2], [3, 4], [5, 6]])
+    third = Matrex.new([[1, 2], [3, 4], [5, 6]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.dot_and_add(first, second, third)
@@ -239,16 +239,16 @@ defmodule MatrexTest do
   end
 
   test "#dot_nt multiplies two matrices, second needing to be transposed" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 3, [[1, 3, 5], [2, 4, 6]])
-    expected = Matrex.new(2, 2, [[22, 28], [49, 64]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[1, 3, 5], [2, 4, 6]])
+    expected = Matrex.new([[22, 28], [49, 64]])
 
     assert Matrex.dot_nt(first, second) == expected
   end
 
   test "#dot_nt raises when sizes do not match" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[2, 2, 3, 5], [3, 5, 6, 7]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.dot_nt(first, second)
@@ -256,16 +256,16 @@ defmodule MatrexTest do
   end
 
   test "#dot_tn multiplies two matrices, first needing to be transposed" do
-    first = Matrex.new(3, 2, [[1, 4], [2, 5], [3, 6]])
-    second = Matrex.new(3, 2, [[1, 2], [3, 4], [5, 6]])
-    expected = Matrex.new(2, 2, [[22, 28], [49, 64]])
+    first = Matrex.new([[1, 4], [2, 5], [3, 6]])
+    second = Matrex.new([[1, 2], [3, 4], [5, 6]])
+    expected = Matrex.new([[22, 28], [49, 64]])
 
     assert Matrex.dot_tn(first, second) == expected
   end
 
   test "#dot_tn raises when sizes do not match" do
-    first = Matrex.new(3, 2, [[1, 4], [2, 5], [3, 6]])
-    second = Matrex.new(2, 4, [[2, 2, 3, 5], [3, 5, 6, 7]])
+    first = Matrex.new([[1, 4], [2, 5], [3, 6]])
+    second = Matrex.new([[2, 2, 3, 5], [3, 5, 6, 7]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.dot_tn(first, second)
@@ -273,13 +273,13 @@ defmodule MatrexTest do
   end
 
   test "#first returns the first element of the matrix" do
-    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
 
     assert Matrex.first(matrix) == 1
   end
 
   test "#size returns the size of the matrix" do
-    matrix = Matrex.new(2, 3, [[4, 8, 22], [20, 0, 9]])
+    matrix = Matrex.new([[4, 8, 22], [20, 0, 9]])
 
     assert Matrex.size(matrix) == {2, 3}
   end
@@ -297,23 +297,23 @@ defmodule MatrexTest do
   end
 
   test "#max returns the maximum element from the matrix" do
-    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = 6
 
     assert Matrex.max(matrix) == expected
   end
 
   test "#multiply performs elementwise multiplication of two matrices" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 3, [[5, 2, 1], [3, 4, 6]])
-    expected = Matrex.new(2, 3, [[5, 4, 3], [12, 20, 36]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[5, 2, 1], [3, 4, 6]])
+    expected = Matrex.new([[5, 4, 3], [12, 20, 36]])
 
     assert Matrex.multiply(first, second) == expected
   end
 
   test "#multiply raises when sizes do not match" do
-    first = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    second = Matrex.new(2, 2, [[5, 2], [3, 4]])
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[5, 2], [3, 4]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
       Matrex.multiply(first, second)
@@ -321,9 +321,9 @@ defmodule MatrexTest do
   end
 
   test "#multiply multiplies matrix element by a scalar" do
-    matrix = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
     scalar = 2
-    expected = Matrex.new(2, 3, [[2, 4, 6], [8, 10, 12]])
+    expected = Matrex.new([[2, 4, 6], [8, 10, 12]])
 
     assert Matrex.multiply(matrix, scalar) == expected
   end
@@ -454,8 +454,8 @@ defmodule MatrexTest do
   end
 
   test "#transpose transposes a matrix" do
-    input = Matrex.new(2, 3, [[1, 2, 3], [4, 5, 6]])
-    expected = Matrex.new(3, 2, [[1, 4], [2, 5], [3, 6]])
+    input = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[1, 4], [2, 5], [3, 6]])
 
     assert Matrex.transpose(input) == expected
   end
