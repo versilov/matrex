@@ -460,6 +460,7 @@ defmodule Matrex.Algorithms do
       when is_number(lambda) do
     # Turn off original operators
     import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
+    import Matrex
     import Matrex.Operators
 
     m = y[:rows]

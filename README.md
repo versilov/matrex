@@ -31,7 +31,7 @@ Dot product of 500x500 matrices
 | Numexy       | 0.0173   | 38 906.14× slower   |
 | ExMatrix     | 0.0129   | 52 327.40× slower   |
 
- 
+
 Transposing 1000x1000 matrix
 
 | Library      | Ops/sec  | Compared to Matrex  |
@@ -165,6 +165,7 @@ ones which do two or more operations at one call, are 2-3 times faster.
       # Turn off original operators
       import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
       import Matrex.Operators
+      import Matrex
 
       m = y[:rows]
 

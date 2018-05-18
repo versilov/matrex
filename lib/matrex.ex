@@ -86,6 +86,7 @@ defmodule Matrex do
         # Turn off original operators
         import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
         import Matrex.Operators
+        import Matrex
 
         m = y[:rows]
 

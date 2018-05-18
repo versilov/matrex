@@ -8,6 +8,7 @@ defmodule Matrex.Operators do
       iex> import IEx.Helpers, except: [t: 1] # Only in iex, conflicts with transpose function
       iex> import Matrex.Operators
       iex> import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
+      iex> import Matrex
 
       iex> m = random(5, 3)
       #Matrex[5×3]
@@ -65,26 +66,6 @@ defmodule Matrex.Operators do
   # Functions
   @doc "Transpose a matrix."
   defdelegate t(m), to: Matrex, as: :transpose
-  @doc "See `Matrex.eye/1`"
-  defdelegate eye(size), to: Matrex
-  @doc "See `Matrex.ones/1`"
-  defdelegate ones(size), to: Matrex
-  @doc "See `Matrex.ones/2`"
-  defdelegate ones(rows, cols), to: Matrex
-  @doc "See `Matrex.random/1`"
-  defdelegate random(size), to: Matrex
-  @doc "See `Matrex.random/2`"
-  defdelegate random(rows, cols), to: Matrex
-  @doc "See `Matrex.set/4`"
-  defdelegate set(matrex, row, col, val), to: Matrex
-  @doc "See `Matrex.size/1`"
-  defdelegate size(matrex), to: Matrex
-  @doc "See `Matrex.scalar/1`"
-  defdelegate scalar(matrex), to: Matrex
   @doc "See `Matrex.square/1`"
   defdelegate pow2(matrex), to: Matrex, as: :square
-  @doc "See `Matrex.zeros/1`"
-  defdelegate zeros(size), to: Matrex
-  @doc "See `Matrex.zeros/2`"
-  defdelegate zeros(rows, cols), to: Matrex
 end
