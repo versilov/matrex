@@ -1874,7 +1874,7 @@ defmodule Matrex do
       when (is_number(value) or value in [NaN, Inf, NegInf]) and row > 0 and column > 0 and
              row <= rows and column <= cols,
       do: %Matrex{
-        data: NIFs.set(matrix, row - 1, column - 1, value)
+        data: NIFs.set(matrix, row - 1, column - 1, float_to_binary(value))
       }
 
   @doc """

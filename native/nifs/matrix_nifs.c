@@ -703,23 +703,24 @@ row_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 
 static ERL_NIF_TERM
 set(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ErlNifBinary  matrix;
+  ErlNifBinary  matrix, value;
   float *matrix_data;
   float *result_data;
   uint32_t  result_size;
   unsigned long row;
   unsigned long column;
-  float         scalar;
+  float scalar;
   ERL_NIF_TERM  result;
   uint32_t rows, cols;
 
-  (void)(argc);
+  UNUSED_VAR(argc);
 
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
   enif_get_uint64(env, argv[1], &row);
   enif_get_uint64(env, argv[2], &column);
+  enif_inspect_binary(env, argv[3], &value);
 
-  scalar = get_scalar(env, argv[3]);
+  scalar = *((float*)value.data);
 
   matrix_data = (float *) matrix.data;
   rows = MX_ROWS(matrix_data);

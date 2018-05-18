@@ -368,6 +368,13 @@ defmodule MatrexTest do
     assert Matrex.set(matrix, 1, 3, 99) == expected
   end
 
+  test "#set can handle special values" do
+    matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[1, NaN, 3], [4, 5, 6]])
+
+    assert Matrex.set(matrix, 1, 2, NaN) == expected
+  end
+
   test "#submatrix returns part of original matrix" do
     matrix =
       Matrex.new([
