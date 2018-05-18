@@ -31,9 +31,7 @@ Dot product of 500x500 matrices
 | Numexy       | 0.0173   | 38 906.14× slower   |
 | ExMatrix     | 0.0129   | 52 327.40× slower   |
 
- ![Dot benchmark](https://raw.githubusercontent.com/versilov/matrex/master/docs/dot_benchmark.png)
-
-
+ 
 Transposing 1000x1000 matrix
 
 | Library      | Ops/sec  | Compared to Matrex  |
