@@ -583,7 +583,7 @@ defmodule Matrex do
   The following math functions from C <math.h> are supported, and also a sigmoid function:
 
   ```elixir
-    :exp, :exp2, :sigmoid, :expm1, :log, :log2, :sqrt, :cbrt, :ceil, :floor, :trunc, :round,
+    :exp, :exp2, :sigmoid, :expm1, :log, :log2, :sqrt, :cbrt, :ceil, :floor, :truncate, :round,
     :abs, :sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh, :asinh, :acosh, :atanh,
     :erf, :erfc, :tgamma, :lgamm
   ```
@@ -649,7 +649,7 @@ defmodule Matrex do
     :cbrt,
     :ceil,
     :floor,
-    :trunc,
+    :truncate,
     :round,
     :abs,
     :sin,
@@ -1354,6 +1354,10 @@ defmodule Matrex do
   """
   @spec magic(index) :: matrex
   def magic(n) when is_integer(n), do: Matrex.MagicSquare.new(n) |> new()
+
+  @doc false
+  # Shortcut to get functions list outside in Matrex.Operators module.
+  def math_functions_list(), do: @math_functions
 
   @doc """
   Maximum element in a matrix. NIF.

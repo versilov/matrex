@@ -88,7 +88,7 @@ math_func_ptr_t math_func_from_name(const char* name) {
     return &ceilf;
   if (strcmp(name, "floor") == 0)
     return &floorf;
-  if (strcmp(name, "trunc") == 0)
+  if (strcmp(name, "truncate") == 0 || strcmp(name, "trunc") == 0)
     return &truncf;
   if (strcmp(name, "round") == 0)
     return &roundf;

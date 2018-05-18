@@ -1,6 +1,6 @@
 defmodule Matrex.Operators do
   @moduledoc """
-  Overrides Kernel math operators for use with matrices.
+  Overrides Kernel math operators and adds common math functions shortcuts for use with matrices.
   Use with caution.
 
   ## Usage
@@ -56,18 +56,15 @@ defmodule Matrex.Operators do
   @doc "Element-wise matrices multiplication. The same as `Matrex.multiply/2`"
   def a <|> b, do: Matrex.multiply(a, b)
 
+  # Define shortcuts for math funcions
+  Enum.each(Matrex.math_functions_list(), fn f ->
+    @doc "Applies C language #{f}(x) to each element of the matrix. See `Matrex.apply/2`"
+    def unquote(f)(%Matrex{} = m), do: Matrex.apply(m, unquote(f))
+  end)
+
   # Functions
   @doc "Transpose a matrix."
-  def t(%Matrex{} = m), do: Matrex.transpose(m)
-  @doc "Take logarithm of a matrix elementwise."
-  def log(%Matrex{} = m), do: Matrex.apply(m, :log)
-
-  @doc """
-  Take sigmoid function of each element of matrix.
-      sigmoid(x) = 1 / (1 + exp(-x))
-  """
-  def sigmoid(%Matrex{} = m), do: Matrex.apply(m, :sigmoid)
-
+  defdelegate t(m), to: Matrex, as: :transpose
   @doc "See `Matrex.eye/1`"
   defdelegate eye(size), to: Matrex
   @doc "See `Matrex.ones/1`"
