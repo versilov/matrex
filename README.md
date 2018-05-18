@@ -26,7 +26,8 @@ Dot product of 500x500 matrices
 
 | Library      | Ops/sec  | Compared to Matrex  |
 | ------------ | -------- | ------------------- |
-| Matrex       | 674.70   |                     |
+| Matrex       | 674.70   |                     | ![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
+
 | Matrix       | 0.0923   | 7 312.62× slower    |
 | Numexy       | 0.0173   | 38 906.14× slower   |
 | ExMatrix     | 0.0129   | 52 327.40× slower   |
