@@ -1560,8 +1560,16 @@ defmodule Matrex do
 
   @doc """
   Create matrix filled with ones.
-  """
 
+  ## Example
+
+      iex> Matrex.ones(2, 3)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     1.0     1.0 │
+      │     1.0     1.0     1.0 │
+      └                         ┘
+  """
   @spec ones(index, index) :: matrex
   def ones(rows, cols) when is_integer(rows) and is_integer(cols), do: fill(rows, cols, 1)
 
