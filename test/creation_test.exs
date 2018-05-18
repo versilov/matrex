@@ -227,7 +227,7 @@ defmodule CreationTest do
 
   test "#random does not generate the same matrix twice" do
     result = Matrex.divide(Matrex.random(100), Matrex.random(100))
-    refute Enum.member?(result, 1.0)
+    refute Matrex.contains?(result, 1.0)
   end
 
   test "#zeros/1 returns zero filled square matrix" do

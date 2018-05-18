@@ -285,6 +285,11 @@ defmodule Matrex do
             zeros: 2,
             zeros: 1}
 
+  @doc """
+  Checks if given value can be uses as and element of the matrix.
+  """
+  defguard is_element(value) when is_number(value) or value in [NaN, Inf, NegInf]
+
   @behaviour Access
 
   # Horizontal vector
@@ -563,7 +568,11 @@ defmodule Matrex do
       do: %Matrex{data: NIFs.add(first, second, alpha, beta)}
 
   @doc """
-  Apply math function to matrix elementwise. NIF, multithreaded.
+
+  Applies given function to each element of the matrix and returns the matrex of results.
+
+  If second argument is an atom, then applies C language math function.
+  NIF, multithreaded.
 
   Uses eight native threads, if matrix size is greater, than 100 000 elements.
 
@@ -586,6 +595,55 @@ defmodule Matrex do
     :abs, :sin, :cos, :tan, :asin, :acos, :atan, :sinh, :cosh, :tanh, :asinh, :acosh, :atanh,
     :erf, :erfc, :tgamma, :lgamm
   ```
+
+
+  If second argument is a function that takes one argument,
+  then this function receives the element of the matrix.
+
+  ## Example
+
+      iex> Matrex.magic(5) |> Matrex.apply(&:math.cos/1)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │-0.95766-0.53283 0.28366  0.7539 0.13674 │
+      │-0.99996-0.65364 0.96017 0.90745 0.40808 │
+      │-0.98999-0.83907 0.84385  0.9887-0.54773 │
+      │-0.91113 0.00443 0.66032  0.9912-0.41615 │
+      │-0.75969-0.27516 0.42418  0.5403 -0.1455 │
+      └                                         ┘
+
+
+  If second argument is a function that takes two arguments,
+  then this function receives the element of the matrix and its one-based index.
+
+
+  ## Example
+
+      iex> Matrex.ones(5) |> Matrex.apply(fn val, index -> val + index end)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │     2.0     3.0     4.0     5.0     6.0 │
+      │     7.0     8.0     9.0    10.0    11.0 │
+      │    12.0    13.0    14.0    15.0    16.0 │
+      │    17.0    18.0    19.0    20.0    21.0 │
+      │    22.0    23.0    24.0    25.0    26.0 │
+      └                                         ┘
+
+  If second argument is a function that takes three arguments,
+  then this function receives the element of the matrix one-based row index and one-based
+  column index of the element.
+
+  ## Example
+
+      iex> Matrex.ones(5) |> Matrex.apply(fn val, row, col -> val + row + col end)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │     3.0     4.0     5.0     6.0     7.0 │
+      │     4.0     5.0     6.0     7.0     8.0 │
+      │     5.0     6.0     7.0     8.0     9.0 │
+      │     6.0     7.0     8.0     9.0    10.0 │
+      │     7.0     8.0     9.0    10.0    11.0 │
+      └                                         ┘
 
   """
   @math_functions [
@@ -620,7 +678,13 @@ defmodule Matrex do
     :lgamma
   ]
 
-  @spec apply(matrex, atom) :: matrex
+  @spec apply(
+          matrex,
+          atom
+          | (element -> element)
+          | (element, index -> element)
+          | (element, index, index -> element)
+        ) :: matrex
   def apply(%Matrex{data: data} = matrix, function_atom)
       when function_atom in @math_functions do
     {rows, cols} = size(matrix)
@@ -635,23 +699,6 @@ defmodule Matrex do
     }
   end
 
-  @doc """
-  Applies the given function on each element of the matrix. Implemented in Elixir, so it's not fast.
-
-  ## Example
-
-      iex> Matrex.magic(5) |> Matrex.apply(&:math.cos/1)
-      #Matrex[5×5]
-      ┌                                         ┐
-      │-0.95766-0.53283 0.28366  0.7539 0.13674 │
-      │-0.99996-0.65364 0.96017 0.90745 0.40808 │
-      │-0.98999-0.83907 0.84385  0.9887-0.54773 │
-      │-0.91113 0.00443 0.66032  0.9912-0.41615 │
-      │-0.75969-0.27516 0.42418  0.5403 -0.1455 │
-      └                                         ┘
-
-  """
-  @spec apply(matrex, (element -> element)) :: matrex
   def apply(
         %Matrex{
           data:
@@ -666,28 +713,6 @@ defmodule Matrex do
     %Matrex{data: apply_on_matrix(data, function, initial)}
   end
 
-  @doc """
-
-  Applies function to each element of the matrix.
-
-  One-based index of element in the matix is
-  passed to the function along with the element value.
-
-
-  ## Examples
-
-      iex> Matrex.ones(5) |> Matrex.apply(fn val, index -> val + index end)
-      #Matrex[5×5]
-      ┌                                         ┐
-      │     2.0     3.0     4.0     5.0     6.0 │
-      │     7.0     8.0     9.0    10.0    11.0 │
-      │    12.0    13.0    14.0    15.0    16.0 │
-      │    17.0    18.0    19.0    20.0    21.0 │
-      │    22.0    23.0    24.0    25.0    26.0 │
-      └                                         ┘
-
-  """
-  @spec apply(matrex, (element, index -> element)) :: matrex
   def apply(
         %Matrex{
           data: <<
@@ -705,7 +730,6 @@ defmodule Matrex do
     %Matrex{data: apply_on_matrix(data, function, 1, size, initial)}
   end
 
-  @spec apply(matrex, (element, index, index -> element)) :: matrex
   def apply(
         %Matrex{
           data: <<
@@ -774,6 +798,20 @@ defmodule Matrex do
 
   @doc """
   Applies function to elements of two matrices and returns matrix of function results.
+
+  Matrices must be of the same size.
+
+  ## Example
+
+      iex(11)> Matrex.apply(Matrex.random(5), Matrex.random(5), fn x1, x2 -> min(x1, x2) end)
+      #Matrex[5×5]
+      ┌                                         ┐
+      │ 0.02025 0.15055 0.69177 0.08159 0.07237 │
+      │ 0.03252 0.14805 0.03627  0.1733 0.58721 │
+      │ 0.10865 0.49192 0.12166  0.0573 0.66522 │
+      │ 0.13642 0.23838 0.14403 0.57151 0.12359 │
+      │ 0.12877 0.12745 0.10933 0.27281 0.35957 │
+      └                                         ┘
   """
   @spec apply(matrex, matrex, (element, element -> element)) :: matrex
   def apply(
@@ -786,14 +824,14 @@ defmodule Matrex do
         },
         %Matrex{
           data: <<
-            _::unsigned-integer-little-32,
-            _::unsigned-integer-little-32,
+            rows2::unsigned-integer-little-32,
+            columns2::unsigned-integer-little-32,
             second_data::binary
           >>
         },
         function
       )
-      when is_function(function, 2) do
+      when is_function(function, 2) and rows == rows2 and columns == columns2 do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     %Matrex{data: apply_on_matrices(first_data, second_data, function, initial)}
@@ -816,6 +854,8 @@ defmodule Matrex do
 
   @doc """
   Returns one-based index of the biggest element. NIF.
+
+  There is also `matrex[:argmax]` shortcut for this function.
 
   ## Example
 
@@ -957,6 +997,28 @@ defmodule Matrex do
   @spec column_to_list(matrex, index) :: [element]
   def column_to_list(%Matrex{data: matrix}, column) when is_integer(column) and column > 0,
     do: NIFs.column_to_list(matrix, column - 1)
+
+  @doc """
+  Checks if given element exists in the matrix.
+
+  ## Example
+
+      iex> m = Matrex.new("1 NaN 3; Inf 10 23")
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0    NaN      3.0 │
+      │     ∞      10.0    23.0 │
+      └                         ┘
+      iex> Matrex.contains?(m, 1.0)
+      true
+      iex> Matrex.contains?(m, NaN)
+      true
+      iex> Matrex.contains?(m, 9)
+      false
+  """
+  @spec contains?(matrex, element) :: boolean
+  def contains?(%Matrex{data: matrix}, value) when is_element(value),
+    do: NIFs.contains?(matrix, float_to_binary(value))
 
   @doc """
   Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF.
@@ -1583,7 +1645,7 @@ defmodule Matrex do
   @doc """
   Create matrix of random floats in [0, 1] range. NIF.
 
-  C language RNG is re-seeded on each function call with `srandom(time(NULL) + clock())`.
+  C language RNG is seeded on NIF libray load with `srandom(time(NULL) + clock())`.
 
   ## Example
 
@@ -1790,7 +1852,14 @@ defmodule Matrex do
       │     1.0     1.0     1.0 │
       │     1.0     1.0     1.0 │
       └                         ┘
-      iex> Matrex.set(m, 2, 2, 0)
+      iex> m = Matrex.set(m, 2, 2, 0)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     1.0     1.0 │
+      │     1.0     0.0     1.0 │
+      │     1.0     1.0     1.0 │
+      └                         ┘
+      iex> m = Matrex.set(m, 3, 2, NegInf)
       #Matrex[3×3]
       ┌                         ┐
       │     1.0     1.0     1.0 │
@@ -1798,7 +1867,7 @@ defmodule Matrex do
       │     1.0     1.0     1.0 │
       └                         ┘
   """
-  @spec set(matrex, index, index, number) :: matrex
+  @spec set(matrex, index, index, element) :: matrex
   def set(
         %Matrex{
           data:
@@ -1812,7 +1881,7 @@ defmodule Matrex do
         column,
         value
       )
-      when is_number(value) and row > 0 and column > 0 and row <= rows and column <= cols,
+      when is_element(value) and row > 0 and column > 0 and row <= rows and column <= cols,
       do: %Matrex{
         data: NIFs.set(matrix, row - 1, column - 1, value)
       }

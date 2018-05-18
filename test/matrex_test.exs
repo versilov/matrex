@@ -156,6 +156,14 @@ defmodule MatrexTest do
     assert Matrex.column_to_list(matrix, 3) == [5, 6, 12, 18, 24]
   end
 
+  test "#contains? checks if given element exists in the matrix" do
+    matrix = Matrex.new("1 2 3; 4 5 6")
+    assert Matrex.contains?(matrix, 3)
+    assert Matrex.contains?(matrix, 6)
+    refute Matrex.contains?(matrix, 0)
+    refute Matrex.contains?(matrix, 10)
+  end
+
   test "#divide divides two matrices" do
     first = Matrex.new(2, 3, [[1, 2, 6], [9, 10, 18]])
     second = Matrex.new(2, 3, [[2, 2, 3], [3, 5, 6]])

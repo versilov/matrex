@@ -76,6 +76,25 @@ defmodule Matrex.NIFs do
     end)
   end
 
+  @spec contains?(binary, binary) :: boolean
+  def contains?(
+        <<
+          _rows::binary-4,
+          _columns::binary-4,
+          data::binary
+        >>,
+        <<value::binary-4>>
+      ),
+      do: do_contains?(data, value)
+
+  defp do_contains?(<<>>, <<_value::binary-4>>), do: false
+
+  defp do_contains?(<<elem::binary-4, _rest::binary>>, <<value::binary-4>>) when elem == value,
+    do: true
+
+  defp do_contains?(<<_elem::binary-4, rest::binary>>, <<value::binary-4>>),
+    do: do_contains?(rest, value)
+
   @spec divide(binary, binary) :: binary
   def divide(first, second)
       when is_binary(first) and is_binary(second),

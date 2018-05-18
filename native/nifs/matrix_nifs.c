@@ -226,6 +226,27 @@ column_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+contains(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix, element;
+  ERL_NIF_TERM  result;
+  float        *matrix_data, *element_data;
+  uint64_t       data_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &element)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+  element_data = (float *) element.data;
+
+  if (matrix_contains(matrix_data, *element_data) == 1)
+    return enif_make_atom(env, "true");
+
+  return enif_make_atom(env, "false");
+}
+
+static ERL_NIF_TERM
 divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -947,6 +968,7 @@ static ErlNifFunc nif_functions[] = {
   {"apply_parallel_math",  2, apply_parallel_math,  0},
   {"argmax",               1, argmax,               0},
   {"column_to_list",       2, column_to_list,       0},
+  {"contains?",            2, contains,             0},
   {"divide",               2, divide,               0},
   {"divide_scalar",        2, divide_scalar,        0},
   {"divide_by_scalar",     2, divide_by_scalar,     0},

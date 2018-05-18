@@ -167,6 +167,16 @@ matrix_argmax(const Matrix matrix) {
   return argmax - 2;
 }
 
+uint32_t
+matrix_contains(const Matrix matrix, const float value) {
+  uint64_t data_size = MX_LENGTH(matrix);
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    if (matrix[index] == value) return 1;
+  }
+  return 0;
+}
+
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result) {
   uint64_t data_size = MX_LENGTH(first);
@@ -465,6 +475,7 @@ matrix_random(Matrix matrix) {
 
   for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = (float)random()/(float)RAND_MAX;
+    // matrix[index] = (float)arc4random()/(float)UINT32_MAX;
   }
 }
 

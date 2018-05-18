@@ -50,6 +50,9 @@ math_func_ptr_t math_func_from_name(const char* name);
 int32_t
 matrix_argmax(const Matrix matrix);
 
+uint32_t
+matrix_contains(const Matrix matrix, const float value);
+
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result);
 
