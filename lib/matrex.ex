@@ -442,6 +442,36 @@ defmodule Matrex do
     end
   end
 
+  @doc false
+  @impl Access
+  def pop(
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+              body::binary>>
+        },
+        row
+      )
+      when is_integer(row) and row >= 1 and row <= rows do
+    {%Matrex{
+       data:
+         <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+           binary_part(body, (row - 1) * columns * @element_size, columns * @element_size)::binary>>
+     },
+     %Matrex{
+       data:
+         <<rows - 1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+           binary_part(body, 0, (row - 1) * columns * @element_size)::binary,
+           binary_part(
+             body,
+             row * columns * @element_size,
+             (rows - row) * columns * @element_size
+           )::binary>>
+     }}
+  end
+
+  def pop(%Matrex{} = matrex, _), do: {nil, matrex}
+
   defimpl Inspect do
     @doc false
     def inspect(%Matrex{} = matrex, %{width: screen_width}),
@@ -1846,7 +1876,6 @@ defmodule Matrex do
         File.write!(file_name, matrix)
 
       :filename.extension(file_name) == ".csv" ->
-        # csv = to_csv(data, cols, cols, "")
         csv =
           matrix
           |> NIFs.to_list_of_lists()
@@ -1864,18 +1893,6 @@ defmodule Matrex do
     end
   end
 
-  defp to_csv(<<>>, _col, _total_csolumns, csv), do: csv
-
-  defp to_csv(<<elem::binary-4, rest::binary>>, 1, total_columns, csv) do
-    new_csv = csv <> float_to_string(elem) <> "\n"
-    to_csv(rest, total_columns, total_columns, new_csv)
-  end
-
-  defp to_csv(<<elem::binary-4, rest::binary>>, col, total_columns, csv) do
-    new_csv = csv <> float_to_string(elem) <> ","
-    to_csv(rest, col - 1, total_columns, new_csv)
-  end
-
   @spec element_to_string(element) :: binary
   # Save zero values without fraction part to save space
   defp element_to_string(0.0), do: "0"
@@ -1883,13 +1900,6 @@ defmodule Matrex do
   defp element_to_string(NaN), do: "NaN"
   defp element_to_string(Inf), do: "Inf"
   defp element_to_string(NegInf), do: "-Inf"
-
-  @spec float_to_string(binary) :: binary
-  defp float_to_string(<<0::float-little-32>>), do: "0"
-  defp float_to_string(<<val::float-little-32>>), do: Float.to_string(val)
-  defp float_to_string(@not_a_number), do: "NaN"
-  defp float_to_string(@positive_infinity), do: "Inf"
-  defp float_to_string(@negative_infinity), do: "-Inf"
 
   @doc """
   Transfer one-element matrix to a scalar value.
