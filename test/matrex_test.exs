@@ -272,6 +272,12 @@ defmodule MatrexTest do
     end
   end
 
+  test "#find returns position tuple of the element" do
+    matrex = Enum.to_list(1..100) |> Matrex.reshape(10, 10)
+    assert Matrex.find(matrex, 11) == {2, 1}
+    assert Matrex.find(matrex, 101) == nil
+  end
+
   test "#first returns the first element of the matrix" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
 
@@ -333,6 +339,25 @@ defmodule MatrexTest do
     expected = Matrex.new([[-1, -2, -3], [-4, -5, -6]])
 
     assert Matrex.neg(matrix) == expected
+  end
+
+  test "#reshape turns flat list into a matrix" do
+    list = Enum.to_list(1..6)
+    expected = Matrex.new("1 2; 3 4; 5 6")
+
+    assert Matrex.reshape(list, 3, 2) == expected
+  end
+
+  test "#reshape raises, when list length and shape do not match" do
+    list = Enum.to_list(1..8)
+
+    assert_raise ArgumentError, fn ->
+      Matrex.reshape(list, 3, 2)
+    end
+
+    assert_raise ArgumentError, fn ->
+      Matrex.reshape(list, 2, 5)
+    end
   end
 
   test "#row returns row of the matrix" do

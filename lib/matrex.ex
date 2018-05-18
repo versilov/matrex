@@ -253,6 +253,7 @@ defmodule Matrex do
             at: 3,
             binary_to_float: 1,
             column_to_list: 2,
+            contains?: 2,
             divide: 2,
             dot: 2,
             dot_and_add: 3,
@@ -272,8 +273,10 @@ defmodule Matrex do
             parse_float: 1,
             random: 2,
             random: 1,
+            reshape: 3,
             row_to_list: 2,
             row: 2,
+            set: 4,
             size: 1,
             square: 1,
             substract: 2,
@@ -1643,6 +1646,61 @@ defmodule Matrex do
   """
   @spec random(index) :: matrex
   def random(size) when is_integer(size), do: random(size, size)
+
+  @doc """
+  Reshapes list of values into a matrix of given size.
+
+  ## Example
+
+      iex> Enum.to_list(1..6) |> Matrex.reshape(2, 3)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+
+  """
+  @spec reshape([element], index, index) :: matrex
+  def reshape([], _, _), do: raise(ArgumentError)
+
+  def reshape(list, rows, columns) when is_list(list),
+    do: %Matrex{
+      data:
+        do_reshape(
+          <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>,
+          list,
+          rows,
+          columns
+        )
+    }
+
+  defp do_reshape(data, [], 1, 0), do: data
+
+  defp do_reshape(_data, [], _, _),
+    do: raise(ArgumentError, message: "Not enough elements for this shape")
+
+  defp do_reshape(_data, [_ | _], 0, 0),
+    do: raise(ArgumentError, message: "Too much elements for this shape")
+
+  # Another row is ready, restart counters
+  defp do_reshape(
+         <<_rows::unsigned-integer-little-32, columns::unsigned-integer-little-32, _::binary>> =
+           data,
+         list,
+         row,
+         0
+       ),
+       do: do_reshape(data, list, row - 1, columns)
+
+  defp do_reshape(
+         <<_rows::unsigned-integer-little-32, _columns::unsigned-integer-little-32, _::binary>> =
+           data,
+         [elem | tail],
+         row,
+         column
+       ) do
+    do_reshape(<<data::binary, float_to_binary(elem)::binary-4>>, tail, row, column - 1)
+  end
 
   @doc """
   Return matrix row as list by one-based index.
