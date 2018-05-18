@@ -285,16 +285,6 @@ defmodule Matrex do
             zeros: 2,
             zeros: 1}
 
-  @doc """
-  Checks if given value can be uses as and element of the matrix.
-  """
-  if Version.match?(System.version(), "~> 1.5") do
-    defguard is_element(value) when is_number(value) or value in [NaN, Inf, NegInf]
-  else
-    defmacro is_element(value),
-      do: quote(is_number(unquote(value)) or unquote(value) in [NaN, Inf, NegInf])
-  end
-
   @behaviour Access
 
   # Horizontal vector
@@ -1016,8 +1006,9 @@ defmodule Matrex do
       false
   """
   @spec contains?(matrex, element) :: boolean
-  def contains?(%Matrex{data: matrix}, value) when is_element(value),
-    do: NIFs.contains?(matrix, float_to_binary(value))
+  def contains?(%Matrex{data: matrix}, value)
+      when is_number(value) or value in [NaN, Inf, NegInf],
+      do: NIFs.contains?(matrix, float_to_binary(value))
 
   @doc """
   Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF.
@@ -1880,7 +1871,8 @@ defmodule Matrex do
         column,
         value
       )
-      when is_element(value) and row > 0 and column > 0 and row <= rows and column <= cols,
+      when (is_number(value) or value in [NaN, Inf, NegInf]) and row > 0 and column > 0 and
+             row <= rows and column <= cols,
       do: %Matrex{
         data: NIFs.set(matrix, row - 1, column - 1, value)
       }

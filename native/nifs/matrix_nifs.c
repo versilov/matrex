@@ -7,6 +7,8 @@
 #define ASSERT_SIZES_MATCH(m1, m2) if (MX_ROWS(m1) != MX_ROWS(m2) || MX_COLS(m1) != MX_COLS(m2)) \
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
+#define UNUSED_VAR(v) (void)(v)
+
 //-----------------------------------------------------------------------------
 // Inner helper functions headers
 //-----------------------------------------------------------------------------
@@ -228,11 +230,9 @@ column_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 contains(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix, element;
-  ERL_NIF_TERM  result;
   float        *matrix_data, *element_data;
-  uint64_t       data_size;
 
-  (void)(argc);
+  UNUSED_VAR(argc);
 
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
   if (!enif_inspect_binary(env, argv[1], &element)) return enif_make_badarg(env);
