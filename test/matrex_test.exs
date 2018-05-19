@@ -155,6 +155,31 @@ defmodule MatrexTest do
     assert Matrex.column_to_list(matrix, 3) == [5, 6, 12, 18, 24]
   end
 
+  test "#concat concatenates two matrices along columns" do
+    first = Matrex.reshape(1..6, 2, 3)
+    second = Matrex.reshape(1..4, 2, 2)
+    expected = Matrex.new("1 2 3 1 2; 4 5 6 3 4")
+
+    assert Matrex.concat(first, second) == expected
+  end
+
+  test "#concat concatenates two matrices along rows" do
+    first = Matrex.reshape(1..6, 3, 2)
+    second = Matrex.reshape(1..4, 2, 2)
+    expected = Matrex.new("1 2; 3 4; 5 6; 1 2; 3 4")
+
+    assert Matrex.concat(first, second, :rows) == expected
+  end
+
+  test "#concat raises when sizes do not match" do
+    first = Matrex.reshape(1..6, 3, 2)
+    second = Matrex.reshape(1..6, 2, 3)
+
+    assert_raise ArgumentError, fn ->
+      Matrex.concat(first, second, :rows)
+    end
+  end
+
   test "#contains? checks if given element exists in the matrix" do
     matrix = Matrex.new("1 2 3; 4 5 6")
     assert Matrex.contains?(matrix, 3)
@@ -377,6 +402,20 @@ defmodule MatrexTest do
 
     assert_raise ArgumentError, fn ->
       Matrex.reshape(list, 2, 5)
+    end
+  end
+
+  test "#reshape converts Matrex to Matrex" do
+    m = Matrex.reshape(1..12, 3, 4)
+    expected = Matrex.new("1 2 3 4 5 6; 7 8 9 10 11 12")
+    assert Matrex.reshape(m, 2, 6) == expected
+  end
+
+  test "#reshape raises ArgumentError when matrices sizes do not match" do
+    m = Matrex.reshape(1..12, 3, 4)
+
+    assert_raise ArgumentError, fn ->
+      Matrex.reshape(m, 3, 5)
     end
   end
 

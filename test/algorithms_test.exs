@@ -43,13 +43,16 @@ defmodule AlgorithmsTest do
     assert j == expected_j
   end
 
+  @tag timeout: 120_000
   test "#fmincg does linear regression" do
-    x = Matrex.load("test/X.mtx")
-    y = Matrex.load("test/y.mtx")
+    x = Matrex.load("test/data/Xtest.mtx.gz") |> Matrex.normalize()
+    y = Matrex.load("test/data/Ytest.mtx.gz")
+
+    x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
     theta = Matrex.zeros(x[:cols], 1)
 
     lambda = 0.01
-    iterations = 100
+    iterations = 70
 
     solutions =
       1..10
@@ -62,12 +65,19 @@ defmodule AlgorithmsTest do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 4
+        max_concurrency: 1,
+        timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
       |> Matrex.new()
 
-    # |> IO.inspect(label: "Solutions")
+    # Visualize solutions
+    # solutions
+    # |> Matrex.to_list_of_lists()
+    # |> Enum.each(&(Matrex.reshape(tl(&1), 28, 28) |> Matrex.heatmap()))
+
+    # x_test = Matrex.load("test/data/Xtest.mtx.gz") |> Matrex.normalize()
+    # x_test = Matrex.concat(Matrex.ones(x_test[:rows], 1), x_test)
 
     predictions =
       x
@@ -75,6 +85,8 @@ defmodule AlgorithmsTest do
       |> Matrex.apply(:sigmoid)
 
     # |> IO.inspect(label: "Predictions")
+
+    y_test = Matrex.load("test/data/Ytest.mtx")
 
     accuracy =
       1..predictions[:rows]
@@ -85,6 +97,6 @@ defmodule AlgorithmsTest do
       |> Kernel.*(100)
       |> IO.inspect(label: "\rTraining set accuracy")
 
-    assert accuracy > 95
+    assert accuracy >= 95
   end
 end

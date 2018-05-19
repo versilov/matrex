@@ -417,6 +417,9 @@ defmodule Matrex.Algorithms do
   @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number}) :: {float, Matrex.t()}
   def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
       when is_number(lambda) do
+    IO.write(IO.ANSI.home())
+    if theta[:rows] == 785, do: theta[2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+
     m = y[:rows]
 
     h = Matrex.dot_and_apply(x, theta, :sigmoid)
@@ -439,6 +442,7 @@ defmodule Matrex.Algorithms do
       |> Matrex.scalar()
       |> (fn
             NaN -> NaN
+            Inf -> Inf
             x -> x / m + regularization
           end).()
 

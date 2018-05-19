@@ -2,7 +2,7 @@ defmodule SaveLoadTest do
   use ExUnit.Case, async: true
 
   test "#load loads matrex from CSV" do
-    m = Matrex.load("test/matrex.csv")
+    m = Matrex.load("test/data/matrex.csv")
 
     expected =
       Matrex.new([
@@ -18,7 +18,7 @@ defmodule SaveLoadTest do
 
   test "#load raises, when format is unkonwn" do
     assert_raise RuntimeError, fn ->
-      Matrex.load("test/matrex.txt")
+      Matrex.load("test/data/matrex.txt")
     end
   end
 
@@ -60,5 +60,15 @@ defmodule SaveLoadTest do
     l = Matrex.load(@test_file_name_csv)
     assert l == m
     assert File.rm(@test_file_name_csv) == :ok
+  end
+
+  test "#load loads matrix from .idx format" do
+    m = Matrex.load("test/data/t10k-labels-idx1-ubyte.idx")
+    assert Matrex.size(m) == {10_000, 1}
+  end
+
+  test "#load loads matrix from .idx.gz format" do
+    m = Matrex.load("test/data/t10k-images-idx3-ubyte.idx.gz")
+    assert Matrex.size(m) == {10_000, 28 * 28}
   end
 end

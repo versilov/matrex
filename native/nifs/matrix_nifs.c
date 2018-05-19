@@ -576,7 +576,7 @@ max(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   max = matrix_max(matrix_data);
 
-  return enif_make_double(env, max);
+  return make_cell_value(env, max);
 }
 
 static ERL_NIF_TERM
@@ -593,7 +593,7 @@ minimum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   min = matrix_min(matrix_data);
 
-  return enif_make_double(env, min);
+  return make_cell_value(env, min);
 }
 
 static ERL_NIF_TERM

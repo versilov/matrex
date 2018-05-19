@@ -1028,6 +1028,136 @@ defmodule Matrex do
     do: NIFs.column_to_list(matrix, column - 1)
 
   @doc """
+  Concatenate two matrices along x or y axis.
+
+  The number of rows or columns must be equal.
+
+  ## Examples
+      iex> m1 = Matrex.new([[1, 2, 3], [4, 5, 6]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+      iex> m2 = Matrex.new([[7, 8, 9], [10, 11, 12]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     7.0     8.0     9.0 │
+      │    10.0    11.0    12.0 │
+      └                         ┘
+      iex> Matrex.concat(m1, m2)
+      #Matrex[2×6]
+      ┌                                                 ┐
+      │     1.0     2.0     3.0     7.0     8.0     9.0 │
+      │     4.0     5.0     6.0    10.0    11.0    12.0 │
+      └                                                 ┘
+      iex> Matrex.concat(m1, m2, :rows)
+      #Matrex[4×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      │     7.0     8.0     9.0 │
+      │    10.0    11.0    12.0 │
+      └                         ┘
+  """
+  @spec concat(matrex, matrex, :columns | :rows) :: matrex
+  def concat(matrex1, matrex2, type \\ :columns)
+
+  def concat(
+        %Matrex{
+          data: <<
+            rows1::unsigned-integer-little-32,
+            columns1::unsigned-integer-little-32,
+            data1::binary
+          >>
+        },
+        %Matrex{
+          data: <<
+            rows2::unsigned-integer-little-32,
+            columns2::unsigned-integer-little-32,
+            data2::binary
+          >>
+        },
+        :columns
+      )
+      when rows1 == rows2 do
+    initial =
+      <<rows1::unsigned-integer-little-32, columns1 + columns2::unsigned-integer-little-32>>
+
+    %Matrex{data: do_concat(initial, data1, columns1, data2, columns2)}
+  end
+
+  def concat(
+        %Matrex{
+          data: <<
+            rows1::unsigned-integer-little-32,
+            columns1::unsigned-integer-little-32,
+            data1::binary
+          >>
+        },
+        %Matrex{
+          data: <<
+            rows2::unsigned-integer-little-32,
+            columns2::unsigned-integer-little-32,
+            data2::binary
+          >>
+        },
+        :rows
+      )
+      when columns1 == columns2 do
+    %Matrex{
+      data:
+        <<rows1 + rows2::unsigned-integer-little-32, columns1::unsigned-integer-little-32,
+          data1::binary, data2::binary>>
+    }
+  end
+
+  def concat(
+        %Matrex{
+          data: <<
+            rows1::unsigned-integer-little-32,
+            columns1::unsigned-integer-little-32,
+            _data1::binary
+          >>
+        },
+        %Matrex{
+          data: <<
+            rows2::unsigned-integer-little-32,
+            columns2::unsigned-integer-little-32,
+            _data2::binary
+          >>
+        },
+        _
+      ),
+      do:
+        raise(
+          ArgumentError,
+          message: "Cannot concat: #{rows1}×#{columns1} does not fit into #{rows2}×#{columns2}."
+        )
+
+  defp do_concat(result, <<>>, _, <<>>, _), do: result
+
+  defp do_concat(
+         result,
+         data1,
+         columns1,
+         data2,
+         columns2
+       ) do
+    row1 = binary_part(data1, 0, columns1 * @element_size)
+
+    rest1 =
+      binary_part(data1, columns1 * @element_size, byte_size(data1) - columns1 * @element_size)
+
+    row2 = binary_part(data2, 0, columns2 * @element_size)
+
+    rest2 =
+      binary_part(data2, columns2 * @element_size, byte_size(data2) - columns2 * @element_size)
+
+    do_concat(<<result::binary, row1::binary, row2::binary>>, rest1, columns1, rest2, columns2)
+  end
+
+  @doc """
   Checks if given element exists in the matrix.
 
   ## Example
@@ -1295,26 +1425,35 @@ defmodule Matrex do
     mx = max(m)
 
     1..div(m[:rows], 2)
-    |> Enum.map(fn rp ->
-      rows_pair_to_ascii(m[rp * 2 - 1], m[rp * 2], mn, mx)
+    |> Enum.each(fn rp ->
+      (rows_pair_to_ascii(m[rp * 2 - 1], m[rp * 2], mn, mx) <> "\e[0m") |> IO.puts()
     end)
-    |> Enum.join("\e[0m\n")
-    |> Kernel.<>("\e[0m")
-    |> IO.puts()
+
+    # |> Enum.join("\e[0m\n")
+    # |> Kernel.<>("\e[0m")
+    # |> IO.puts()
 
     m
   end
 
   defp rows_pair_to_ascii(top_row, bottom_row, min, max) do
+    range = if max != min, do: max - min, else: 1
+
     1..top_row[:columns]
     |> Enum.reduce("", fn c, acc ->
       <<acc::binary,
-        "\e[38;2;#{val_to_rgb(bottom_row[c], min, max)};48;2;#{val_to_rgb(top_row[c], min, max)}m▄">>
+        "\e[38;2;#{val_to_rgb(bottom_row[c], min, range)};48;2;#{
+          val_to_rgb(top_row[c], min, range)
+        }m▄">>
     end)
   end
 
-  defp val_to_rgb(val, mn, mx) do
-    c = trunc((val - mn) * 255 / (mx - mn))
+  defp val_to_rgb(NaN, _, _), do: "255;0;0"
+  defp val_to_rgb(Inf, _, _), do: "0;128;255"
+  defp val_to_rgb(NegInf, _, _), do: "0;0;255"
+
+  defp val_to_rgb(val, mn, range) do
+    c = trunc((val - mn) * 255 / range)
     "#{c};#{c};#{c}"
   end
 
@@ -1392,18 +1531,28 @@ defmodule Matrex do
   @spec load(binary) :: matrex
   def load(file_name) when is_binary(file_name) do
     cond do
+      :filename.extension(file_name) == ".gz" ->
+        File.read!(file_name)
+        |> :zlib.gunzip()
+        |> do_load(String.split(file_name, ".") |> Enum.at(-2))
+
       :filename.extension(file_name) == ".csv" ->
-        file_name
-        |> File.read!()
-        |> new()
+        do_load(File.read!(file_name), "csv")
 
       :filename.extension(file_name) == ".mtx" ->
-        %Matrex{data: File.read!(file_name)}
+        do_load(File.read!(file_name), "mtx")
+
+      :filename.extension(file_name) == ".idx" ->
+        do_load(File.read!(file_name), "idx")
 
       true ->
         raise "Unknown file format: #{file_name}"
     end
   end
+
+  defp do_load(data, "csv"), do: new(data)
+  defp do_load(data, "mtx"), do: %Matrex{data: data}
+  defp do_load(data, "idx"), do: %Matrex{data: Matrex.IDX.load(data)}
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal
@@ -1690,13 +1839,7 @@ defmodule Matrex do
       └                         ┘
   """
   @spec normalize(matrex) :: matrex
-  def normalize(%Matrex{} = matrex) do
-    mn = min(matrex)
-    mx = max(matrex)
-    range = mx - mn
-
-    __MODULE__.apply(matrex, fn x -> (x - mn) / range end)
-  end
+  def normalize(%Matrex{data: data}), do: %Matrex{data: NIFs.normalize(data)}
 
   @doc """
   Create matrix filled with ones.
@@ -1823,6 +1966,34 @@ defmodule Matrex do
         )
     }
 
+  def reshape(
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+              _matrix::binary>>
+        },
+        new_rows,
+        new_columns
+      )
+      when rows * columns != new_rows * new_columns,
+      do:
+        raise(
+          ArgumentError,
+          message:
+            "Cannot reshape: #{rows}×#{columns} does not fit into #{new_rows}×#{new_columns}."
+        )
+
+  def reshape(
+        %Matrex{data: <<_rows::binary-4, _columns::binary-4, matrix::binary>>},
+        new_rows,
+        new_columns
+      ),
+      do: %Matrex{
+        data:
+          <<new_rows::unsigned-integer-little-32, new_columns::unsigned-integer-little-32,
+            matrix::binary>>
+      }
+
   def reshape(input, rows, columns), do: input |> Enum.to_list() |> reshape(rows, columns)
 
   defp do_reshape(data, [], 1, 0), do: data
@@ -1830,7 +2001,7 @@ defmodule Matrex do
   defp do_reshape(_data, [], _, _),
     do: raise(ArgumentError, message: "Not enough elements for this shape")
 
-  defp do_reshape(_data, [_ | _], 0, 0),
+  defp do_reshape(_data, [_ | _], 1, 0),
     do: raise(ArgumentError, message: "Too much elements for this shape")
 
   # Another row is ready, restart counters
