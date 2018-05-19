@@ -348,6 +348,20 @@ defmodule MatrexTest do
     assert Matrex.neg(matrix) == expected
   end
 
+  test "#normalize puts matrix values in [0, 1] range" do
+    matrix = Matrex.reshape(1..12, 4, 3)
+
+    expected =
+      Matrex.new([
+        [0.0, 0.09090909361839294, 0.1818181872367859],
+        [0.27272728085517883, 0.3636363744735718, 0.4545454680919647],
+        [0.5454545617103577, 0.6363636255264282, 0.7272727489471436],
+        [0.8181818127632141, 0.9090909361839294, 1.0]
+      ])
+
+    assert Matrex.normalize(matrix) == expected
+  end
+
   test "#reshape consumes any value, convertable to list" do
     assert Matrex.reshape(1..6, 2, 3) == Matrex.new("1 2 3; 4 5 6")
     assert Matrex.reshape('abcd', 2, 2) == Matrex.new("97 98; 99 100")

@@ -1287,6 +1287,14 @@ defmodule Matrex do
       do: binary_to_float(element)
 
   @doc """
+  Print heatmap of the matrix to the console.
+  """
+  @spec heatmap(matrex) :: matrex
+  def heatmap(%Matrex{} = matrex) do
+    matrex
+  end
+
+  @doc """
   An alias for `eye/1`.
   """
   @spec identity(index) :: matrex
@@ -1633,6 +1641,37 @@ defmodule Matrex do
     new_accumulator = <<accumulator::binary, function.(row + 1, col + 1)::float-little-32>>
 
     new_matrix_from_function(size - 1, rows, columns, function, new_accumulator)
+  end
+
+  @doc """
+  Bring all values of matrix into [0, 1] range.
+
+  Where 0 corresponds to the minimum value of the matrix, and 1 — to the maxixmim.
+
+  ## Example
+
+      iex> m = Matrex.reshape(1..9, 3, 3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      │     7.0     8.0     9.0 │
+      └                         ┘
+      iex> Matrex.normalize(m)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     0.0   0.125    0.25 │
+      │   0.375     0.5   0.625 │
+      │    0.75   0.875     1.0 │
+      └                         ┘
+  """
+  @spec normalize(matrex) :: matrex
+  def normalize(%Matrex{} = matrex) do
+    mn = min(matrex)
+    mx = max(matrex)
+    range = mx - mn
+
+    __MODULE__.apply(matrex, fn x -> (x - mn) / range end)
   end
 
   @doc """
