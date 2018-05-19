@@ -180,6 +180,15 @@ defmodule Matrex.NIFs do
     )
   end
 
+  @spec normalize(binary) :: binary
+  def normalize(matrex) do
+    mn = min(matrex)
+    mx = max(matrex)
+    range = mx - mn
+
+    Matrex.apply(%Matrex{data: matrex}, fn x -> (x - mn) / range end).data
+  end
+
   @spec random(non_neg_integer, non_neg_integer) :: binary
   def random(rows, cols)
       when is_integer(rows) and is_integer(cols),

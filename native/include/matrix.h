@@ -112,6 +112,9 @@ void
 matrix_neg(const Matrix matrix, Matrix result);
 
 void
+matrix_normalize(const Matrix matrix, Matrix result);
+
+void
 matrix_random(Matrix matrix);
 
 void

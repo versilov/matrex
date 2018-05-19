@@ -482,6 +482,22 @@ matrix_neg(
 }
 
 void
+matrix_normalize(const Matrix matrix, Matrix result) {
+  uint64_t data_size = MX_LENGTH(matrix);
+  float min = matrix_min(matrix);
+  float max = matrix_max(matrix);
+  float range = max - min;
+
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = (matrix[index] - min)/range;
+  }
+}
+
+
+void
 matrix_random(Matrix matrix) {
   uint64_t length = MX_LENGTH(matrix);
 

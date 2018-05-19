@@ -673,6 +673,29 @@ neg(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+normalize(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+  data_size   = MX_LENGTH(matrix_data);
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_normalize(matrix_data, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   long rows, cols;
@@ -1009,6 +1032,7 @@ static ErlNifFunc nif_functions[] = {
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},
   {"neg",                  1, neg,                  0},
+  {"normalize",            1, normalize,            0},
   {"random",               2, random_matrix,        0},
   {"row_to_list",          2, row_to_list,          0},
   {"set",                  4, set,                  0},
