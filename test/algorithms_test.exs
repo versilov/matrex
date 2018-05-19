@@ -45,14 +45,14 @@ defmodule AlgorithmsTest do
 
   @tag timeout: 120_000
   test "#fmincg does linear regression" do
-    x = Matrex.load("test/data/Xtest.mtx.gz") |> Matrex.normalize()
-    y = Matrex.load("test/data/Ytest.mtx.gz")
+    x = Matrex.load("test/data/X.mtx.gz") |> Matrex.normalize()
+    y = Matrex.load("test/data/Y.mtx")
 
     x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
     theta = Matrex.zeros(x[:cols], 1)
 
     lambda = 0.01
-    iterations = 70
+    iterations = 100
 
     solutions =
       1..10
@@ -65,7 +65,7 @@ defmodule AlgorithmsTest do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 1,
+        max_concurrency: 3,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
@@ -86,7 +86,7 @@ defmodule AlgorithmsTest do
 
     # |> IO.inspect(label: "Predictions")
 
-    y_test = Matrex.load("test/data/Ytest.mtx")
+    # y_test = Matrex.load("test/data/Ytest.mtx")
 
     accuracy =
       1..predictions[:rows]

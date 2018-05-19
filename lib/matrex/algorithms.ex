@@ -417,8 +417,10 @@ defmodule Matrex.Algorithms do
   @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number}) :: {float, Matrex.t()}
   def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
       when is_number(lambda) do
-    IO.write(IO.ANSI.home())
-    if theta[:rows] == 785, do: theta[2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+    if theta[:rows] == 785 do
+      IO.write(IO.ANSI.home())
+      theta[2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+    end
 
     m = y[:rows]
 
