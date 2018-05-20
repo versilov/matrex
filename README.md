@@ -59,9 +59,10 @@ Matrex implements `Inspect` protocol and looks nice in your console:
 It can even draw a heatmap of your matrix in console! Here is an animation of logistic regression training with Matrex library and MNIST digits preview:
 
 
-<img src="./docs/logistic_regression.gif" width="230px" align="left" />
-<img src="./docs/mnist5.png" width="200px" align="left" />
-<img src="./docs/mnist8.png" width="200px" />
+<img src="./docs/logistic_regression.gif" width="230px" align="left" />&nbsp;
+<img src="./docs/mnist8.png" width="200px"  />&nbsp;
+<img src="./docs/magic_square.png" width="200px" align="left" />&nbsp;
+<img src="./docs/hot_boobs.png" width="200px"  />
 
 ## Installation
 
