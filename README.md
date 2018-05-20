@@ -62,7 +62,7 @@ It can even draw a heatmap of your matrix in console! If it supports 24-bit colo
 <img src="./docs/logistic_regression.gif" width="215px" />&nbsp;
 <img src="./docs/mnist8.png" width="200px" />&nbsp;
 <img src="./docs/magic_square.png" width="200px" />&nbsp;
-<img src="./docs/hot_boobs.png" width="210px"  />
+<img src="./docs/hot_boobs.png" width="220px"  />
 
 ## Installation
 
