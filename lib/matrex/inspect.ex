@@ -30,16 +30,14 @@ defmodule Matrex.Inspect do
           |> Enum.join()
       )
 
-    top_row_length =
+    row_length =
       String.length(List.first(rows_as_strings) |> String.replace(@ansi_formatting, "") || "") + 1
 
-    bottom_row_length =
-      String.length(List.last(rows_as_strings) |> String.replace(@ansi_formatting, "") || "") + 1
-
-    top = "#{IO.ANSI.reset()}┌#{String.pad_trailing("", top_row_length)}┐\n│#{IO.ANSI.yellow()}"
-    bottom = " #{IO.ANSI.reset()}│\n└#{String.pad_trailing("", bottom_row_length)}┘"
     contents_str = rows_as_strings |> Enum.join(IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow())
-    "#{header(rows, columns)}\n#{top}#{contents_str}#{bottom}"
+
+    contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
+
+    "#{header(rows, columns)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
   @element_byte_size 4
@@ -77,21 +75,27 @@ defmodule Matrex.Inspect do
 
     row_length = row_length(columns, suffix_size, prefix_size)
     half_row_length = div(row_length, 2)
-    top = "#{IO.ANSI.reset()}┌#{String.pad_trailing("", row_length)}┐\n│#{IO.ANSI.yellow()}"
-    bottom = " #{IO.ANSI.reset()}│\n└#{String.pad_trailing("", row_length)}┘"
 
     contents_str =
       rows_as_strings
       |> Enum.join(joiner(columns, suffix_size, prefix_size))
       |> insert_vertical_ellipsis_row(half_row_length, columns, suffix_size, prefix_size)
 
-    "#{header(rows, columns)}\n#{top}#{contents_str}#{bottom}"
+    contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
+
+    "#{header(rows, columns)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
   defp displayable_rows(rows) when rows > 21,
     do: Enum.to_list(1..10) ++ [-1] ++ Enum.to_list((rows - 9)..rows)
 
   defp displayable_rows(rows), do: 1..rows
+
+  @spec top_row(pos_integer) :: binary
+  defp top_row(length), do: "#{IO.ANSI.reset()}┌#{String.pad_trailing("", length)}┐"
+
+  @spec bottom_row(pos_integer) :: binary
+  defp bottom_row(length), do: "#{IO.ANSI.reset()}└#{String.pad_trailing("", length)}┘"
 
   # Put the vertical ellipsis marker, which we will use later to insert full ellipsis row
   defp format_row(_matrix, -1, _rows, _columns, _, _), do: "⋮"
@@ -112,6 +116,14 @@ defmodule Matrex.Inspect do
     |> Enum.join()
   end
 
+  defp format_row(%Matrex{data: matrix}, row, _rows, columns, suffix_size, prefix_size)
+       when is_binary(matrix) do
+    n = chunk_offset(row, columns, suffix_size)
+
+    binary_part(matrix, n, (suffix_size + prefix_size) * @element_byte_size)
+    |> format_row_head_tail(suffix_size, prefix_size)
+  end
+
   defp row_to_list_of_binaries(
          %Matrex{
            data: <<
@@ -127,14 +139,6 @@ defmodule Matrex.Inspect do
     |> Enum.map(fn c ->
       binary_part(data, ((row - 1) * columns + c) * @element_byte_size, @element_byte_size)
     end)
-  end
-
-  defp format_row(%Matrex{data: matrix}, row, _rows, columns, suffix_size, prefix_size)
-       when is_binary(matrix) do
-    n = chunk_offset(row, columns, suffix_size)
-
-    binary_part(matrix, n, (suffix_size + prefix_size) * @element_byte_size)
-    |> format_row_head_tail(suffix_size, prefix_size)
   end
 
   defp chunk_offset(row, columns, suffix_size),
@@ -234,9 +238,92 @@ defmodule Matrex.Inspect do
 
   defp joiner(_, _, _), do: IO.ANSI.reset() <> "  … " <> IO.ANSI.yellow()
 
+  defp header(%Matrex{} = m), do: header(m[:rows], m[:columns])
+
   defp header(rows, columns),
     do:
       "#{IO.ANSI.reset()}#Matrex[#{IO.ANSI.yellow()}#{rows}#{IO.ANSI.reset()}×#{IO.ANSI.yellow()}#{
         columns
       }#{IO.ANSI.reset()}]"
+
+  #
+  # Heatmap
+  #
+  @spec heatmap(Matrex.t(), :mono | :color) :: Matrex.t()
+  def heatmap(%Matrex{} = m, type \\ :mono) do
+    mn = Matrex.min(m)
+    mx = Matrex.max(m)
+
+    IO.puts(header(m))
+    IO.puts(top_row(m[:cols]))
+
+    1..div(m[:rows], 2)
+    |> Enum.each(fn rp ->
+      <<"│", rows_pair_to_ascii(m[rp * 2 - 1], m[rp * 2], mn, mx, type)::binary, "\e[0m│\n">>
+      |> IO.write()
+    end)
+
+    IO.puts(bottom_row(m[:cols]))
+
+    # |> Enum.join("\e[0m\n")
+    # |> Kernel.<>("\e[0m")
+    # |> IO.puts()
+
+    m
+  end
+
+  defp rows_pair_to_ascii(top_row, bottom_row, min, max, type) do
+    range = if max != min, do: max - min, else: 1
+
+    1..top_row[:columns]
+    |> Enum.reduce("", fn c, acc ->
+      <<acc::binary,
+        "\e[38;2;#{val_to_rgb(type, bottom_row[c], min, range)};48;2;#{
+          val_to_rgb(type, top_row[c], min, range)
+        }m▄">>
+    end)
+  end
+
+  defp val_to_rgb(_, NaN, _, _), do: "255;0;0"
+  defp val_to_rgb(_, Inf, _, _), do: "0;128;255"
+  defp val_to_rgb(_, NegInf, _, _), do: "0;0;255"
+
+  defp val_to_rgb(:mono, val, mn, range) do
+    c = trunc((val - mn) * 255 / range)
+    "#{c};#{c};#{c}"
+  end
+
+  defp val_to_rgb(:color, val, mn, range) do
+    # Color points for the heatmap. You can have as many of them, as you wish.
+    cps =
+      {[r: 0, g: 0, b: 1], [r: 0, g: 1, b: 1], [r: 0, g: 1, b: 0], [r: 1, g: 1, b: 0],
+       [r: 1, g: 0, b: 0]}
+
+    # Normalize value into [0, 1] range.
+    vn = (val - mn) / range
+
+    # Find indices of two color points, between wich this value is located (idx1, idx2),
+    # and offset from the lower color point (frac).
+    {idx1, idx2, frac} =
+      cond do
+        vn >= 1 ->
+          {tuple_size(cps) - 1, tuple_size(cps) - 1, 0.0}
+
+        vn <= 0 ->
+          {0, 0, 0.0}
+
+        true ->
+          i = vn * (tuple_size(cps) - 1)
+          idx1 = trunc(i)
+          idx2 = idx1 + 1
+          frac = i - idx1
+
+          {idx1, idx2, frac}
+      end
+
+    r = trunc(((elem(cps, idx2)[:r] - elem(cps, idx1)[:r]) * frac + elem(cps, idx1)[:r]) * 255)
+    g = trunc(((elem(cps, idx2)[:g] - elem(cps, idx1)[:g]) * frac + elem(cps, idx1)[:g]) * 255)
+    b = trunc(((elem(cps, idx2)[:b] - elem(cps, idx1)[:b]) * frac + elem(cps, idx1)[:b]) * 255)
+    "#{r};#{g};#{b}"
+  end
 end

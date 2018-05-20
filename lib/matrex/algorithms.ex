@@ -480,4 +480,18 @@ defmodule Matrex.Algorithms do
 
     {scalar(j), grad}
   end
+
+  @doc """
+  Function of a surface with two hills.
+  """
+  @spec boobs(float, float) :: float
+  def boobs(x, y) do
+    x = (x - 40) / 4
+    y = (y - 40) / 4
+
+    :math.exp(-:math.pow(:math.pow(x - 4, 2) + :math.pow(y - 4, 2), 2) / 1000) +
+      :math.exp(-:math.pow(:math.pow(x + 4, 2) + :math.pow(y + 4, 2), 2) / 1000) +
+      0.1 * :math.exp(-:math.pow(:math.pow(x + 4, 2) + :math.pow(y + 4, 2), 2)) +
+      0.1 * :math.exp(-:math.pow(:math.pow(x - 4, 2) + :math.pow(y - 4, 2), 2))
+  end
 end

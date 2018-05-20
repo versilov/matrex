@@ -51,8 +51,10 @@ defmodule AlgorithmsTest do
     x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
     theta = Matrex.zeros(x[:cols], 1)
 
-    lambda = 0.01
+    lambda = 0.1
     iterations = 100
+
+    IO.write(IO.ANSI.clear())
 
     solutions =
       1..10
@@ -65,7 +67,7 @@ defmodule AlgorithmsTest do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 3,
+        max_concurrency: 2,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)

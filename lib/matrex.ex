@@ -1417,45 +1417,12 @@ defmodule Matrex do
       do: binary_to_float(element)
 
   @doc """
-  Print heatmap of the matrix to the console.
+  Prints monochrome or color heatmap of the matrix to the console.
+
+  Only on terminals, that support 24bit color.
   """
-  @spec heatmap(matrex) :: matrex
-  def heatmap(%Matrex{} = m) do
-    mn = min(m)
-    mx = max(m)
-
-    1..div(m[:rows], 2)
-    |> Enum.each(fn rp ->
-      (rows_pair_to_ascii(m[rp * 2 - 1], m[rp * 2], mn, mx) <> "\e[0m") |> IO.puts()
-    end)
-
-    # |> Enum.join("\e[0m\n")
-    # |> Kernel.<>("\e[0m")
-    # |> IO.puts()
-
-    m
-  end
-
-  defp rows_pair_to_ascii(top_row, bottom_row, min, max) do
-    range = if max != min, do: max - min, else: 1
-
-    1..top_row[:columns]
-    |> Enum.reduce("", fn c, acc ->
-      <<acc::binary,
-        "\e[38;2;#{val_to_rgb(bottom_row[c], min, range)};48;2;#{
-          val_to_rgb(top_row[c], min, range)
-        }m▄">>
-    end)
-  end
-
-  defp val_to_rgb(NaN, _, _), do: "255;0;0"
-  defp val_to_rgb(Inf, _, _), do: "0;128;255"
-  defp val_to_rgb(NegInf, _, _), do: "0;0;255"
-
-  defp val_to_rgb(val, mn, range) do
-    c = trunc((val - mn) * 255 / range)
-    "#{c};#{c};#{c}"
-  end
+  @spec heatmap(matrex, :mono | :color) :: matrex
+  defdelegate heatmap(matrex, type \\ :mono), to: Matrex.Inspect
 
   @doc """
   An alias for `eye/1`.
