@@ -56,13 +56,13 @@ Matrex implements `Inspect` protocol and looks nice in your console:
 
 ![Inspect Matrex](docs/matrex_inspect.png)
 
-It can even draw a heatmap of your matrix in console! Here is an animation of logistic regression training with Matrex library and MNIST digits preview:
+It can even draw a heatmap of your matrix in console! If it supports 24-bit color, of course. For example, on MacOS use [iTerm2](https://www.iterm2.com/). Here is an animation of logistic regression training with Matrex library and some matrix heatmaps:
 
 
-<img src="./docs/logistic_regression.gif" width="230px" align="left" />&nbsp;
-<img src="./docs/mnist8.png" width="200px"  />&nbsp;
-<img src="./docs/magic_square.png" width="200px" align="left" />&nbsp;
-<img src="./docs/hot_boobs.png" width="200px"  />
+<img src="./docs/logistic_regression.gif" width="215px" />&nbsp;
+<img src="./docs/mnist8.png" width="200px" />&nbsp;
+<img src="./docs/magic_square.png" width="200px" />&nbsp;
+<img src="./docs/hot_boobs.png" width="210px"  />
 
 ## Installation
 
