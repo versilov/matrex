@@ -54,9 +54,11 @@ Complete example of Matrex library at work:
 
 Matrex implements `Inspect` protocol and looks nice in your console:
 
-![Inspect Matrex Heatmap](docs/logistic_regression.gif)
-![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
+![Inspect Matrex](docs/matrex_inspect.png)
 
+It can even draw a heatmap of your matrix in console! Here is an animation of logistic regression training with Matrex library:
+
+![Inspect Matrex Heatmap](docs/logistic_regression.gif)
 
 ## Installation
 
