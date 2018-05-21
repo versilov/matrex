@@ -154,6 +154,17 @@ matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
   return 1;
 }
 
+void
+matrix_arc4random(Matrix matrix) {
+  uint64_t length = MX_LENGTH(matrix);
+
+  // RNG is initialized in ELR_NIF_INIT load function.
+  for (uint64_t index = 2; index < length; index += 1) {
+    matrix[index] = (float)arc4random()/(float)UINT32_MAX;
+  }
+}
+
+
 int32_t
 matrix_argmax(const Matrix matrix) {
   uint64_t data_size = MX_LENGTH(matrix);

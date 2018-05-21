@@ -1,6 +1,16 @@
 defmodule CreationTest do
   use ExUnit.Case, async: true
 
+  test "#arc4random creates matrix of arc4random values" do
+    arc4random_matrix = Matrex.arc4random(10)
+    assert Matrex.at(arc4random_matrix, 5, 7) != Matrex.at(arc4random_matrix, 5, 8)
+  end
+
+  test "#arc4random does not generate the same matrix twice" do
+    result = Matrex.divide(Matrex.arc4random(100), Matrex.arc4random(100))
+    refute Matrex.contains?(result, 1.0)
+  end
+
   test "#eye creates a diagonal square matirx" do
     expected =
       Matrex.new([
