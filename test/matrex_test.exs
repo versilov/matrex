@@ -13,7 +13,7 @@ defmodule MatrexTest do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2], [3, 4]])
 
-    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
+    assert_raise FunctionClauseError, fn ->
       Matrex.add(first, second)
     end
   end
@@ -238,7 +238,7 @@ defmodule MatrexTest do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[2, 2, 3], [3, 5, 6]])
 
-    assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
+    assert_raise FunctionClauseError, fn ->
       Matrex.dot(first, second)
     end
   end
@@ -274,7 +274,7 @@ defmodule MatrexTest do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[2, 2, 3, 5], [3, 5, 6, 7]])
 
-    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
+    assert_raise FunctionClauseError, fn ->
       Matrex.dot_nt(first, second)
     end
   end
@@ -291,7 +291,7 @@ defmodule MatrexTest do
     first = Matrex.new([[1, 4], [2, 5], [3, 6]])
     second = Matrex.new([[2, 2, 3, 5], [3, 5, 6, 7]])
 
-    assert_raise ErlangError, ~r/Matrices sizes mismatch/, fn ->
+    assert_raise FunctionClauseError, fn ->
       Matrex.dot_tn(first, second)
     end
   end
@@ -535,6 +535,13 @@ defmodule MatrexTest do
     matrex = Matrex.magic(3)
     expected = [[8.0, 1.0, 6.0], [3.0, 5.0, 7.0], [4.0, 9.0, 2.0]]
     assert Matrex.to_list_of_lists(matrex) == expected
+  end
+
+  test "#to_row converts any matrix into a row matrix" do
+    m = Matrex.magic(3)
+    expected = Matrex.new([[8.0, 1.0, 6.0, 3.0, 5.0, 7.0, 4.0, 9.0, 2.0]])
+
+    assert Matrex.to_row(m) == expected
   end
 
   test "#transpose transposes a matrix" do
