@@ -228,6 +228,32 @@ column_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+concat_columns(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  first, second;
+  ERL_NIF_TERM  result;
+  float        *first_data, *second_data, *result_data;
+  float         alpha, beta;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+
+  first_data  = (float *) first.data;
+  second_data = (float *) second.data;
+
+  result_size = 2*sizeof(float) + MX_DATA_BYTE_SIZE(first_data) + MX_DATA_BYTE_SIZE(second_data);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_concat_columns(first_data, second_data, result_data);
+
+  return result;
+}
+
+
+static ERL_NIF_TERM
 divide(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
@@ -786,6 +812,41 @@ set(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+set_column(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix, column_matrix;
+  float *matrix_data;
+  float *column_matrix_data;
+  float *result_data;
+  uint32_t  result_size;
+  unsigned long column;
+  ERL_NIF_TERM  result;
+  uint32_t rows, cols;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &column);
+  if (!enif_inspect_binary(env, argv[2], &column_matrix)) return enif_make_badarg(env);
+
+
+  matrix_data = (float *) matrix.data;
+  column_matrix_data = (float *) column_matrix.data;
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
+
+  if (column >= cols)
+    return enif_raise_exception(env, enif_make_string(env, "Position out of bounds.", ERL_NIF_LATIN1));
+
+
+  result_size = MX_BYTE_SIZE(matrix_data);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_set_column(matrix_data, column, column_matrix_data, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 submatrix(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   float *matrix_data;
@@ -1016,6 +1077,7 @@ static ErlNifFunc nif_functions[] = {
   {"apply_parallel_math",  2, apply_parallel_math,  0},
   {"argmax",               1, argmax,               0},
   {"column_to_list",       2, column_to_list,       0},
+  {"concat_columns",       2, concat_columns,       0},
   {"divide",               2, divide,               0},
   {"divide_scalar",        2, divide_scalar,        0},
   {"divide_by_scalar",     2, divide_by_scalar,     0},
@@ -1036,6 +1098,7 @@ static ErlNifFunc nif_functions[] = {
   {"random",               2, random_matrix,        0},
   {"row_to_list",          2, row_to_list,          0},
   {"set",                  4, set,                  0},
+  {"set_column",           3, set_column,           0},
   {"submatrix",            5, submatrix,            0},
   {"substract",            2, substract,            0},
   {"substract_from_scalar",2, substract_from_scalar,0},

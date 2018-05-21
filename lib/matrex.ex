@@ -592,7 +592,20 @@ defmodule Matrex do
   """
 
   @spec add(matrex, matrex, number, number) :: matrex
-  def add(%Matrex{data: first}, %Matrex{data: second}, alpha \\ 1.0, beta \\ 1.0)
+  def add(
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+              _data1::binary>> = first
+        },
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+              _data2::binary>> = second
+        },
+        alpha \\ 1.0,
+        beta \\ 1.0
+      )
       when is_number(alpha) and is_number(beta),
       do: %Matrex{data: NIFs.add(first, second, alpha, beta)}
 
@@ -1065,26 +1078,29 @@ defmodule Matrex do
 
   def concat(
         %Matrex{
-          data: <<
-            rows1::unsigned-integer-little-32,
-            columns1::unsigned-integer-little-32,
-            data1::binary
-          >>
+          data:
+            <<
+              rows1::unsigned-integer-little-32,
+              columns1::unsigned-integer-little-32,
+              data1::binary
+            >> = first
         },
         %Matrex{
-          data: <<
-            rows2::unsigned-integer-little-32,
-            columns2::unsigned-integer-little-32,
-            data2::binary
-          >>
+          data:
+            <<
+              rows2::unsigned-integer-little-32,
+              columns2::unsigned-integer-little-32,
+              data2::binary
+            >> = second
         },
         :columns
       )
       when rows1 == rows2 do
-    initial =
-      <<rows1::unsigned-integer-little-32, columns1 + columns2::unsigned-integer-little-32>>
-
-    %Matrex{data: do_concat(initial, data1, columns1, data2, columns2)}
+    %Matrex{data: Matrex.NIFs.concat_columns(first, second)}
+    #   initial =
+    #     <<rows1::unsigned-integer-little-32, columns1 + columns2::unsigned-integer-little-32>>
+    #
+    #   %Matrex{data: do_concat(initial, data1, columns1, data2, columns2)}
   end
 
   def concat(
@@ -1132,7 +1148,7 @@ defmodule Matrex do
       do:
         raise(
           ArgumentError,
-          message: "Cannot concat: #{rows1}×#{columns1} does not fit into #{rows2}×#{columns2}."
+          message: "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2}."
         )
 
   defp do_concat(result, <<>>, _, <<>>, _), do: result
@@ -1240,7 +1256,26 @@ defmodule Matrex do
 
   """
   @spec dot(matrex, matrex) :: matrex
-  def dot(%Matrex{data: first}, %Matrex{data: second}), do: %Matrex{data: NIFs.dot(first, second)}
+  def dot(
+        %Matrex{
+          data:
+            <<
+              _rows1::unsigned-integer-little-32,
+              columns1::unsigned-integer-little-32,
+              _data1::binary
+            >> = first
+        },
+        %Matrex{
+          data:
+            <<
+              rows2::unsigned-integer-little-32,
+              _columns2::unsigned-integer-little-32,
+              _data2::binary
+            >> = second
+        }
+      )
+      when columns1 == rows2,
+      do: %Matrex{data: NIFs.dot(first, second)}
 
   @doc """
   Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
@@ -1259,8 +1294,27 @@ defmodule Matrex do
 
   """
   @spec dot_and_add(matrex, matrex, matrex) :: matrex
-  def dot_and_add(%Matrex{data: first}, %Matrex{data: second}, %Matrex{data: third}),
-    do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
+  def dot_and_add(
+        %Matrex{
+          data:
+            <<
+              _rows1::unsigned-integer-little-32,
+              columns1::unsigned-integer-little-32,
+              _data1::binary
+            >> = first
+        },
+        %Matrex{
+          data:
+            <<
+              rows2::unsigned-integer-little-32,
+              _columns2::unsigned-integer-little-32,
+              _data2::binary
+            >> = second
+        },
+        %Matrex{data: third}
+      )
+      when columns1 == rows2,
+      do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
 
   @doc """
   Computes dot product of two matrices, then applies math function to each element
@@ -1277,8 +1331,26 @@ defmodule Matrex do
       └                 ┘
   """
   @spec dot_and_apply(matrex, matrex, atom) :: matrex
-  def dot_and_apply(%Matrex{data: first}, %Matrex{data: second}, function)
-      when function in @math_functions,
+  def dot_and_apply(
+        %Matrex{
+          data:
+            <<
+              _rows1::unsigned-integer-little-32,
+              columns1::unsigned-integer-little-32,
+              _data1::binary
+            >> = first
+        },
+        %Matrex{
+          data:
+            <<
+              rows2::unsigned-integer-little-32,
+              _columns2::unsigned-integer-little-32,
+              _data2::binary
+            >> = second
+        },
+        function
+      )
+      when columns1 == rows2 and function in @math_functions,
       do: %Matrex{data: NIFs.dot_and_apply(first, second, function)}
 
   @doc """
@@ -1298,8 +1370,26 @@ defmodule Matrex do
 
   """
   @spec dot_nt(matrex, matrex) :: matrex
-  def dot_nt(%Matrex{data: first}, %Matrex{data: second}),
-    do: %Matrex{data: NIFs.dot_nt(first, second)}
+  def dot_nt(
+        %Matrex{
+          data:
+            <<
+              _rows1::unsigned-integer-little-32,
+              columns1::unsigned-integer-little-32,
+              _data1::binary
+            >> = first
+        },
+        %Matrex{
+          data:
+            <<
+              _rows2::unsigned-integer-little-32,
+              columns2::unsigned-integer-little-32,
+              _data2::binary
+            >> = second
+        }
+      )
+      when columns1 == columns2,
+      do: %Matrex{data: NIFs.dot_nt(first, second)}
 
   @doc """
   Matrix dot multiplication where the first matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
@@ -1320,8 +1410,27 @@ defmodule Matrex do
 
   """
   @spec dot_tn(matrex, matrex, number) :: matrex
-  def dot_tn(%Matrex{data: first}, %Matrex{data: second}, alpha \\ 1.0) when is_number(alpha),
-    do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
+  def dot_tn(
+        %Matrex{
+          data:
+            <<
+              rows1::unsigned-integer-little-32,
+              _columns1::unsigned-integer-little-32,
+              _data1::binary
+            >> = first
+        },
+        %Matrex{
+          data:
+            <<
+              rows2::unsigned-integer-little-32,
+              _columns2::unsigned-integer-little-32,
+              _data2::binary
+            >> = second
+        },
+        alpha \\ 1.0
+      )
+      when rows1 == rows2 and is_number(alpha),
+      do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
 
   @doc """
   Create eye (identity) square matrix of given size.
@@ -2178,6 +2287,34 @@ defmodule Matrex do
       }
 
   @doc """
+  Set column of a matrix to the values from the given 1-column matrix. NIF.
+
+  ## Example
+
+      iex> m = Matrex.reshape(1..6, 3, 2)
+
+  """
+  @spec set_column(matrex, index, matrex) :: matrex
+  def set_column(
+        %Matrex{
+          data:
+            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+              _rest::binary>> = matrix
+        },
+        column,
+        %Matrex{
+          data:
+            <<
+              rows::unsigned-integer-little-32,
+              1::unsigned-integer-little-32,
+              _rest2::binary
+            >> = column_matrix
+        }
+      )
+      when column in 1..columns,
+      do: %Matrex{data: NIFs.set_column(matrix, column - 1, column_matrix)}
+
+  @doc """
   Return size of matrix as `{rows, cols}`
 
   ## Example
@@ -2300,8 +2437,11 @@ defmodule Matrex do
   def substract(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.substract(first, second)}
 
-  def substract(scalar, %Matrex{data: matrix}),
+  def substract(scalar, %Matrex{data: matrix}) when is_number(scalar),
     do: %Matrex{data: NIFs.substract_from_scalar(scalar, matrix)}
+
+  def substract(%Matrex{data: matrix}, scalar) when is_number(scalar),
+    do: %Matrex{data: NIFs.add_scalar(matrix, -scalar)}
 
   @doc """
   Substracts the second matrix from the first. Inlined.
@@ -2387,6 +2527,47 @@ defmodule Matrex do
   def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
 
   @doc """
+  Convert any matrix m×n to a row matrix 1×(m*n).
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.to_row(m)
+      #Matrex[1×9]
+      ┌                                                                         ┐
+      │     8.0     1.0     6.0     3.0     5.0     7.0     4.0     9.0     2.0 │
+      └                                                                         ┘
+
+  """
+  @spec to_row(matrex) :: matrex
+  def to_row(
+        %Matrex{
+          data: <<
+            1::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = m
+      ),
+      do: m
+
+  def to_row(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = m
+      ),
+      do: reshape(m, 1, rows * columns)
+
+  @doc """
   Transposes a matrix. NIF.
 
   ## Example
@@ -2406,6 +2587,29 @@ defmodule Matrex do
       └                 ┘
   """
   @spec transpose(matrex) :: matrex
+  # Vectors are transposed by simply reshaping
+  def transpose(
+        %Matrex{
+          data: <<
+            1::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = m
+      ),
+      do: reshape(m, columns, 1)
+
+  def transpose(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            1::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = m
+      ),
+      do: reshape(m, 1, rows)
+
   def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
 
   @doc """
@@ -2441,6 +2645,7 @@ defmodule Matrex do
       │     0.0     0.0     0.0 │
       └                         ┘
   """
-  @spec zeros(index) :: matrex
+  @spec zeros(index | {index, index}) :: matrex
+  def zeros({rows, cols}), do: zeros(rows, cols)
   def zeros(size), do: zeros(size, size)
 end

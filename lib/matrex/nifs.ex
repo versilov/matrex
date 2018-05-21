@@ -76,6 +76,11 @@ defmodule Matrex.NIFs do
     end)
   end
 
+  @spec concat_columns(binary, binary) :: binary
+  def concat_columns(first, second)
+      when is_binary(first) and is_binary(second),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec divide(binary, binary) :: binary
   def divide(first, second)
       when is_binary(first) and is_binary(second),
@@ -211,7 +216,7 @@ defmodule Matrex.NIFs do
 
   defp to_list_of_floats(<<>>), do: []
 
-  @spec set(binary, pos_integer, pos_integer, binary) :: binary
+  @spec set(binary, non_neg_integer, non_neg_integer, binary) :: binary
   def set(
         <<
           rows::unsigned-integer-little-32,
@@ -228,6 +233,9 @@ defmodule Matrex.NIFs do
       binary_part(data, 0, pos * 4)::binary, value::binary-4,
       binary_part(data, (pos + 1) * 4, (rows * cols - pos - 1) * 4)::binary>>
   end
+
+  @spec set_column(binary, non_neg_integer, binary) :: binary
+  def set_column(matrex, column, column_matrex), do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec submatrix(binary, pos_integer, pos_integer, pos_integer, pos_integer) :: binary
   def submatrix(matrex, row_from, row_to, col_from, col_to)

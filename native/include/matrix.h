@@ -51,6 +51,9 @@ int32_t
 matrix_argmax(const Matrix matrix);
 
 void
+matrix_concat_columns(const Matrix first, const Matrix second, Matrix result);
+
+void
 matrix_divide(const Matrix first, const Matrix second, Matrix result);
 
 void
@@ -119,6 +122,9 @@ matrix_random(Matrix matrix);
 
 void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result);
+
+void
+matrix_set_column(const Matrix matrix, const uint32_t column, const Matrix column_matrix, Matrix result);
 
 void
 matrix_submatrix(const Matrix matrix, const uint32_t row_from, const uint32_t row_to,
