@@ -494,4 +494,138 @@ defmodule Matrex.Algorithms do
       0.1 * :math.exp(-:math.pow(:math.pow(x + 4, 2) + :math.pow(y + 4, 2), 2)) +
       0.1 * :math.exp(-:math.pow(:math.pow(x - 4, 2) + :math.pow(y - 4, 2), 2))
   end
+
+  @spec sigmoid_gradient(Matrex.t()) :: Matrex.t()
+  def sigmoid_gradient(%Matrex{} = z) do
+    s = Matrex.apply(z, :sigmoid)
+
+    Matrex.multiply(s, Matrex.substract(1, s))
+  end
+
+  @spec nn_cost_fun(
+          Matrex.t(),
+          {pos_integer, pos_integer, pos_integer, Matrex.t(), Matrex.t(), number}
+        ) :: {number, Matrex.t()}
+  def nn_cost_fun(
+        %Matrex{} = theta,
+        {input_layer_size, hidden_layer_size, num_labels, x, y, lambda} = _params
+      ) do
+    alias Matrex, as: M
+
+    theta1 =
+      theta[1..(hidden_layer_size * (input_layer_size + 1))]
+      |> M.reshape(hidden_layer_size, input_layer_size + 1)
+
+    theta2 =
+      theta[(hidden_layer_size * (input_layer_size + 1) + 1)..theta[:rows]]
+      |> M.reshape(num_labels, hidden_layer_size + 1)
+
+    theta1h = Matrex.submatrix(theta1, 1..theta1[:rows], 2..theta1[:cols])
+
+    # IO.write(IO.ANSI.home())
+    #
+    # data_side_size = trunc(:math.sqrt(theta1h[:cols]))
+    #
+    # theta1h
+    # |> Matrex.Algorithms.visual_net({5, 5}, {data_side_size, data_side_size})
+    # |> Matrex.heatmap()
+
+    m = x[:rows]
+
+    x = M.concat(M.ones(m, 1), x)
+    a2 = M.dot_nt(theta1, x) |> M.apply(:sigmoid)
+    a2 = M.concat(M.ones(1, m), a2, :rows)
+    a3 = M.dot_and_apply(theta2, a2, :sigmoid)
+
+    y_b = M.zeros(num_labels, m)
+    y_b = Enum.reduce(1..m, y_b, fn i, y_b -> M.set(y_b, trunc(y[i]), i, 1) end)
+
+    c =
+      M.neg(y_b)
+      |> M.multiply(M.apply(a3, :log))
+      |> M.substract(M.multiply(M.substract(1, y_b), M.apply(M.substract(1, a3), :log)))
+
+    theta1_sum =
+      theta1
+      |> M.submatrix(1..theta1[:rows], 2..theta1[:columns])
+      |> M.square()
+      |> M.sum()
+
+    theta2_sum =
+      theta2
+      |> M.submatrix(1..theta2[:rows], 2..theta2[:columns])
+      |> M.square()
+      |> M.sum()
+
+    reg = lambda / (2 * m) * (theta1_sum + theta2_sum)
+
+    j = M.sum(c) / m + reg
+
+    # Compute gradients
+    classes = M.reshape(1..num_labels, num_labels, 1)
+
+    delta1 = M.zeros(M.size(theta1))
+    delta2 = M.zeros(M.size(theta2))
+
+    {delta1, delta2} =
+      Enum.reduce(1..m, {delta1, delta2}, fn t, {delta1, delta2} ->
+        a1 = M.transpose(x[t])
+        z2 = M.dot(theta1, a1)
+        a2 = M.concat(M.new([[1]]), M.apply(z2, :sigmoid), :rows)
+
+        a3 = M.dot_and_apply(theta2, a2, :sigmoid)
+
+        sigma3 = M.substract(a3, M.apply(classes, &if(&1 == y[t], do: 1.0, else: 0.0)))
+
+        sigma2 =
+          theta2
+          |> M.submatrix(1..theta2[:rows], 2..theta2[:cols])
+          |> M.dot_tn(sigma3)
+          |> M.multiply(sigmoid_gradient(z2))
+
+        delta2 = M.add(delta2, M.dot_nt(sigma3, a2))
+        delta1 = M.add(delta1, M.dot_nt(sigma2, a1))
+        {delta1, delta2}
+      end)
+
+    theta1 = M.set_column(theta1, 1, M.zeros(hidden_layer_size, 1))
+    theta2 = M.set_column(theta2, 1, M.zeros(num_labels, 1))
+    theta1_grad = M.divide(delta1, m) |> M.add(M.multiply(lambda / m, theta1))
+    theta2_grad = M.divide(delta2, m) |> M.add(M.multiply(lambda / m, theta2))
+
+    theta = M.concat(M.to_row(theta1_grad), M.to_row(theta2_grad)) |> M.transpose()
+
+    {j, theta}
+  end
+
+  @spec nn_predict(Matrex.t(), Matrex.t(), Matrex.t()) :: Matrex.t()
+  def nn_predict(theta1, theta2, x) do
+    m = x[:rows]
+    num_labels = theta2[:rows]
+
+    h1 =
+      Matrex.concat(Matrex.ones(m, 1), x)
+      |> Matrex.dot_nt(theta1)
+      |> Matrex.apply(:sigmoid)
+
+    h2 =
+      Matrex.concat(Matrex.ones(m, 1), h1)
+      |> Matrex.dot_nt(theta2)
+      |> Matrex.apply(:sigmoid)
+  end
+
+  def visual_net(theta, {rows, cols} = _visu_size, {n_rows, n_cols} = _neuron_size) do
+    Enum.reduce(1..rows, nil, fn row, result ->
+      first = (row - 1) * cols + 1
+      last = row * cols
+
+      visual_row =
+        Enum.reduce((first + 1)..last, Matrex.reshape(theta[first], n_rows, n_cols), fn r,
+                                                                                        result ->
+          Matrex.concat(result, Matrex.reshape(theta[r], n_rows, n_cols))
+        end)
+
+      if result == nil, do: visual_row, else: Matrex.concat(result, visual_row, :rows)
+    end)
+  end
 end

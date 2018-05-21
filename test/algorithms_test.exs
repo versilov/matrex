@@ -51,7 +51,7 @@ defmodule AlgorithmsTest do
     x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
     theta = Matrex.zeros(x[:cols], 1)
 
-    lambda = 0.1
+    lambda = 0.01
     iterations = 100
 
     IO.write(IO.ANSI.clear())
@@ -67,7 +67,7 @@ defmodule AlgorithmsTest do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 2,
+        max_concurrency: 1,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
@@ -93,12 +93,113 @@ defmodule AlgorithmsTest do
     accuracy =
       1..predictions[:rows]
       |> Enum.reduce(0, fn row, acc ->
-        if y[row] == predictions[row][:argmax], do: acc + 1, else: acc
+        if y[row] == predictions[row][:argmax] do
+          acc + 1
+        else
+          # Show wrongful predictions
+          # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+          # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
+          acc
+        end
       end)
       |> Kernel./(predictions[:rows])
       |> Kernel.*(100)
       |> IO.inspect(label: "\rTraining set accuracy")
 
     assert accuracy >= 95
+  end
+
+  @input_layer_size 20 * 20
+  @hidden_layer_size 25
+  @num_labels 10
+
+  test "#nn_cost_function computes neural network cost with and w/0 regularization" do
+    x = Matrex.load("test/data/X.mtx.gz")
+    y = Matrex.load("test/data/Y.mtx")
+    theta1 = Matrex.load("../../Octave/ex4/theta1.csv") |> Matrex.to_row()
+    theta2 = Matrex.load("../../Octave/ex4/theta2.csv") |> Matrex.to_row()
+
+    theta = Matrex.concat(theta1, theta2) |> Matrex.transpose()
+
+    lambda = 0
+
+    {j, grads} =
+      Matrex.Algorithms.nn_cost_fun(
+        theta,
+        {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
+      )
+
+    assert j == 0.2876291611777169
+    lambda = 1
+
+    {j, grads} =
+      Matrex.Algorithms.nn_cost_fun(
+        theta,
+        {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
+      )
+
+    assert j == 0.3837698553161823
+  end
+
+  @tag timeout: 600_000
+  test "#fmincg optimizes neural network" do
+    initial_theta1 = random_weights(@input_layer_size, @hidden_layer_size) |> Matrex.to_row()
+    initial_theta2 = random_weights(@hidden_layer_size, @num_labels) |> Matrex.to_row()
+    initial_nn_params = Matrex.concat(initial_theta1, initial_theta2) |> Matrex.transpose()
+
+    x = Matrex.load("test/data/X.mtx.gz")
+    y = Matrex.load("test/data/Y.mtx")
+
+    lambda = 0.5
+    iterations = 10
+
+    {sX, _fX, _i} =
+      Algorithms.fmincg(
+        &Algorithms.nn_cost_fun/2,
+        initial_nn_params,
+        {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda},
+        iterations
+      )
+
+    # Unpack thetas from the found solution
+    theta1 =
+      sX[1..(@hidden_layer_size * (@input_layer_size + 1))]
+      |> Matrex.reshape(@hidden_layer_size, @input_layer_size + 1)
+
+    theta2 =
+      sX[(@hidden_layer_size * (@input_layer_size + 1) + 1)..sX[:rows]]
+      |> Matrex.reshape(@num_labels, @hidden_layer_size + 1)
+
+    theta1h = Matrex.submatrix(theta1, 1..theta1[:rows], 2..theta1[:cols])
+
+    theta1h
+    |> Matrex.Algorithms.visual_net({5, 5}, {20, 20})
+    |> Matrex.heatmap()
+
+    predictions = Matrex.Algorithms.nn_predict(theta1, theta2, x)
+
+    accuracy =
+      1..predictions[:rows]
+      |> Enum.reduce(0, fn row, acc ->
+        if y[row] == predictions[row][:argmax] do
+          acc + 1
+        else
+          # Show wrongful predictions
+          # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+          # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
+          acc
+        end
+      end)
+      |> Kernel./(predictions[:rows])
+      |> Kernel.*(100)
+      |> IO.inspect(label: "\rTraining set accuracy")
+  end
+
+  defp random_weights(l_in, l_out) do
+    epsilon_init = 0.12
+
+    Matrex.random(l_out, 1 + l_in)
+    |> Matrex.multiply(2 * epsilon_init)
+    |> Matrex.substract(epsilon_init)
   end
 end
