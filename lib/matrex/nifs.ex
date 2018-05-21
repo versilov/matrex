@@ -56,11 +56,6 @@ defmodule Matrex.NIFs do
   def apply_parallel_math(matrix, c_function) when is_binary(matrix) and is_atom(c_function),
     do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec random(non_neg_integer, non_neg_integer) :: binary
-  def arc4random(rows, cols)
-      when is_integer(rows) and is_integer(cols),
-      do: :erlang.nif_error(:nif_library_not_loaded)
-
   @spec argmax(binary) :: non_neg_integer
   def argmax(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
 

@@ -895,47 +895,6 @@ defmodule Matrex do
   end
 
   @doc """
-  Create matrix of random floats in [0, 1] range. NIF.
-
-  Uses C library arc4random/0 function, which uses the key stream generator employed by the arc4 cipher,
-  which uses 8*8 8 bit S-Boxes. It is supposed to generate better quality random numbers,
-  but works about 3 times slower.
-
-  ## Example
-
-      iex> Matrex.arc4random(4,3)
-      #Matrex[4×3]
-      ┌                         ┐
-      │ 0.32994 0.28736 0.88012 │
-      │ 0.51782 0.68608 0.29976 │
-      │ 0.52953  0.9071 0.26743 │
-      │ 0.82189 0.59311  0.8451 │
-      └                         ┘
-
-  """
-  @spec arc4random(index, index) :: matrex
-  def arc4random(rows, columns) when is_integer(rows) and is_integer(columns),
-    do: %Matrex{data: NIFs.arc4random(rows, columns)}
-
-  @doc """
-  Create square matrix of random floats from arc4random().
-
-  See `arc4random/2` for details.
-
-  ## Example
-
-      iex> Matrex.arc4random(3)
-      #Matrex[3×3]
-      ┌                         ┐
-      │ 0.66438 0.31026 0.98602 │
-      │ 0.82127 0.04701 0.13278 │
-      │ 0.96935 0.70772 0.98738 │
-      └                         ┘
-  """
-  @spec arc4random(index) :: matrex
-  def arc4random(size) when is_integer(size), do: arc4random(size, size)
-
-  @doc """
   Returns one-based index of the biggest element. NIF.
 
   There is also `matrex[:argmax]` shortcut for this function.

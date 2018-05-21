@@ -182,29 +182,6 @@ apply_parallel_math(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
-arc4random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  long rows, cols;
-  float *result_data;
-  size_t result_size;
-
-  (void)(argc);
-
-  enif_get_int64(env, argv[0], &rows);
-  enif_get_int64(env, argv[1], &cols);
-
-  result_size = (rows*cols + 2) * sizeof(float);
-  result_data = (float *) enif_make_new_binary(env, result_size, &result);
-
-  MX_SET_ROWS(result_data, rows);
-  MX_SET_COLS(result_data, cols);
-
-  matrix_arc4random(result_data);
-
-  return result;
-}
-
-static ERL_NIF_TERM
 argmax(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   float        *matrix_data;
@@ -255,8 +232,6 @@ concat_columns(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
-  float         alpha, beta;
-  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -973,7 +948,7 @@ sum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   sum = matrix_sum(matrix_data);
 
-  return enif_make_double(env, sum);
+  return make_cell_value(env, sum);
 }
 
 static ERL_NIF_TERM
@@ -1098,7 +1073,6 @@ static ErlNifFunc nif_functions[] = {
   {"add_scalar",           2, add_scalar,           0},
   {"apply_math",           2, apply_math,           0},
   {"apply_parallel_math",  2, apply_parallel_math,  0},
-  {"arc4random",           2, arc4random_matrix,    0},
   {"argmax",               1, argmax,               0},
   {"column_to_list",       2, column_to_list,       0},
   {"concat_columns",       2, concat_columns,       0},

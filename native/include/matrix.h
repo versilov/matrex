@@ -47,9 +47,6 @@ typedef float (*math_func_ptr_t)(float);
 
 math_func_ptr_t math_func_from_name(const char* name);
 
-void
-matrix_arc4random(Matrix matrix);
-
 int32_t
 matrix_argmax(const Matrix matrix);
 
