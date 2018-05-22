@@ -1047,22 +1047,23 @@ defmodule Matrex do
 
   ## Example
 
-  iex(115)> Matrex.concat([Matrex.fill(2, 0), Matrex.fill(2, 1), Matrex.fill(2, 2)])                #Matrex[2×6]
-  ┌                                                 ┐
-  │     0.0     0.0     1.0     1.0     2.0     2.0 │
-  │     0.0     0.0     1.0     1.0     2.0     2.0 │
-  └                                                 ┘
+      iex> Matrex.concat([Matrex.fill(2, 0), Matrex.fill(2, 1), Matrex.fill(2, 2)])                #Matrex[2×6]
+      ┌                                                 ┐
+      │     0.0     0.0     1.0     1.0     2.0     2.0 │
+      │     0.0     0.0     1.0     1.0     2.0     2.0 │
+      └                                                 ┘
 
   """
   @spec concat([matrex]) :: matrex
   def concat([%Matrex{} | _] = list_of_ma), do: Enum.reduce(list_of_ma, &Matrex.concat(&2, &1))
 
   @doc """
-  Concatenate two matrices along x or y axis.
+  Concatenate two matrices along rows or columns. NIF.
 
   The number of rows or columns must be equal.
 
   ## Examples
+
       iex> m1 = Matrex.new([[1, 2, 3], [4, 5, 6]])
       #Matrex[2×3]
       ┌                         ┐
@@ -1160,12 +1161,15 @@ defmodule Matrex do
             _data2::binary
           >>
         },
-        _
+        type
       ),
       do:
         raise(
           ArgumentError,
-          message: "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2}."
+          message:
+            "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{
+              type
+            }."
         )
 
   defp do_concat(result, <<>>, _, <<>>, _), do: result
@@ -1832,8 +1836,8 @@ defmodule Matrex do
       │     4.0     5.0     6.0 │
       └                         ┘
 
-      iex> Matrex.new([[Matrex.fill(2, 1), Matrex.fill(2, 3, 2)],
-      ...> [Matrex.fill(1, 2, 3), Matrex.fill(1, 3, 4)]])
+      iex> Matrex.new([[Matrex.fill(2, 1.0), Matrex.fill(2, 3, 2.0)],
+      ...> [Matrex.fill(1, 2, 3.0), Matrex.fill(1, 3, 4.0)]])
       #Matrex[5×5]
       ┌                                         ┐
       │     1.0     1.0     2.0     2.0     2.0 │
@@ -1943,7 +1947,7 @@ defmodule Matrex do
   end
 
   @doc """
-  Bring all values of matrix into [0, 1] range.
+  Bring all values of matrix into [0, 1] range. NIF.
 
   Where 0 corresponds to the minimum value of the matrix, and 1 — to the maxixmim.
 
@@ -2106,7 +2110,7 @@ defmodule Matrex do
 
   Takes a list or anything, that implements `Enumerable.to_list/1`.
 
-  Can take a list of matrices and concatenate them along columns into one big matrix.
+  Can take a list of matrices and concatenate into one big matrix.
 
   Raises `ArgumentError` if lsit size and given shape do not match.
 
@@ -2119,12 +2123,16 @@ defmodule Matrex do
       │     4.0     5.0     6.0 │
       └                         ┘
 
-      iex> Matrex.concat([Matrex.zeros(2), Matrex.ones(2), Matrex.fill(2, 3, 2.0)])
-      #Matrex[2×7]
-      ┌                                                         ┐
-      │     0.0     0.0     1.0     1.0     2.0     2.0     2.0 │
-      │     0.0     0.0     1.0     1.0     2.0     2.0     2.0 │
-      └                                                         ┘
+      iex> Matrex.reshape([Matrex.zeros(2), Matrex.ones(2),
+      ...> Matrex.fill(3, 2, 2.0), Matrex.fill(3, 2, 3.0)], 2, 2)
+      #Matrex[5×4]
+      ┌                                 ┐
+      │     0.0     0.0     1.0     1.0 │
+      │     0.0     0.0     1.0     1.0 │
+      │     2.0     2.0     3.0     3.0 │
+      │     2.0     2.0     3.0     3.0 │
+      │     2.0     2.0     3.0     3.0 │
+      └                                 ┘
 
       iex> Matrex.reshape(1..6, 2, 3)
       #Matrex[2×3]
@@ -2452,7 +2460,7 @@ defmodule Matrex do
       do: {rows, cols}
 
   @doc """
-  Produces element-wise squared matrix.
+  Produces element-wise squared matrix. NIF through `multiply/4`.
 
 
   ## Example
@@ -2577,6 +2585,8 @@ defmodule Matrex do
   @doc """
   Sums all elements. NIF.
 
+  Can return special float values as atoms.
+
   ## Example
 
       iex> m = Matrex.magic(3)
@@ -2588,6 +2598,15 @@ defmodule Matrex do
       └                         ┘
       iex> Matrex.sum(m)
       45.0
+
+      iex> m = Matrex.new("1 Inf; 2 3")
+      #Matrex[2×2]
+      ┌                 ┐
+      │     1.0     ∞   │
+      │     2.0     3.0 │
+      └                 ┘
+      iex> sum(m)
+      Inf
   """
   @spec sum(matrex) :: element
   def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
@@ -2611,7 +2630,7 @@ defmodule Matrex do
   def to_list(%Matrex{data: matrix}), do: NIFs.to_list(matrix)
 
   @doc """
-  Converts to list of lists
+  Converts to list of lists. NIF.
 
   ## Examples
 
