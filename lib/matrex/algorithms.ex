@@ -520,13 +520,12 @@ defmodule Matrex.Algorithms do
       theta[(hidden_layer_size * (input_layer_size + 1) + 1)..theta[:rows]]
       |> M.reshape(num_labels, hidden_layer_size + 1)
 
-    theta1h = Matrex.submatrix(theta1, 1..theta1[:rows], 2..theta1[:cols])
-
     # IO.write(IO.ANSI.home())
     #
     # data_side_size = trunc(:math.sqrt(theta1h[:cols]))
     #
-    # theta1h
+    # theta1
+    # |>Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
     # |> Matrex.Algorithms.visual_net({5, 5}, {data_side_size, data_side_size})
     # |> Matrex.heatmap()
 
@@ -559,33 +558,55 @@ defmodule Matrex.Algorithms do
 
     reg = lambda / (2 * m) * (theta1_sum + theta2_sum)
 
-    j = M.sum(c) / m + reg
+    sum_c = M.sum(c)
+
+    # Check for special sum_C value
+    sum_c =
+      if sum_c == Inf or sum_c == NaN do
+        IO.inspect(c)
+        1_000_000_000
+      else
+        sum_c
+      end
+
+    j = sum_c / m + reg
 
     # Compute gradients
     classes = M.reshape(1..num_labels, num_labels, 1)
 
-    delta1 = M.zeros(M.size(theta1))
-    delta2 = M.zeros(M.size(theta2))
+    delta1_init = M.zeros(M.size(theta1))
+    delta2_init = M.zeros(M.size(theta2))
+
+    n_chunks = 5
+    chunk_size = trunc(m / n_chunks)
 
     {delta1, delta2} =
-      Enum.reduce(1..m, {delta1, delta2}, fn t, {delta1, delta2} ->
-        a1 = M.transpose(x[t])
-        z2 = M.dot(theta1, a1)
-        a2 = M.concat(M.new([[1]]), M.apply(z2, :sigmoid), :rows)
+      1..n_chunks
+      |> Task.async_stream(fn n ->
+        ((n - 1) * chunk_size + 1)..(n * chunk_size)
+        |> Enum.reduce({delta1_init, delta2_init}, fn t, {delta1, delta2} ->
+          a1 = M.transpose(x[t])
+          z2 = M.dot(theta1, a1)
+          a2 = M.concat(M.new([[1]]), M.apply(z2, :sigmoid), :rows)
 
-        a3 = M.dot_and_apply(theta2, a2, :sigmoid)
+          a3 = M.dot_and_apply(theta2, a2, :sigmoid)
 
-        sigma3 = M.substract(a3, M.apply(classes, &if(&1 == y[t], do: 1.0, else: 0.0)))
+          sigma3 = M.substract(a3, M.apply(classes, &if(&1 == y[t], do: 1.0, else: 0.0)))
 
-        sigma2 =
-          theta2
-          |> M.submatrix(1..theta2[:rows], 2..theta2[:cols])
-          |> M.dot_tn(sigma3)
-          |> M.multiply(sigmoid_gradient(z2))
+          sigma2 =
+            theta2
+            |> M.submatrix(1..theta2[:rows], 2..theta2[:cols])
+            |> M.dot_tn(sigma3)
+            |> M.multiply(sigmoid_gradient(z2))
 
-        delta2 = M.add(delta2, M.dot_nt(sigma3, a2))
-        delta1 = M.add(delta1, M.dot_nt(sigma2, a1))
-        {delta1, delta2}
+          delta2 = M.add(delta2, M.dot_nt(sigma3, a2))
+          delta1 = M.add(delta1, M.dot_nt(sigma2, a1))
+          {delta1, delta2}
+        end)
+      end)
+      |> Enum.reduce({delta1_init, delta2_init}, fn {:ok, {delta1, delta2}},
+                                                    {delta1_result, delta2_result} ->
+        {M.add(delta1_result, delta1), M.add(delta2_result, delta2)}
       end)
 
     theta1 = M.set_column(theta1, 1, M.zeros(hidden_layer_size, 1))
@@ -601,17 +622,15 @@ defmodule Matrex.Algorithms do
   @spec nn_predict(Matrex.t(), Matrex.t(), Matrex.t()) :: Matrex.t()
   def nn_predict(theta1, theta2, x) do
     m = x[:rows]
-    num_labels = theta2[:rows]
 
     h1 =
       Matrex.concat(Matrex.ones(m, 1), x)
       |> Matrex.dot_nt(theta1)
       |> Matrex.apply(:sigmoid)
 
-    h2 =
-      Matrex.concat(Matrex.ones(m, 1), h1)
-      |> Matrex.dot_nt(theta2)
-      |> Matrex.apply(:sigmoid)
+    Matrex.concat(Matrex.ones(m, 1), h1)
+    |> Matrex.dot_nt(theta2)
+    |> Matrex.apply(:sigmoid)
   end
 
   def visual_net(theta, {rows, cols} = _visu_size, {n_rows, n_cols} = _neuron_size) do
@@ -627,5 +646,90 @@ defmodule Matrex.Algorithms do
 
       if result == nil, do: visual_row, else: Matrex.concat(result, visual_row, :rows)
     end)
+  end
+
+  @sample_side_size 28
+  @input_layer_size @sample_side_size * @sample_side_size
+  @hidden_layer_size 25
+  @num_labels 10
+
+  def run_nn() do
+    x = Matrex.load("test/data/Xtrain.mtx.gz")
+    y = Matrex.load("test/data/Ytrain.mtx")
+
+    # {x_train, y_train, x_test, y_test} = split_data(x, y)
+
+    {x_train, y_train, x_test, y_test} =
+      {x[1000..4000], y[1000..4000], x[25000..26000], y[25000..26000]}
+
+    lambdas = [0.01, 5, 50]
+    iterations = 100
+
+    lambdas
+
+    lambdas
+    |> Task.async_stream(
+      fn lambda ->
+        initial_theta1 = random_weights(@input_layer_size, @hidden_layer_size) |> Matrex.to_row()
+        initial_theta2 = random_weights(@hidden_layer_size, @num_labels) |> Matrex.to_row()
+        initial_nn_params = Matrex.concat(initial_theta1, initial_theta2) |> Matrex.transpose()
+
+        {sX, fX, _i} =
+          fmincg(
+            &nn_cost_fun/2,
+            initial_nn_params,
+            {@input_layer_size, @hidden_layer_size, @num_labels, x_train, y_train, lambda},
+            iterations
+          )
+
+        {lambda, List.last(fX), sX}
+      end,
+      timeout: 600_000,
+      max_concurrency: 4
+    )
+    |> Enum.each(fn
+      {:ok, {lambda, cost, sX}} ->
+        # Unpack thetas from the found solution
+        theta1 =
+          sX[1..(@hidden_layer_size * (@input_layer_size + 1))]
+          |> Matrex.reshape(@hidden_layer_size, @input_layer_size + 1)
+
+        theta2 =
+          sX[(@hidden_layer_size * (@input_layer_size + 1) + 1)..sX[:rows]]
+          |> Matrex.reshape(@num_labels, @hidden_layer_size + 1)
+
+        predictions = Matrex.Algorithms.nn_predict(theta1, theta2, x_test)
+
+        1..predictions[:rows]
+        |> Enum.reduce(0, fn row, acc ->
+          if y_test[row] == predictions[row][:argmax] do
+            acc + 1
+          else
+            # Show wrongful predictions
+            # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+            # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
+            acc
+          end
+        end)
+        |> Kernel./(predictions[:rows])
+        |> Kernel.*(100)
+        |> IO.inspect(label: "\rTraining set accuracy with lambda #{lambda} and cost #{cost}")
+
+        theta1
+        |> Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
+        |> Matrex.Algorithms.visual_net({5, 5}, {@sample_side_size, @sample_side_size})
+        |> Matrex.heatmap()
+
+      _ ->
+        :noop
+    end)
+  end
+
+  defp random_weights(l_in, l_out) do
+    epsilon_init = 0.12
+
+    Matrex.random(l_out, 1 + l_in)
+    |> Matrex.multiply(2 * epsilon_init)
+    |> Matrex.substract(epsilon_init)
   end
 end

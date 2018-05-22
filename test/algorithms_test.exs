@@ -1,5 +1,4 @@
 defmodule AlgorithmsTest do
-  ExUnit.start()
   use ExUnit.Case, async: true
 
   alias Matrex.Algorithms
@@ -109,97 +108,73 @@ defmodule AlgorithmsTest do
     assert accuracy >= 95
   end
 
-  @input_layer_size 20 * 20
+  @sample_side_size 20
+  @input_layer_size @sample_side_size * @sample_side_size
   @hidden_layer_size 25
   @num_labels 10
 
   test "#nn_cost_function computes neural network cost with and w/0 regularization" do
     x = Matrex.load("test/data/X.mtx.gz")
     y = Matrex.load("test/data/Y.mtx")
-    theta1 = Matrex.load("../../Octave/ex4/theta1.csv") |> Matrex.to_row()
-    theta2 = Matrex.load("../../Octave/ex4/theta2.csv") |> Matrex.to_row()
+    theta1 = Matrex.load("test/data/nn_theta1.mtx") |> Matrex.to_row()
+    theta2 = Matrex.load("test/data/nn_theta2.mtx") |> Matrex.to_row()
 
     theta = Matrex.concat(theta1, theta2) |> Matrex.transpose()
 
     lambda = 0
 
-    {j, grads} =
+    {j, _grads} =
       Matrex.Algorithms.nn_cost_fun(
         theta,
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert j == 0.2876291611777169
+    assert almost_equal(j, 0.287629150390625)
     lambda = 1
 
-    {j, grads} =
+    {j, _grads} =
       Matrex.Algorithms.nn_cost_fun(
         theta,
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert j == 0.3837698553161823
+    assert almost_equal(j, 0.3837698553161823)
   end
 
   @tag timeout: 600_000
+  @tag skip: true
   test "#fmincg optimizes neural network" do
-    initial_theta1 = random_weights(@input_layer_size, @hidden_layer_size) |> Matrex.to_row()
-    initial_theta2 = random_weights(@hidden_layer_size, @num_labels) |> Matrex.to_row()
-    initial_nn_params = Matrex.concat(initial_theta1, initial_theta2) |> Matrex.transpose()
-
-    x = Matrex.load("test/data/X.mtx.gz")
-    y = Matrex.load("test/data/Y.mtx")
-
-    lambda = 0.5
-    iterations = 10
-
-    {sX, _fX, _i} =
-      Algorithms.fmincg(
-        &Algorithms.nn_cost_fun/2,
-        initial_nn_params,
-        {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda},
-        iterations
-      )
-
-    # Unpack thetas from the found solution
-    theta1 =
-      sX[1..(@hidden_layer_size * (@input_layer_size + 1))]
-      |> Matrex.reshape(@hidden_layer_size, @input_layer_size + 1)
-
-    theta2 =
-      sX[(@hidden_layer_size * (@input_layer_size + 1) + 1)..sX[:rows]]
-      |> Matrex.reshape(@num_labels, @hidden_layer_size + 1)
-
-    theta1h = Matrex.submatrix(theta1, 1..theta1[:rows], 2..theta1[:cols])
-
-    theta1h
-    |> Matrex.Algorithms.visual_net({5, 5}, {20, 20})
-    |> Matrex.heatmap()
-
-    predictions = Matrex.Algorithms.nn_predict(theta1, theta2, x)
-
-    accuracy =
-      1..predictions[:rows]
-      |> Enum.reduce(0, fn row, acc ->
-        if y[row] == predictions[row][:argmax] do
-          acc + 1
-        else
-          # Show wrongful predictions
-          # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
-          # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
-          acc
-        end
-      end)
-      |> Kernel./(predictions[:rows])
-      |> Kernel.*(100)
-      |> IO.inspect(label: "\rTraining set accuracy")
   end
 
-  defp random_weights(l_in, l_out) do
-    epsilon_init = 0.12
+  @spec almost_equal(float, float) :: boolean
+  defp almost_equal(num1, num2), do: Float.round(num1, 5) == Float.round(num2, 5)
 
-    Matrex.random(l_out, 1 + l_in)
-    |> Matrex.multiply(2 * epsilon_init)
-    |> Matrex.substract(epsilon_init)
+  # Split data into training and testing set, permute it randomly
+  @spec split_data(Matrex.t(), Matrex.t()) :: {Matrex.t(), Matrex.t(), Matrex.t(), Matrex.t()}
+  defp split_data(x, y) do
+    n = x[:rows]
+    n_train = trunc(0.8 * n)
+    n_test = n - n_train
+    n_rows = Enum.take_random(1..n, n)
+
+    {x_train, y_train, rows} =
+      Enum.reduce(2..n_train, {x[hd(n_rows)], Matrex.row(y, hd(n_rows)), tl(n_rows)}, fn _i,
+                                                                                         {x_train,
+                                                                                          y_train,
+                                                                                          rows} ->
+        {Matrex.concat(x_train, x[hd(rows)], :rows),
+         Matrex.concat(y_train, Matrex.row(y, hd(rows)), :rows), tl(rows)}
+      end)
+
+    {x_test, y_test, _rows} =
+      Enum.reduce(1..(n_test - 2), {x[hd(rows)], Matrex.row(y, hd(rows)), tl(rows)}, fn _i,
+                                                                                        {x_test,
+                                                                                         y_test,
+                                                                                         rows} ->
+        {Matrex.concat(x_test, x[hd(rows)], :rows),
+         Matrex.concat(y_test, Matrex.row(y, hd(rows)), :rows), tl(rows)}
+      end)
+
+    {x_train, y_train, x_test, y_test}
   end
 end
