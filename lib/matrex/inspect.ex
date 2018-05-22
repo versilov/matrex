@@ -257,9 +257,11 @@ defmodule Matrex.Inspect do
     IO.puts(header(m))
     IO.puts(top_row(m[:cols]))
 
-    1..div(m[:rows], 2)
+    1..(div(m[:rows], 2) + rem(m[:rows], 2))
     |> Enum.each(fn rp ->
-      {rows_pair, _, _} = rows_pair_to_ascii(m[rp * 2 - 1], m[rp * 2], mn, mx, type)
+      top_row = m[rp * 2 - 1]
+      bottom_row = if rp * 2 <= m[:rows], do: m[rp * 2], else: nil
+      {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, mx, type)
 
       <<"│", rows_pair::binary, "\e[0m│\n">>
       |> IO.write()
@@ -280,20 +282,23 @@ defmodule Matrex.Inspect do
     1..top_row[:columns]
     |> Enum.reduce({"", "", ""}, fn c, {result, prev_top_pixel_color, prev_bottom_pixel_color} ->
       top_pixel_color = val_to_rgb(type, top_row[c], min, range)
-      bottom_pixel_color = val_to_rgb(type, bottom_row[c], min, range)
+
+      bottom_pixel_color =
+        if bottom_row, do: val_to_rgb(type, bottom_row[c], min, range), else: nil
 
       {<<result::binary,
          "#{
            ascii_escape(
-             escape_color(:foreground, bottom_pixel_color, prev_bottom_pixel_color),
-             escape_color(:background, top_pixel_color, prev_top_pixel_color)
+             escape_color(:foreground, top_pixel_color, prev_top_pixel_color),
+             escape_color(:background, bottom_pixel_color, prev_bottom_pixel_color)
            )
-         }▄">>, top_pixel_color, bottom_pixel_color}
+         }▀">>, top_pixel_color, bottom_pixel_color}
     end)
   end
 
   # Do not set color again, if it's equal to the previous one
   defp escape_color(_, color, color), do: ""
+  defp escape_color(_, nil, _), do: ""
   defp escape_color(:foreground, color, _prev_color), do: "38;2;#{color}"
   defp escape_color(:background, color, _prev_color), do: "48;2;#{color}"
 

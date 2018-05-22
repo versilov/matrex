@@ -41,7 +41,35 @@ defmodule InspectTest do
     m = Matrex.magic(4)
 
     expected =
-      "\e[0m#Matrex[\e[33m4\e[0m×\e[33m4\e[0m]\n\e[0m┌    ┐\n│\e[38;2;187;187;187;48;2;0;0;0m▄\e[38;2;85;85;85;48;2;238;238;238m▄\e[38;2;102;102;102;48;2;221;221;221m▄\e[38;2;136;136;136;48;2;51;51;51m▄\e[0m│\n│\e[38;2;204;204;204;48;2;119;119;119m▄\e[38;2;34;34;34;48;2;153;153;153m▄\e[38;2;17;17;17;48;2;170;170;170m▄\e[38;2;255;255;255;48;2;68;68;68m▄\e[0m│\n\e[0m└    ┘\n"
+      "\e[0m#Matrex[\e[33m4\e[0m×\e[33m4\e[0m]\n\e[0m┌    ┐\n│\e[38;2;0;0;0;48;2;187;187;187m▀\e[38;2;238;238;238;48;2;85;85;85m▀\e[38;2;221;221;221;48;2;102;102;102m▀\e[38;2;51;51;51;48;2;136;136;136m▀\e[0m│\n│\e[38;2;119;119;119;48;2;204;204;204m▀\e[38;2;153;153;153;48;2;34;34;34m▀\e[38;2;170;170;170;48;2;17;17;17m▀\e[38;2;68;68;68;48;2;255;255;255m▀\e[0m│\n\e[0m└    ┘\n"
+
+    output =
+      capture_io(fn ->
+        assert Matrex.heatmap(m) == m
+      end)
+
+    assert output == expected
+  end
+
+  test "#heatmap prints last row of matrices with odd rows number" do
+    m = Matrex.magic(3)
+
+    expected =
+      "\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[38;2;223;223;223;48;2;63;63;63m▀\e[38;2;0;0;0;48;2;127;127;127m▀\e[38;2;159;159;159;48;2;191;191;191m▀\e[0m│\n│\e[38;2;95;95;95m▀\e[38;2;255;255;255m▀\e[38;2;31;31;31m▀\e[0m│\n\e[0m└   ┘\n"
+
+    output =
+      capture_io(fn ->
+        assert Matrex.heatmap(m) == m
+      end)
+
+    assert output == expected
+  end
+
+  test "#heatmap unites cells of the same color" do
+    m = Matrex.zeros(3)
+
+    expected =
+      "\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[38;2;0;0;0;48;2;0;0;0m▀▀▀\e[0m│\n│\e[38;2;0;0;0m▀▀▀\e[0m│\n\e[0m└   ┘\n"
 
     output =
       capture_io(fn ->
