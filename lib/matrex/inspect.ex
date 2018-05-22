@@ -249,7 +249,7 @@ defmodule Matrex.Inspect do
   #
   # Heatmap
   #
-  @spec heatmap(Matrex.t(), :mono | :color) :: Matrex.t()
+  @spec heatmap(Matrex.t(), :mono | :color | :mono256 | :color256) :: Matrex.t()
   def heatmap(%Matrex{} = m, type \\ :mono) do
     mn = Matrex.min(m)
     mx = Matrex.max(m)
@@ -276,31 +276,41 @@ defmodule Matrex.Inspect do
     m
   end
 
-  defp rows_pair_to_ascii(top_row, bottom_row, min, max, type) do
+  defp rows_pair_to_ascii(top_row, bottom_row, min, max, ttype) do
     range = if max != min, do: max - min, else: 1
 
     1..top_row[:columns]
     |> Enum.reduce({"", "", ""}, fn c, {result, prev_top_pixel_color, prev_bottom_pixel_color} ->
-      top_pixel_color = val_to_rgb(type, top_row[c], min, range)
+      top_pixel_color = val_to_rgb(ttype, top_row[c], min, range)
 
       bottom_pixel_color =
-        if bottom_row, do: val_to_rgb(type, bottom_row[c], min, range), else: nil
+        if bottom_row, do: val_to_rgb(ttype, bottom_row[c], min, range), else: nil
 
       {<<result::binary,
          "#{
            ascii_escape(
-             escape_color(:foreground, top_pixel_color, prev_top_pixel_color),
-             escape_color(:background, bottom_pixel_color, prev_bottom_pixel_color)
+             escape_color(ttype, :foreground, top_pixel_color, prev_top_pixel_color),
+             escape_color(ttype, :background, bottom_pixel_color, prev_bottom_pixel_color)
            )
          }▀">>, top_pixel_color, bottom_pixel_color}
     end)
   end
 
   # Do not set color again, if it's equal to the previous one
-  defp escape_color(_, color, color), do: ""
-  defp escape_color(_, nil, _), do: ""
-  defp escape_color(:foreground, color, _prev_color), do: "38;2;#{color}"
-  defp escape_color(:background, color, _prev_color), do: "48;2;#{color}"
+  defp escape_color(_, _, color, color), do: ""
+  defp escape_color(_, _, nil, _), do: ""
+
+  defp escape_color(ttype, :foreground, color, _prev_color) when ttype in [:mono, :color],
+    do: "38;2;#{color}"
+
+  defp escape_color(ttype, :background, color, _prev_color) when ttype in [:mono, :color],
+    do: "48;2;#{color}"
+
+  defp escape_color(ttype, :foreground, color, _prev_color) when ttype in [:mono256, :color256],
+    do: "38;5;#{color}"
+
+  defp escape_color(ttype, :background, color, _prev_color) when ttype in [:mono256, :color256],
+    do: "48;5;#{color}"
 
   defp ascii_escape("", ""), do: ""
   defp ascii_escape(color1, ""), do: "\e[#{color1}m"
@@ -314,6 +324,11 @@ defmodule Matrex.Inspect do
   defp val_to_rgb(:mono, val, mn, range) do
     c = trunc((val - mn) * 255 / range)
     "#{c};#{c};#{c}"
+  end
+
+  defp val_to_rgb(:mono256, val, mn, range) do
+    c = trunc((val - mn) * 23 / range)
+    "#{232 + c}"
   end
 
   defp val_to_rgb(:color, val, mn, range) do

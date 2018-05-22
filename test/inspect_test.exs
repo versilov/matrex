@@ -78,4 +78,18 @@ defmodule InspectTest do
 
     assert output == expected
   end
+
+  test "#heatmap(:mono256) uses predefined palette" do
+    m = Matrex.reshape(1..64, 8, 8)
+
+    expected =
+      "\e[0m#Matrex[\e[33m8\e[0m×\e[33m8\e[0m]\n\e[0m┌        ┐\n│\e[38;5;232;48;5;234m▀\e[48;5;235m▀▀\e[38;5;233;48;5;236m▀▀▀\e[38;5;234;48;5;237m▀▀\e[0m│\n│\e[38;5;237;48;5;240m▀\e[38;5;238;48;5;241m▀▀▀\e[38;5;239;48;5;242m▀▀\e[38;5;240m▀\e[48;5;243m▀\e[0m│\n│\e[38;5;243;48;5;246m▀\e[38;5;244m▀\e[48;5;247m▀▀\e[38;5;245;48;5;248m▀▀▀\e[38;5;246;48;5;249m▀\e[0m│\n│\e[38;5;249;48;5;252m▀▀\e[38;5;250;48;5;253m▀▀▀\e[38;5;251;48;5;254m▀▀\e[38;5;252;48;5;255m▀\e[0m│\n\e[0m└        ┘\n"
+
+    output =
+      capture_io(fn ->
+        assert Matrex.heatmap(m, :mono256) == m
+      end)
+
+    assert output == expected
+  end
 end
