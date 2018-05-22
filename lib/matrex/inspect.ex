@@ -249,8 +249,9 @@ defmodule Matrex.Inspect do
   #
   # Heatmap
   #
-  @spec heatmap(Matrex.t(), :mono | :color | :mono256 | :color256) :: Matrex.t()
-  def heatmap(%Matrex{} = m, type \\ :mono) do
+  @spec heatmap(Matrex.t(), :mono24bit | :color24bit | :mono8 | :color8 | :mono256 | :color256) ::
+          Matrex.t()
+  def heatmap(%Matrex{} = m, type \\ :mono256) do
     mn = Matrex.min(m)
     mx = Matrex.max(m)
 
@@ -300,17 +301,25 @@ defmodule Matrex.Inspect do
   defp escape_color(_, _, color, color), do: ""
   defp escape_color(_, _, nil, _), do: ""
 
-  defp escape_color(ttype, :foreground, color, _prev_color) when ttype in [:mono, :color],
-    do: "38;2;#{color}"
+  defp escape_color(ttype, :foreground, color, _prev_color)
+       when ttype in [:mono24bit, :color24bit],
+       do: "38;2;#{color}"
 
-  defp escape_color(ttype, :background, color, _prev_color) when ttype in [:mono, :color],
-    do: "48;2;#{color}"
+  defp escape_color(ttype, :background, color, _prev_color)
+       when ttype in [:mono24bit, :color24bit],
+       do: "48;2;#{color}"
 
   defp escape_color(ttype, :foreground, color, _prev_color) when ttype in [:mono256, :color256],
     do: "38;5;#{color}"
 
   defp escape_color(ttype, :background, color, _prev_color) when ttype in [:mono256, :color256],
     do: "48;5;#{color}"
+
+  defp escape_color(ttype, :foreground, color, _prev_color) when ttype in [:mono8, :color8],
+    do: "3#{color}"
+
+  defp escape_color(ttype, :background, color, _prev_color) when ttype in [:mono8, :color8],
+    do: "4#{color}"
 
   defp ascii_escape("", ""), do: ""
   defp ascii_escape(color1, ""), do: "\e[#{color1}m"
@@ -321,7 +330,7 @@ defmodule Matrex.Inspect do
   defp val_to_color(_, Inf, _, _), do: "0;128;255"
   defp val_to_color(_, NegInf, _, _), do: "0;0;255"
 
-  defp val_to_color(:mono, val, mn, range) do
+  defp val_to_color(:mono24bit, val, mn, range) do
     c = trunc((val - mn) * 255 / range)
     "#{c};#{c};#{c}"
   end
@@ -331,7 +340,12 @@ defmodule Matrex.Inspect do
     "#{232 + c}"
   end
 
-  defp val_to_color(:color, val, mn, range) do
+  defp val_to_color(:mono8, val, mn, range) do
+    c = round((val - mn) / range) |> trunc()
+    "#{elem({"0", "7"}, c)}"
+  end
+
+  defp val_to_color(:color24bit, val, mn, range) do
     {r, g, b} = val_to_rgb(val, mn, range)
     "#{trunc(r * 255)};#{trunc(g * 255)};#{trunc(b * 255)}"
   end
@@ -339,6 +353,12 @@ defmodule Matrex.Inspect do
   defp val_to_color(:color256, val, mn, range) do
     {r, g, b} = val_to_rgb(val, mn, range)
     color = 16 + 36 * trunc(r * 5) + 6 * trunc(g * 5) + trunc(b * 5)
+    "#{color}"
+  end
+
+  defp val_to_color(:color8, val, mn, range) do
+    {r, g, b} = val_to_rgb(val, mn, range)
+    color = trunc(round(r)) + 2 * trunc(round(g)) + 4 * trunc(round(b))
     "#{color}"
   end
 

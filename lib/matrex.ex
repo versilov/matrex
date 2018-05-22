@@ -1560,8 +1560,9 @@ defmodule Matrex do
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />
 
   """
-  @spec heatmap(matrex, :mono | :color) :: matrex
-  defdelegate heatmap(matrex, type \\ :mono), to: Matrex.Inspect
+  @spec heatmap(matrex, :mono8 | :color8 | :mono256 | :color256 | :mono24bit | :color24bit) ::
+          matrex
+  defdelegate heatmap(matrex, type \\ :mono256), to: Matrex.Inspect
 
   @doc """
   An alias for `eye/1`.
