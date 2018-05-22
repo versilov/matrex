@@ -54,15 +54,15 @@ Complete example of Matrex library at work:
 
 Matrex implements `Inspect` protocol and looks nice in your console:
 
-![Inspect Matrex](docs/matrex_inspect.png)
+![Inspect Matrex](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_inspect.png)
 
 It can even draw a heatmap of your matrix in console! If it supports 24-bit color, of course. For example, on MacOS use [iTerm2](https://www.iterm2.com/). Here is an animation of logistic regression training with Matrex library and some matrix heatmaps:
 
 
-<img src="./docs/logistic_regression.gif" width="215px" />&nbsp;
-<img src="./docs/mnist8.png" width="200px" />&nbsp;
-<img src="./docs/magic_square.png" width="200px" />&nbsp;
-<img src="./docs/hot_boobs.png" width="220px"  />
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="215px" />&nbsp;
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />
 
 ## Installation
 
