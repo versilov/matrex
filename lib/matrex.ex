@@ -1804,6 +1804,8 @@ defmodule Matrex do
   @doc """
   Creates new matrix from list of lists or text representation (compatible with MathLab/Octave).
 
+  List of lists can contain other matrices, which are concatenated in one.
+
   ## Example
 
       iex> Matrex.new([[1, 2, 3], [4, 5, 6]])
@@ -1812,6 +1814,15 @@ defmodule Matrex do
       │     1.0     2.0     3.0 │
       │     4.0     5.0     6.0 │
       └                         ┘
+
+      iex> Matrex.new([[Matrex.fill(2, 1), Matrex.fill(2, 3, 2)],
+      ...> [Matrex.fill(1, 2, 3), Matrex.fill(1, 3, 4)]])
+      #Matrex[5×5]
+      ┌                                         ┐
+      │     1.0     1.0     2.0     2.0     2.0 │
+      │     1.0     1.0     2.0     2.0     2.0 │
+      │     3.0     3.0     4.0     4.0     4.0 │
+      └                                         ┘
 
       iex> Matrex.new("1;0;1;0;1")
       #Matrex[5×1]
@@ -1840,7 +1851,29 @@ defmodule Matrex do
       └                                 ┘
 
   """
-  @spec new([[element]] | binary) :: matrex
+  @spec new([[element]] | [[matrex]] | binary) :: matrex
+  def new(
+        [
+          [
+            %Matrex{
+              data: <<
+                rows::unsigned-integer-little-32,
+                columns::unsigned-integer-little-32,
+                _rest::binary
+              >>
+            }
+            | _
+          ]
+          | _
+        ] = lol_of_ma
+      ) do
+    lol_of_ma
+    |> Enum.map(fn list_of_ma ->
+      Enum.reduce(list_of_ma, &Matrex.concat(&2, &1))
+    end)
+    |> Enum.reduce(&Matrex.concat(&2, &1, :rows))
+  end
+
   def new([first_list | _] = lol_or_binary) when is_list(first_list) do
     rows = length(lol_or_binary)
     columns = length(first_list)

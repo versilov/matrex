@@ -160,7 +160,7 @@ defmodule CreationTest do
     assert Matrex.new(rows, columns, function) == expected
   end
 
-  test "#new creates a new matrix initialized by a list" do
+  test "#new creates a new matrix initialized by a list of lists" do
     list = [[1, 2, 3], [4, 5, 6]]
 
     expected = %Matrex{
@@ -198,6 +198,18 @@ defmodule CreationTest do
     }
 
     assert Matrex.new(list) == expected
+  end
+
+  test "#new creates a new matrix from a list of lists of matrices" do
+    m1 = Matrex.reshape(1..6, 2, 3)
+    m2 = Matrex.reshape(7..12, 2, 3)
+    m3 = Matrex.reshape(13..16, 2, 2)
+    m4 = Matrex.reshape(17..20, 2, 2)
+
+    expected =
+      Matrex.new([[1, 2, 3, 13, 14], [4, 5, 6, 15, 16], [7, 8, 9, 17, 18], [10, 11, 12, 19, 20]])
+
+    assert Matrex.new([[m1, m3], [m2, m4]]) == expected
   end
 
   test "#ones creates matrix filled with ones" do
