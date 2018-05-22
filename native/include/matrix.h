@@ -121,6 +121,9 @@ void
 matrix_random(Matrix matrix);
 
 void
+matrix_resize(const Matrix matrix, const int32_t new_rows, const int32_t new_cols, Matrix result);
+
+void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result);
 
 void

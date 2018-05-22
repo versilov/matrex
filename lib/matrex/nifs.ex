@@ -199,6 +199,10 @@ defmodule Matrex.NIFs do
       when is_integer(rows) and is_integer(cols),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec resize(binary, number) :: binary
+  def resize(matrex, scale) when is_binary(matrex) and is_number(scale),
+    do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec row_to_list(binary, non_neg_integer) :: [float]
   def row_to_list(
         <<

@@ -383,6 +383,20 @@ defmodule MatrexTest do
     assert Matrex.normalize(matrix) == expected
   end
 
+  test "#resize scales down the dimensions of the matrix and interpolaties values" do
+    m = Matrex.reshape(1..16, 4, 4)
+    expected = Matrex.new([[1, 3], [9, 11]])
+
+    assert Matrex.resize(m, 0.5) == expected
+  end
+
+  test "#resize scales up the dimensions of the matrix and interpolaties values" do
+    m = Matrex.reshape(1..4, 2, 2)
+    expected = Matrex.new([[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]])
+
+    assert Matrex.resize(m, 2) == expected
+  end
+
   test "#reshape consumes any value, convertable to list" do
     assert Matrex.reshape(1..6, 2, 3) == Matrex.new("1 2 3; 4 5 6")
     assert Matrex.reshape('abcd', 2, 2) == Matrex.new("97 98; 99 100")

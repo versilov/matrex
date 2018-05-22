@@ -13,7 +13,7 @@
 // Inner helper functions headers
 //-----------------------------------------------------------------------------
 
-static float
+static double
 get_scalar(ErlNifEnv *env, ERL_NIF_TERM arg);
 
 static inline ERL_NIF_TERM
@@ -562,7 +562,7 @@ find(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 
 // Inner function for getting scalar from args list and casting it to float.
 // Scalars come as doubles or long integers.
-static float
+static double
 get_scalar(ErlNifEnv *env, ERL_NIF_TERM arg) {
   double scalar;
   if (enif_get_double(env, arg, &scalar) == 0) {
@@ -571,7 +571,7 @@ get_scalar(ErlNifEnv *env, ERL_NIF_TERM arg) {
 
     scalar = (double) long_scalar;
   }
-  return (float) scalar;
+  return scalar;
 }
 
 static inline ERL_NIF_TERM
@@ -738,6 +738,35 @@ random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   MX_SET_COLS(result_data, cols);
 
   matrix_random(result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
+resize(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  double         scale;
+  int32_t      new_rows, new_cols;
+  float        *matrix_data, *result_data;
+  uint64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  scale = get_scalar(env, argv[1]);
+
+  matrix_data = (float *) matrix.data;
+  data_size   = MX_LENGTH(matrix_data);
+
+  new_rows = (int32_t)round((float)MX_ROWS(matrix_data) * scale);
+  new_cols = (int32_t)round((float)MX_COLS(matrix_data) * scale);
+
+  result_size = sizeof(float) * (2 + new_rows * new_cols);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_resize(matrix_data, new_rows, new_cols, result_data);
 
   return result;
 }
@@ -1094,6 +1123,7 @@ static ErlNifFunc nif_functions[] = {
   {"neg",                  1, neg,                  0},
   {"normalize",            1, normalize,            0},
   {"random",               2, random_matrix,        0},
+  {"resize",               2, resize,               0},
   {"row_to_list",          2, row_to_list,          0},
   {"set",                  4, set,                  0},
   {"set_column",           3, set_column,           0},

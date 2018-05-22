@@ -520,9 +520,22 @@ matrix_random(Matrix matrix) {
 
   for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = (float)random()/(float)RAND_MAX;
-    // matrix[index] = (float)arc4random()/(float)UINT32_MAX;
   }
 }
+
+void
+matrix_resize(const Matrix matrix, const int32_t new_rows, const int32_t new_cols, Matrix result) {
+  MX_SET_ROWS(result, new_rows);
+  MX_SET_COLS(result, new_cols);
+
+  const double row_scale = (double)new_rows / (double)MX_ROWS(matrix);
+  const double col_scale = (double)new_cols / (double)MX_COLS(matrix);
+
+  for (int32_t row = 0; row < new_rows; row++)
+    for (int32_t col = 0; col < new_cols; col++)
+      result[2 + row*new_cols + col] = matrix[2 + (int)trunc((double)row/row_scale)*MX_COLS(matrix) + (int)trunc((double)col/col_scale)];
+}
+
 
 void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result) {

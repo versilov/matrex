@@ -2054,6 +2054,53 @@ defmodule Matrex do
   def random(size) when is_integer(size), do: random(size, size)
 
   @doc """
+  Resize matrix by scaling its dimenson with `scale`. NIF.
+
+  ## Examples
+  iex> m = Matrex.magic(3)
+  #Matrex[3×3]
+  ┌                         ┐
+  │     8.0     1.0     6.0 │
+  │     3.0     5.0     7.0 │
+  │     4.0     9.0     2.0 │
+  └                         ┘
+  iex(3)> Matrex.resize(m, 2)
+  #Matrex[6×6]
+  ┌                                                 ┐
+  │     8.0     8.0     1.0     1.0     6.0     6.0 │
+  │     8.0     8.0     1.0     1.0     6.0     6.0 │
+  │     3.0     3.0     5.0     5.0     7.0     7.0 │
+  │     3.0     3.0     5.0     5.0     7.0     7.0 │
+  │     4.0     4.0     9.0     9.0     2.0     2.0 │
+  │     4.0     4.0     9.0     9.0     2.0     2.0 │
+  └                                                 ┘
+
+  iex(4)> m = Matrex.magic(5)
+  #Matrex[5×5]
+  ┌                                         ┐
+  │    16.0    23.0     5.0     7.0    14.0 │
+  │    22.0     4.0     6.0    13.0    20.0 │
+  │     3.0    10.0    12.0    19.0    21.0 │
+  │     9.0    11.0    18.0    25.0     2.0 │
+  │    15.0    17.0    24.0     1.0     8.0 │
+  └                                         ┘
+  iex(5)> Matrex.resize(m, 0.5)
+  #Matrex[3×3]
+  ┌                         ┐
+  │    16.0    23.0     7.0 │
+  │    22.0     4.0    13.0 │
+  │     9.0    11.0    25.0 │
+  └                         ┘
+  """
+  @spec resize(matrex, number, :nearest | :bilinear) :: matrex
+  def resize(matrex, scale, method \\ :nearest)
+
+  def resize(%Matrex{} = matrex, 1, _), do: matrex
+
+  def resize(%Matrex{data: data}, scale, :nearest) when is_number(scale) and scale > 0,
+    do: %Matrex{data: NIFs.resize(data, scale)}
+
+  @doc """
   Reshapes list of values into a matrix of given size.
 
   Takes a list or anything, that implements `Enumerable.to_list/1`.
