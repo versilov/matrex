@@ -1041,6 +1041,23 @@ defmodule Matrex do
     do: NIFs.column_to_list(matrix, column - 1)
 
   @doc """
+  Concatenate list of matrices along columns.
+
+  The number of rows must be equal.
+
+  ## Example
+
+  iex(115)> Matrex.concat([Matrex.fill(2, 0), Matrex.fill(2, 1), Matrex.fill(2, 2)])                #Matrex[2×6]
+  ┌                                                 ┐
+  │     0.0     0.0     1.0     1.0     2.0     2.0 │
+  │     0.0     0.0     1.0     1.0     2.0     2.0 │
+  └                                                 ┘
+
+  """
+  @spec concat([matrex]) :: matrex
+  def concat([%Matrex{} | _] = list_of_ma), do: Enum.reduce(list_of_ma, &Matrex.concat(&2, &1))
+
+  @doc """
   Concatenate two matrices along x or y axis.
 
   The number of rows or columns must be equal.
@@ -1855,22 +1872,13 @@ defmodule Matrex do
   def new(
         [
           [
-            %Matrex{
-              data: <<
-                rows::unsigned-integer-little-32,
-                columns::unsigned-integer-little-32,
-                _rest::binary
-              >>
-            }
-            | _
+            %Matrex{} | _
           ]
           | _
         ] = lol_of_ma
       ) do
     lol_of_ma
-    |> Enum.map(fn list_of_ma ->
-      Enum.reduce(list_of_ma, &Matrex.concat(&2, &1))
-    end)
+    |> Enum.map(&Matrex.concat/1)
     |> Enum.reduce(&Matrex.concat(&2, &1, :rows))
   end
 
@@ -2072,6 +2080,12 @@ defmodule Matrex do
   @spec reshape([element], index, index) :: matrex
   @spec reshape(Enumerable.t(), index, index) :: matrex
   def reshape([], _, _), do: raise(ArgumentError)
+
+  def reshape([%Matrex{} | _] = list_of_ma, _rows, columns) do
+    list_of_ma
+    |> Enum.chunk_every(columns)
+    |> new()
+  end
 
   def reshape([_ | _] = list, rows, columns),
     do: %Matrex{

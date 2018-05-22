@@ -163,6 +163,15 @@ defmodule MatrexTest do
     assert Matrex.concat(first, second) == expected
   end
 
+  test "#concat concatenates list of matrices along columns" do
+    z = Matrex.zeros(2)
+    o = Matrex.ones(2)
+    t = Matrex.fill(2, 2)
+
+    expected = Matrex.new("0 0 1 1 2 2; 0 0 1 1 2 2")
+    assert Matrex.concat([z, o, t]) == expected
+  end
+
   test "#concat concatenates two matrices along rows" do
     first = Matrex.reshape(1..6, 3, 2)
     second = Matrex.reshape(1..4, 2, 2)
@@ -384,6 +393,27 @@ defmodule MatrexTest do
     expected = Matrex.new("1 2; 3 4; 5 6")
 
     assert Matrex.reshape(list, 3, 2) == expected
+  end
+
+  test "#reshape transforms list of matrices into a one big matrix" do
+    list_of_matrices = [
+      Matrex.fill(3, 1),
+      Matrex.fill(3, 2),
+      Matrex.fill(3, 3),
+      Matrex.fill(3, 4)
+    ]
+
+    expected =
+      Matrex.new("""
+      1 1 1 2 2 2;
+      1 1 1 2 2 2;
+      1 1 1 2 2 2;
+      3 3 3 4 4 4;
+      3 3 3 4 4 4;
+      3 3 3 4 4 4;
+      """)
+
+    assert Matrex.reshape(list_of_matrices, 2, 2) == expected
   end
 
   test "#reshape respects special float values" do
