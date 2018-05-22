@@ -58,9 +58,10 @@ defmodule Matrex.IDX do
   def idx_to_float_binary(result, <<elem::float-big-64, rest::binary>>, @double),
     do: idx_to_float_binary(<<result::binary, elem::float-little-32>>, rest, @double)
 
+  defp binary_to_list_of_integers(binary, init \\ [])
   defp binary_to_list_of_integers(<<>>, list), do: Enum.reverse(list)
 
-  defp binary_to_list_of_integers(<<value::unsigned-integer-big-32, rest::binary>>, list \\ []),
+  defp binary_to_list_of_integers(<<value::unsigned-integer-big-32, rest::binary>>, list),
     do: binary_to_list_of_integers(rest, [value | list])
 
   defp data_size(@unsigned_byte), do: 1
