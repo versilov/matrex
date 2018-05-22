@@ -2092,7 +2092,7 @@ defmodule Matrex do
 
   def reshape([%Matrex{} | _] = list_of_ma, _rows, columns) do
     list_of_ma
-    |> Enum.chunk_every(columns)
+    |> Enum.chunk(columns)
     |> new()
   end
 
