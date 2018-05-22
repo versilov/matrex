@@ -2106,7 +2106,7 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.resize(data, scale)}
 
   @doc """
-  Reshapes list of values into a matrix of given size.
+  Reshapes list of values into a matrix of given size or changes the shape of existing matrix.
 
   Takes a list or anything, that implements `Enumerable.to_list/1`.
 
@@ -2140,6 +2140,14 @@ defmodule Matrex do
       │     1.0     2.0     3.0 │
       │     4.0     5.0     6.0 │
       └                         ┘
+
+      iex> Matrex.new("1 2 3; 4 5 6") |> Matrex.reshape(3, 2)
+      #Matrex[3×2]
+      ┌                 ┐
+      │     1.0     2.0 │
+      │     3.0     4.0 │
+      │     5.0     6.0 │
+      └                 ┘
 
   """
   @spec reshape([element], index, index) :: matrex
