@@ -525,6 +525,11 @@ defmodule MatrexTest do
     assert Matrex.sum(input) == expected
   end
 
+  test "#sum returns special float values" do
+    input = Matrex.new([[Inf, 1.5, 0.0]])
+    assert Matrex.sum(input) == Inf
+  end
+
   test "#to_list returs whole matrix as a list" do
     matrex = Matrex.new("1 2 3; 4 5 6; 7 8 9;")
     expected = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]
