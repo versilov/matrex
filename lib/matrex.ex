@@ -342,7 +342,7 @@ defmodule Matrex do
         },
         a..b
       )
-      when b > a and b <= columns,
+      when b > a and a > 0 and b <= columns,
       do:
         {:ok,
          %Matrex{
@@ -362,7 +362,7 @@ defmodule Matrex do
         },
         a..b
       )
-      when b > a and b <= rows,
+      when b > a and a > 0 and b <= rows,
       do:
         {:ok,
          %Matrex{
@@ -1529,6 +1529,15 @@ defmodule Matrex do
   Prints monochrome or color heatmap of the matrix to the console.
 
   Only on terminals, that support 24bit color.
+
+  ## Examples
+
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="215px" />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="220px"  />
+
   """
   @spec heatmap(matrex, :mono | :color) :: matrex
   defdelegate heatmap(matrex, type \\ :mono), to: Matrex.Inspect
