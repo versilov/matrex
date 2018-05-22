@@ -1536,7 +1536,7 @@ defmodule Matrex do
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="220px"  />
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />
 
   """
   @spec heatmap(matrex, :mono | :color) :: matrex
