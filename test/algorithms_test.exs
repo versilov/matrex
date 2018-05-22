@@ -42,6 +42,7 @@ defmodule AlgorithmsTest do
     assert j == expected_j
   end
 
+  @tag skip: true
   @tag timeout: 120_000
   test "#fmincg does linear regression" do
     x = Matrex.load("test/data/X.mtx.gz") |> Matrex.normalize()
@@ -129,7 +130,7 @@ defmodule AlgorithmsTest do
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert almost_equal(j, 0.287629150390625)
+    assert round_enough(j) == round_enough(0.287629150390625)
     lambda = 1
 
     {j, _grads} =
@@ -138,7 +139,7 @@ defmodule AlgorithmsTest do
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert almost_equal(j, 0.3837698553161823)
+    assert round_enough(j) == round_enough(0.3837698553161823)
   end
 
   @tag timeout: 600_000
@@ -146,8 +147,7 @@ defmodule AlgorithmsTest do
   test "#fmincg optimizes neural network" do
   end
 
-  @spec almost_equal(float, float) :: boolean
-  defp almost_equal(num1, num2), do: Float.round(num1, 5) == Float.round(num2, 5)
+  defp round_enough(num), do: Float.round(num, 5)
 
   # Split data into training and testing set, permute it randomly
   @spec split_data(Matrex.t(), Matrex.t()) :: {Matrex.t(), Matrex.t(), Matrex.t(), Matrex.t()}

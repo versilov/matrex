@@ -633,39 +633,29 @@ defmodule Matrex.Algorithms do
     |> Matrex.apply(:sigmoid)
   end
 
-  def visual_net(theta, {rows, cols} = _visu_size, {n_rows, n_cols} = _neuron_size) do
-    Enum.reduce(1..rows, nil, fn row, result ->
-      first = (row - 1) * cols + 1
-      last = row * cols
-
-      visual_row =
-        Enum.reduce((first + 1)..last, Matrex.reshape(theta[first], n_rows, n_cols), fn r,
-                                                                                        result ->
-          Matrex.concat(result, Matrex.reshape(theta[r], n_rows, n_cols))
-        end)
-
-      if result == nil, do: visual_row, else: Matrex.concat(result, visual_row, :rows)
-    end)
+  # Reshape each row of theta into a n_rows x n_cols matrix
+  # Group these matrices into a rows x cols big matrix for visualization
+  defp visual_net(theta, {rows, cols} = _visu_size, {n_rows, n_cols} = _neuron_size) do
+    1..theta[:rows]
+    |> Enum.map(&(theta[&1] |> Matrex.reshape(n_rows, n_cols)))
+    |> Matrex.reshape(rows, cols)
   end
 
-  @sample_side_size 28
+  @sample_side_size 20
   @input_layer_size @sample_side_size * @sample_side_size
   @hidden_layer_size 25
   @num_labels 10
 
   def run_nn() do
-    x = Matrex.load("test/data/Xtrain.mtx.gz")
-    y = Matrex.load("test/data/Ytrain.mtx")
+    x = Matrex.load("test/data/X.mtx.gz")
+    y = Matrex.load("test/data/Y.mtx")
 
     # {x_train, y_train, x_test, y_test} = split_data(x, y)
 
-    {x_train, y_train, x_test, y_test} =
-      {x[1000..4000], y[1000..4000], x[25000..26000], y[25000..26000]}
+    {x_train, y_train, x_test, y_test} = {x, y, x, y}
 
     lambdas = [0.01, 5, 50]
-    iterations = 100
-
-    lambdas
+    iterations = 50
 
     lambdas
     |> Task.async_stream(
@@ -717,7 +707,8 @@ defmodule Matrex.Algorithms do
 
         theta1
         |> Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
-        |> Matrex.Algorithms.visual_net({5, 5}, {@sample_side_size, @sample_side_size})
+        |> visual_net({5, 5}, {@sample_side_size, @sample_side_size})
+        |> Matrex.resize(0.5)
         |> Matrex.heatmap()
 
       _ ->
