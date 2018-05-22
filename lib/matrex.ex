@@ -2058,6 +2058,8 @@ defmodule Matrex do
 
   Takes a list or anything, that implements `Enumerable.to_list/1`.
 
+  Can take a list of matrices and concatenate them along columns into one big matrix.
+
   Raises `ArgumentError` if lsit size and given shape do not match.
 
   ## Example
@@ -2068,6 +2070,13 @@ defmodule Matrex do
       │     1.0     2.0     3.0 │
       │     4.0     5.0     6.0 │
       └                         ┘
+
+      iex> Matrex.concat([Matrex.zeros(2), Matrex.ones(2), Matrex.fill(2, 3, 2.0)])
+      #Matrex[2×7]
+      ┌                                                         ┐
+      │     0.0     0.0     1.0     1.0     2.0     2.0     2.0 │
+      │     0.0     0.0     1.0     1.0     2.0     2.0     2.0 │
+      └                                                         ┘
 
       iex> Matrex.reshape(1..6, 2, 3)
       #Matrex[2×3]
