@@ -281,10 +281,10 @@ defmodule Matrex.Inspect do
 
     1..top_row[:columns]
     |> Enum.reduce({"", "", ""}, fn c, {result, prev_top_pixel_color, prev_bottom_pixel_color} ->
-      top_pixel_color = val_to_rgb(ttype, top_row[c], min, range)
+      top_pixel_color = val_to_color(ttype, top_row[c], min, range)
 
       bottom_pixel_color =
-        if bottom_row, do: val_to_rgb(ttype, bottom_row[c], min, range), else: nil
+        if bottom_row, do: val_to_color(ttype, bottom_row[c], min, range), else: nil
 
       {<<result::binary,
          "#{
@@ -317,21 +317,33 @@ defmodule Matrex.Inspect do
   defp ascii_escape("", color2), do: "\e[#{color2}m"
   defp ascii_escape(color1, color2), do: "\e[#{color1};#{color2}m"
 
-  defp val_to_rgb(_, NaN, _, _), do: "255;0;0"
-  defp val_to_rgb(_, Inf, _, _), do: "0;128;255"
-  defp val_to_rgb(_, NegInf, _, _), do: "0;0;255"
+  defp val_to_color(_, NaN, _, _), do: "255;0;0"
+  defp val_to_color(_, Inf, _, _), do: "0;128;255"
+  defp val_to_color(_, NegInf, _, _), do: "0;0;255"
 
-  defp val_to_rgb(:mono, val, mn, range) do
+  defp val_to_color(:mono, val, mn, range) do
     c = trunc((val - mn) * 255 / range)
     "#{c};#{c};#{c}"
   end
 
-  defp val_to_rgb(:mono256, val, mn, range) do
+  defp val_to_color(:mono256, val, mn, range) do
     c = trunc((val - mn) * 23 / range)
     "#{232 + c}"
   end
 
-  defp val_to_rgb(:color, val, mn, range) do
+  defp val_to_color(:color, val, mn, range) do
+    {r, g, b} = val_to_rgb(val, mn, range)
+    "#{trunc(r * 255)};#{trunc(g * 255)};#{trunc(b * 255)}"
+  end
+
+  defp val_to_color(:color256, val, mn, range) do
+    {r, g, b} = val_to_rgb(val, mn, range)
+    color = 16 + 36 * trunc(r * 5) + 6 * trunc(g * 5) + trunc(b * 5)
+    "#{color}"
+  end
+
+  @spec val_to_rgb(float, float, float) :: float
+  defp val_to_rgb(val, mn, range) do
     # Color points for the heatmap. You can have as many of them, as you wish.
     cps =
       {[r: 0, g: 0, b: 1], [r: 0, g: 1, b: 1], [r: 0, g: 1, b: 0], [r: 1, g: 1, b: 0],
@@ -359,9 +371,9 @@ defmodule Matrex.Inspect do
           {idx1, idx2, frac}
       end
 
-    r = trunc(((elem(cps, idx2)[:r] - elem(cps, idx1)[:r]) * frac + elem(cps, idx1)[:r]) * 255)
-    g = trunc(((elem(cps, idx2)[:g] - elem(cps, idx1)[:g]) * frac + elem(cps, idx1)[:g]) * 255)
-    b = trunc(((elem(cps, idx2)[:b] - elem(cps, idx1)[:b]) * frac + elem(cps, idx1)[:b]) * 255)
-    "#{r};#{g};#{b}"
+    r = (elem(cps, idx2)[:r] - elem(cps, idx1)[:r]) * frac + elem(cps, idx1)[:r]
+    g = (elem(cps, idx2)[:g] - elem(cps, idx1)[:g]) * frac + elem(cps, idx1)[:g]
+    b = (elem(cps, idx2)[:b] - elem(cps, idx1)[:b]) * frac + elem(cps, idx1)[:b]
+    {r, g, b}
   end
 end
