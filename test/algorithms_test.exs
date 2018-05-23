@@ -130,7 +130,7 @@ defmodule AlgorithmsTest do
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert round_enough(j) == round_enough(0.287629150390625)
+    assert j == 0.287629150390625
     lambda = 1
 
     {j, _grads} =
@@ -139,7 +139,7 @@ defmodule AlgorithmsTest do
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert round_enough(j) == round_enough(0.3837698553161823)
+    assert j == 0.38376984558105465
   end
 
   @tag timeout: 600_000
