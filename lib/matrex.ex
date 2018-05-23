@@ -734,7 +734,8 @@ defmodule Matrex do
     %Matrex{
       data:
         if(
-          rows * cols < 100_000,
+          true,
+          # rows * cols < 100_000,
           do: NIFs.apply_math(data, function_atom),
           else: NIFs.apply_parallel_math(data, function_atom)
         )
