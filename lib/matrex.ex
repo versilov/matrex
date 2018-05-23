@@ -1099,27 +1099,20 @@ defmodule Matrex do
           data:
             <<
               rows1::unsigned-integer-little-32,
-              columns1::unsigned-integer-little-32,
-              data1::binary
+              _rest1::binary
             >> = first
         },
         %Matrex{
           data:
             <<
               rows2::unsigned-integer-little-32,
-              columns2::unsigned-integer-little-32,
-              data2::binary
+              _rest2::binary
             >> = second
         },
         :columns
       )
-      when rows1 == rows2 do
-    %Matrex{data: Matrex.NIFs.concat_columns(first, second)}
-    #   initial =
-    #     <<rows1::unsigned-integer-little-32, columns1 + columns2::unsigned-integer-little-32>>
-    #
-    #   %Matrex{data: do_concat(initial, data1, columns1, data2, columns2)}
-  end
+      when rows1 == rows2,
+      do: %Matrex{data: Matrex.NIFs.concat_columns(first, second)}
 
   def concat(
         %Matrex{
@@ -1523,7 +1516,7 @@ defmodule Matrex do
 
   """
   @spec find(matrex, element) :: {index, index} | nil
-  def find(%Matrex{data: data}, value) when is_number(value) or value in [NaN, Inf, PosInf],
+  def find(%Matrex{data: data}, value) when is_number(value) or value in [NaN, Inf, NegInf],
     do: NIFs.find(data, float_to_binary(value))
 
   @doc """
@@ -1535,7 +1528,7 @@ defmodule Matrex do
       6.0
 
   """
-  @spec first(matrex) :: element | NaN | Inf | NegInf
+  @spec first(matrex) :: element
   def first(%Matrex{
         data: <<
           _rows::unsigned-integer-little-32,

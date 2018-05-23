@@ -63,11 +63,4 @@ defmodule Matrex.IDX do
 
   defp binary_to_list_of_integers(<<value::unsigned-integer-big-32, rest::binary>>, list),
     do: binary_to_list_of_integers(rest, [value | list])
-
-  defp data_size(@unsigned_byte), do: 1
-  defp data_size(@signed_byte), do: 1
-  defp data_size(@short), do: 2
-  defp data_size(@integer), do: 4
-  defp data_size(@float), do: 4
-  defp data_size(@double), do: 8
 end

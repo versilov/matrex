@@ -563,7 +563,7 @@ defmodule Matrex.Algorithms do
     # Check for special sum_C value
     sum_c =
       if sum_c == Inf or sum_c == NaN do
-        IO.inspect(sum_c, "Bad sum from a matrix")
+        IO.inspect(sum_c, label: "Bad sum from a matrix")
         IO.inspect(c)
         1_000_000_000
       else
@@ -655,7 +655,7 @@ defmodule Matrex.Algorithms do
 
     {x_train, y_train, x_test, y_test} = {x, y, x, y}
 
-    lambdas = [0.01, 5, 50]
+    _lambdas = [0.01, 5, 50]
     iterations = 100
     epsilon = 0.13
 

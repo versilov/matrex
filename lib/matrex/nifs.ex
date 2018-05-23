@@ -117,7 +117,9 @@ defmodule Matrex.NIFs do
       do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec dot_tn(binary, binary, number) :: binary
-  def dot_tn(first, second, aplha), do: :erlang.nif_error(:nif_library_not_loaded)
+  def dot_tn(first, second, alpha)
+      when is_binary(first) and is_binary(second) and is_number(alpha),
+      do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec eye(pos_integer, number) :: binary
   def eye(size, value)
@@ -239,7 +241,9 @@ defmodule Matrex.NIFs do
   end
 
   @spec set_column(binary, non_neg_integer, binary) :: binary
-  def set_column(matrex, column, column_matrex), do: :erlang.nif_error(:nif_library_not_loaded)
+  def set_column(matrex, column, column_matrex)
+      when is_binary(matrex) and is_integer(column) and is_binary(column_matrex),
+      do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec submatrix(binary, pos_integer, pos_integer, pos_integer, pos_integer) :: binary
   def submatrix(matrex, row_from, row_to, col_from, col_to)

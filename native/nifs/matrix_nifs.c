@@ -19,10 +19,6 @@ get_scalar(ErlNifEnv *env, ERL_NIF_TERM arg);
 static inline ERL_NIF_TERM
 make_cell_value(ErlNifEnv* env, const float value);
 
-static ERL_NIF_TERM
-wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary);
-
-
 
 //-----------------------------------------------------------------------------
 // Exported nifs
@@ -749,7 +745,6 @@ resize(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   double         scale;
   int32_t      new_rows, new_cols;
   float        *matrix_data, *result_data;
-  uint64_t       data_size;
   size_t        result_size;
 
   (void)(argc);
@@ -758,7 +753,6 @@ resize(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   scale = get_scalar(env, argv[1]);
 
   matrix_data = (float *) matrix.data;
-  data_size   = MX_LENGTH(matrix_data);
 
   new_rows = (int32_t)round((float)MX_ROWS(matrix_data) * scale);
   new_cols = (int32_t)round((float)MX_COLS(matrix_data) * scale);
@@ -777,7 +771,7 @@ row_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   float *matrix_data;
   unsigned long row;
   ERL_NIF_TERM  result;
-  uint32_t rows, cols;
+  int32_t rows, cols;
 
   (void)(argc);
 
@@ -847,7 +841,7 @@ set_column(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   uint32_t  result_size;
   unsigned long column;
   ERL_NIF_TERM  result;
-  uint32_t rows, cols;
+  uint32_t cols;
 
   UNUSED_VAR(argc);
 
@@ -858,7 +852,6 @@ set_column(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   matrix_data = (float *) matrix.data;
   column_matrix_data = (float *) column_matrix.data;
-  rows = MX_ROWS(matrix_data);
   cols = MX_COLS(matrix_data);
 
   if (column >= cols)
@@ -1054,24 +1047,6 @@ transpose(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   matrix_transpose(matrix_data, result_data);
 
   return result;
-}
-
-static ERL_NIF_TERM
-wrap_matrex(ErlNifEnv *env, ERL_NIF_TERM matrix_binary) {
-  // we make an empty erlang/elixir map object
-  ERL_NIF_TERM matrex = enif_make_new_map(env);
-
-  enif_make_map_put(env, matrex,
-                      enif_make_atom(env, "__struct__"),
-                      enif_make_atom(env, "Elixir.Matrex"),
-                      &matrex);
-
-  enif_make_map_put(env, matrex,
-                      enif_make_atom(env, "data"),
-                      matrix_binary,
-                      &matrex);
-
-  return matrex;
 }
 
 static ERL_NIF_TERM
