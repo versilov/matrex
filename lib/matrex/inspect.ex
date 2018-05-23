@@ -290,10 +290,10 @@ defmodule Matrex.Inspect do
       {<<result::binary,
          "#{
            ascii_escape(
-             escape_color(ttype, :foreground, top_pixel_color, prev_top_pixel_color),
-             escape_color(ttype, :background, bottom_pixel_color, prev_bottom_pixel_color)
+             escape_color(ttype, :background, top_pixel_color, prev_top_pixel_color),
+             escape_color(ttype, :foreground, bottom_pixel_color, prev_bottom_pixel_color)
            )
-         }▀">>, top_pixel_color, bottom_pixel_color}
+         }▄">>, top_pixel_color, bottom_pixel_color}
     end)
   end
 
@@ -366,8 +366,8 @@ defmodule Matrex.Inspect do
   defp val_to_rgb(val, mn, range) do
     # Color points for the heatmap. You can have as many of them, as you wish.
     cps =
-      {[r: 0, g: 0, b: 1], [r: 0, g: 1, b: 1], [r: 0, g: 1, b: 0], [r: 1, g: 1, b: 0],
-       [r: 1, g: 0, b: 0]}
+      {[r: 0, g: 0, b: 0.3], [r: 0, g: 0, b: 1], [r: 0, g: 0.7, b: 0.7], [r: 0, g: 1, b: 0],
+       [r: 1, g: 1, b: 0], [r: 1, g: 0, b: 0]}
 
     # Normalize value into [0, 1] range.
     vn = (val - mn) / range
