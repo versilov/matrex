@@ -192,7 +192,7 @@ defmodule Matrex.Algorithms do
     f1 = data.f2
     fX = data.fX ++ [f1]
 
-    IO.write(legend(data.i, f1) <> "\r")
+    # IO.write(legend(data.i, f1) <> "\r")
 
     s =
       Matrex.substract(
@@ -414,14 +414,10 @@ defmodule Matrex.Algorithms do
   `lambda`  — regularization parameter.
 
   """
-  @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number}) :: {float, Matrex.t()}
-  def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+  @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number, non_neg_integer}) ::
+          {float, Matrex.t()}
+  def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda, digit} = _params)
       when is_number(lambda) do
-    if theta[:rows] == 785 do
-      IO.write(IO.ANSI.home())
-      theta[2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
-    end
-
     m = y[:rows]
 
     h = Matrex.dot_and_apply(x, theta, :sigmoid)
@@ -454,6 +450,15 @@ defmodule Matrex.Algorithms do
       |> Matrex.add(Matrex.multiply(theta, l), 1.0, lambda)
       |> Matrex.divide(m)
 
+    if theta[:rows] == 785 do
+      r = div(digit - 1, 3) * 17 + 1
+      c = rem(digit - 1, 3) * 30 + 1
+
+      theta[2..785]
+      |> Matrex.reshape(28, 28)
+      |> Matrex.heatmap(:color256, at: {r, c}, title: "##{digit} | #{j}")
+    end
+
     {j, grad}
   end
 
@@ -479,6 +484,78 @@ defmodule Matrex.Algorithms do
     grad = (t(x) * (h - y) + (theta <|> l) * lambda) / m
 
     {scalar(j), grad}
+  end
+
+  @doc """
+  Run logistic regression one-vs-all MNIST digits recognition in parallel.
+  """
+  def run_lr() do
+    {x, y} =
+      case Mix.env() do
+        :test ->
+          {Matrex.load("test/data/X.mtx.gz"), Matrex.load("test/data/Y.mtx")}
+
+        _ ->
+          IO.write("#{IO.ANSI.reset()}#{IO.ANSI.clear()}")
+          {Matrex.load("test/data/Xtest.mtx.gz"), Matrex.load("test/data/Ytest.mtx")}
+      end
+
+    x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
+    theta = Matrex.zeros(x[:cols], 1)
+
+    lambda = 0.01
+    iterations = 200
+
+    solutions =
+      1..10
+      |> Task.async_stream(
+        fn digit ->
+          y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
+
+          {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda, digit}, iterations)
+
+          {digit, List.last(fX), sX}
+        end,
+        max_concurrency: 10,
+        timeout: 100_000
+      )
+      |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
+      |> Matrex.new()
+
+    # Visualize solutions
+    # solutions
+    # |> Matrex.to_list_of_lists()
+    # |> Enum.each(&(Matrex.reshape(tl(&1), 28, 28) |> Matrex.heatmap()))
+
+    # x_test = Matrex.load("test/data/Xtest.mtx.gz") |> Matrex.normalize()
+    # x_test = Matrex.concat(Matrex.ones(x_test[:rows], 1), x_test)
+
+    predictions =
+      x
+      |> Matrex.dot_nt(solutions)
+      |> Matrex.apply(:sigmoid)
+
+    # |> IO.inspect(label: "Predictions")
+
+    # y_test = Matrex.load("test/data/Ytest.mtx")
+
+    accuracy =
+      1..predictions[:rows]
+      |> Enum.reduce(0, fn row, acc ->
+        if y[row] == predictions[row][:argmax] do
+          acc + 1
+        else
+          # Show wrongful predictions
+          # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+          # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
+          acc
+        end
+      end)
+      |> Kernel./(predictions[:rows])
+      |> Kernel.*(100)
+      |> IO.inspect(label: "\rTraining set accuracy")
+
+    accuracy
   end
 
   @doc """

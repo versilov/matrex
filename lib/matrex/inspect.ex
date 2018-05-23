@@ -256,8 +256,11 @@ defmodule Matrex.Inspect do
     mx = Matrex.max_finite(m)
     range = if mx != mn, do: mx - mn, else: 1
 
-    IO.write("#{row_prefix(opts, 0)}#{header(m)}")
-    IO.write(row_prefix(opts, 1) <> top_row(m[:cols]))
+    at_opts = Keyword.take(opts, [:at])
+    title = Keyword.get(opts, :title, header(m))
+
+    IO.write("#{row_prefix(at_opts, 0)}#{title}")
+    IO.write(row_prefix(at_opts, 1) <> top_row(m[:cols]))
 
     n_lines = div(m[:rows], 2) + rem(m[:rows], 2)
 
@@ -267,11 +270,11 @@ defmodule Matrex.Inspect do
       bottom_row = if rp * 2 <= m[:rows], do: m[rp * 2], else: nil
       {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, range, type)
 
-      <<"#{row_prefix(opts, rp + 1)}│", rows_pair::binary, "\e[0m│">>
+      <<"#{row_prefix(at_opts, rp + 1)}│", rows_pair::binary, "\e[0m│">>
       |> IO.write()
     end)
 
-    IO.puts(row_prefix(opts, n_lines + 2) <> bottom_row(m[:cols]))
+    IO.puts(row_prefix(at_opts, n_lines + 2) <> bottom_row(m[:cols]))
 
     m
   end
