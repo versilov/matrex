@@ -42,7 +42,7 @@ defmodule AlgorithmsTest do
     assert j == expected_j
   end
 
-  @tag skip: true
+  @tag skip: false
   @tag timeout: 120_000
   test "#fmincg does linear regression" do
     x = Matrex.load("test/data/X.mtx.gz") |> Matrex.normalize()
