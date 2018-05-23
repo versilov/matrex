@@ -251,32 +251,34 @@ defmodule Matrex.Inspect do
   #
   @spec heatmap(Matrex.t(), :mono24bit | :color24bit | :mono8 | :color8 | :mono256 | :color256) ::
           Matrex.t()
-  def heatmap(%Matrex{} = m, type \\ :mono256) do
+  def heatmap(%Matrex{} = m, type \\ :mono256, opts \\ []) do
     mn = Matrex.min_finite(m)
     mx = Matrex.max_finite(m)
     range = if mx != mn, do: mx - mn, else: 1
 
-    IO.puts(header(m))
-    IO.puts(top_row(m[:cols]))
+    IO.write("#{row_prefix(opts, 0)}#{header(m)}")
+    IO.write(row_prefix(opts, 1) <> top_row(m[:cols]))
 
-    1..(div(m[:rows], 2) + rem(m[:rows], 2))
+    n_lines = div(m[:rows], 2) + rem(m[:rows], 2)
+
+    1..n_lines
     |> Enum.each(fn rp ->
       top_row = m[rp * 2 - 1]
       bottom_row = if rp * 2 <= m[:rows], do: m[rp * 2], else: nil
       {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, range, type)
 
-      <<"│", rows_pair::binary, "\e[0m│\n">>
+      <<"#{row_prefix(opts, rp + 1)}│", rows_pair::binary, "\e[0m│">>
       |> IO.write()
     end)
 
-    IO.puts(bottom_row(m[:cols]))
-
-    # |> Enum.join("\e[0m\n")
-    # |> Kernel.<>("\e[0m")
-    # |> IO.puts()
+    IO.puts(row_prefix(opts, n_lines + 2) <> bottom_row(m[:cols]))
 
     m
   end
+
+  defp row_prefix([], 0), do: ""
+  defp row_prefix([], _), do: "\n"
+  defp row_prefix([at: {row, col}], r), do: "\e[#{row + r};#{col}H"
 
   # If we've got last odd row
   defp rows_pair_to_ascii(top_row, nil, min, range, ttype) do

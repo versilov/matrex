@@ -177,4 +177,14 @@ defmodule InspectTest do
 
     assert output == expected
   end
+
+  test "#heatmap accepts coordinates" do
+    m = magic(3)
+
+    e =
+      "\e[9;12H\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\e[10;12H\e[0m┌   ┐\e[11;12H│\e[48;5;251;38;5;236m▄\e[48;5;0;38;5;242m▄\e[48;5;245;38;5;248m▄\e[0m│\e[12;12H│\e[7m\e[38;5;239m▄\e[38;5;254m▄\e[38;5;233m▄\e[0m│\e[13;12H\e[0m└   ┘\n"
+
+    out = capture_io(fn -> assert heatmap(m, :mono256, at: {9, 12}) == m end)
+    assert out == e
+  end
 end
