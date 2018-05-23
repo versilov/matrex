@@ -508,8 +508,9 @@ eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
+  ErlNifBinary value;
   unsigned long rows, cols;
-  float value;
+  float *value_data;
   float *result_data;
   size_t result_size;
 
@@ -517,7 +518,8 @@ fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   enif_get_uint64(env, argv[0], &rows);
   enif_get_uint64(env, argv[1], &cols);
-  value = get_scalar(env, argv[2]);
+  if (!enif_inspect_binary(env, argv[2], &value)) return enif_make_badarg(env);
+  value_data = (float*)value.data;
 
   result_size = (rows*cols + 2) * sizeof(float);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
@@ -525,7 +527,7 @@ fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   MX_SET_ROWS(result_data, rows);
   MX_SET_COLS(result_data, cols);
 
-  matrix_fill(result_data, value);
+  matrix_fill(result_data, *value_data);
 
   return result;
 }
@@ -548,7 +550,7 @@ find(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   if (isnan(*element_data)) {
     index = matrix_find_nan(matrix_data);
   } else {
-    index = matrix_find(matrix_data, *element_data);    
+    index = matrix_find(matrix_data, *element_data);
   }
 
   if (index >= 0) {
@@ -578,10 +580,12 @@ static inline ERL_NIF_TERM
 make_cell_value(ErlNifEnv* env, const float value) {
   if (isfinite(value))
     return enif_make_double(env, value);
-  if (isnan(value))
+  else if (isnan(value))
     return enif_make_atom(env, "Elixir.NaN");
-  else if (isinf(value))
+  else if (value == INFINITY)
     return enif_make_atom(env, "Elixir.Inf");
+  else if (value == -INFINITY)
+    return enif_make_atom(env, "Elixir.NegInf");
   else
     return enif_make_badarg(env);
 }
@@ -604,6 +608,26 @@ max(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+max_finite(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  float         max;
+  float        *matrix_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+
+  max = matrix_max_finite(matrix_data);
+
+  if (isnan(max))
+    return enif_make_atom(env, "nil");
+  else
+    return enif_make_double(env, max);
+}
+
+static ERL_NIF_TERM
 minimum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   float         min;
@@ -618,6 +642,26 @@ minimum(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   min = matrix_min(matrix_data);
 
   return make_cell_value(env, min);
+}
+
+static ERL_NIF_TERM
+min_finite(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  float         min;
+  float        *matrix_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+
+  min = matrix_min_finite(matrix_data);
+
+  if (isnan(min))
+    return enif_make_atom(env, "nil");
+  else
+    return enif_make_double(env, min);
 }
 
 static ERL_NIF_TERM
@@ -1097,6 +1141,8 @@ static ErlNifFunc nif_functions[] = {
   {"find",                 2, find,                 0},
   {"max",                  1, max,                  0},
   {"min",                  1, minimum,              0},
+  {"max_finite",           1, max_finite,           0},
+  {"min_finite",           1, min_finite,           0},
   {"multiply",             2, multiply,             0},
   {"multiply_with_scalar", 2, multiply_with_scalar, 0},
   {"neg",                  1, neg,                  0},

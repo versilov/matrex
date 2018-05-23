@@ -67,7 +67,7 @@ defmodule AlgorithmsTest do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 1,
+        max_concurrency: 8,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
@@ -146,8 +146,6 @@ defmodule AlgorithmsTest do
   @tag skip: true
   test "#fmincg optimizes neural network" do
   end
-
-  defp round_enough(num), do: Float.round(num, 5)
 
   # Split data into training and testing set, permute it randomly
   @spec split_data(Matrex.t(), Matrex.t()) :: {Matrex.t(), Matrex.t(), Matrex.t(), Matrex.t()}

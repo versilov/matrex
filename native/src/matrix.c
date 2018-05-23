@@ -369,7 +369,7 @@ matrix_eye(Matrix matrix, const float value) {
 
 void
 matrix_fill(Matrix matrix, const float value) {
-  uint64_t length = MX_LENGTH(matrix);
+  const uint64_t length = MX_LENGTH(matrix);
 
   for (uint64_t index = 2; index < length; index += 1) {
     matrix[index] = value;
@@ -439,8 +439,22 @@ matrix_inspect_internal(const Matrix matrix, int32_t indentation) {
 }
 
 float
+matrix_max(const Matrix matrix) {
+  const uint64_t data_size = MX_LENGTH(matrix);
+  float   max       = matrix[2];
+
+  for (uint64_t index = 3; index < data_size; index += 1) {
+    if (max < matrix[index]) {
+      max = matrix[index];
+    }
+  }
+
+  return max;
+}
+
+float
 matrix_min(const Matrix matrix) {
-  uint64_t data_size = MX_LENGTH(matrix);
+  const uint64_t data_size = MX_LENGTH(matrix);
   float   min       = matrix[2];
 
   for (uint64_t index = 3; index < data_size; index += 1) {
@@ -453,17 +467,31 @@ matrix_min(const Matrix matrix) {
 }
 
 float
-matrix_max(const Matrix matrix) {
-  uint64_t data_size = MX_LENGTH(matrix);
-  float   max       = matrix[2];
+matrix_max_finite(const Matrix matrix) {
+  const uint64_t data_size = MX_LENGTH(matrix);
+  float   max       = NAN;
 
-  for (uint64_t index = 3; index < data_size; index += 1) {
-    if (max < matrix[index]) {
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    if (isfinite(matrix[index]) && (isnan(max) || max < matrix[index])) {
       max = matrix[index];
     }
   }
 
   return max;
+}
+
+float
+matrix_min_finite(const Matrix matrix) {
+  const uint64_t data_size = MX_LENGTH(matrix);
+  float   min       = NAN;
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    if (isfinite(matrix[index]) && (isnan(min) || min > matrix[index])) {
+      min = matrix[index];
+    }
+  }
+
+  return min;
 }
 
 void

@@ -1,6 +1,8 @@
 defmodule CreationTest do
   use ExUnit.Case, async: true
 
+  import Matrex
+
   test "#eye creates a diagonal square matirx" do
     expected =
       Matrex.new([
@@ -30,6 +32,11 @@ defmodule CreationTest do
   test "#fill fills new matrex with value" do
     expected = Matrex.new("7.53 7.53 7.53; 7.53 7.53 7.53; 7.53 7.53 7.53")
     assert Matrex.fill(3, 7.53) == expected
+  end
+
+  test "#fill fills matrix with special float value" do
+    e = new("NegInf NegInf; NegInf NegInf")
+    assert fill(2, NegInf) == e
   end
 
   test "#magic raises error, when too small is requested" do

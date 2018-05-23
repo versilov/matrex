@@ -1461,10 +1461,10 @@ defmodule Matrex do
       │    55.0    55.0    55.0 │
       └                         ┘
   """
-  @spec fill(index, index, number) :: matrex
+  @spec fill(index, index, element) :: matrex
   def fill(rows, cols, value)
-      when is_integer(rows) and is_integer(cols) and is_number(value),
-      do: %Matrex{data: NIFs.fill(rows, cols, value)}
+      when (is_integer(rows) and is_integer(cols) and is_number(value)) or is_atom(value),
+      do: %Matrex{data: NIFs.fill(rows, cols, float_to_binary(value))}
 
   @doc """
   Create square matrix filled with given value. Inlined.
@@ -1479,7 +1479,7 @@ defmodule Matrex do
       │    33.0    33.0    33.0 │
       └                         ┘
   """
-  @spec fill(index, number) :: matrex
+  @spec fill(index, element) :: matrex
   def fill(size, value), do: fill(size, size, value)
 
   @doc """
@@ -1675,6 +1675,20 @@ defmodule Matrex do
   def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
 
   @doc """
+  Returns maximum finite element of a matrex. NIF.
+
+  Used on matrices which may contain infinite values.
+
+  ## Example
+
+      iex>Matrex.reshape([1, 2, Inf, 3, NaN, 5], 3, 2) |> Matrex.max_finite()
+      5.0
+
+  """
+  @spec max_finite(matrex) :: float
+  def max_finite(%Matrex{data: matrix}), do: NIFs.max_finite(matrix)
+
+  @doc """
 
   Minimum element in a matrix. NIF.
 
@@ -1695,6 +1709,20 @@ defmodule Matrex do
   """
   @spec min(matrex) :: element
   def min(%Matrex{data: matrix}), do: NIFs.min(matrix)
+
+  @doc """
+  Returns minimum finite element of a matrex. NIF.
+
+  Used on matrices which may contain infinite values.
+
+  ## Example
+
+      iex>Matrex.reshape([1, 2, NegInf, 3, 4, 5], 3, 2) |> Matrex.min_finite()
+      1.0
+
+  """
+  @spec min_finite(matrex) :: float
+  def min_finite(%Matrex{data: matrix}), do: NIFs.min_finite(matrix)
 
   @doc """
   Elementwise multiplication of two matrices or matrix and a scalar. NIF.
@@ -2391,7 +2419,20 @@ defmodule Matrex do
   ## Example
 
       iex> m = Matrex.reshape(1..6, 3, 2)
+      #Matrex[3×2]
+      ┌                    ┐
+      │     1.0     2.0    │
+      │     3.0     4.0    │
+      │     5.0     6.0    │
+      └                    ┘
 
+      iex> Matrex.set_column(m, 2, Matrex.new("7; 8; 9"))
+      #Matrex[3×2]
+      ┌                    ┐
+      │     1.0     7.0    │
+      │     3.0     8.0    │
+      │     5.0     9.0    │
+      └                    ┘
   """
   @spec set_column(matrex, index, matrex) :: matrex
   def set_column(

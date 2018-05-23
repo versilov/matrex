@@ -157,6 +157,12 @@ defmodule Matrex.NIFs do
   @spec min(binary) :: float
   def min(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec max_finite(binary) :: float
+  def max_finite(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
+
+  @spec min_finite(binary) :: float
+  def min_finite(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec multiply(binary, binary) :: binary
   def multiply(first, second)
       when is_binary(first) and is_binary(second),

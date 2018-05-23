@@ -1,5 +1,6 @@
 defmodule MatrexTest do
   use ExUnit.Case, async: true
+  import Matrex
 
   test "#add adds two matrices" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
@@ -337,11 +338,45 @@ defmodule MatrexTest do
     assert Matrex.max(matrix) == expected
   end
 
+  test "#max returns Inf" do
+    matrix = Matrex.new([[1, Inf, 3], [4, NegInf, 6]])
+    expected = Inf
+
+    assert Matrex.max(matrix) == expected
+  end
+
   test "#min returns the minimum element from the matrix" do
     matrix = Matrex.new([[1, 2, 0.5], [4, 5, 6]])
     expected = 0.5
 
     assert Matrex.min(matrix) == expected
+  end
+
+  test "#min returns NegInf" do
+    matrix = Matrex.new([[1, 2, 0.5], [4, 5, NegInf]])
+    expected = NegInf
+
+    assert Matrex.min(matrix) == expected
+  end
+
+  test "#max_finite returns max finite element" do
+    m = reshape([Inf, 2, 3, Inf], 2, 2)
+    assert max_finite(m) == 3.0
+  end
+
+  test "#max_finite returns nil for totally infinite matrix" do
+    m = fill(3, 3, Inf)
+    assert max_finite(m) == nil
+  end
+
+  test "#min_finite returns min finite element" do
+    m = reshape([NegInf, -2, NaN, 5], 2, 2)
+    assert min_finite(m) == -2.0
+  end
+
+  test "#min_finite returns nil for totally infinite matrix" do
+    m = fill(3, 3, NegInf)
+    assert min_finite(m) == nil
   end
 
   test "#multiply performs elementwise multiplication of two matrices" do

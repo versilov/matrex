@@ -108,6 +108,12 @@ matrix_max(const Matrix matrix);
 float
 matrix_min(const Matrix matrix);
 
+float
+matrix_max_finite(const Matrix matrix);
+
+float
+matrix_min_finite(const Matrix matrix);
+
 void
 matrix_multiply(const Matrix first, const Matrix second, Matrix result);
 
