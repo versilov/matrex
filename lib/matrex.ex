@@ -611,12 +611,9 @@ defmodule Matrex do
 
   @doc """
 
-  Applies given function to each element of the matrix and returns the matrex of results.
+  Applies given function to each element of the matrix and returns the matrex of results. NIF.
 
   If second argument is an atom, then applies C language math function.
-  NIF, multithreaded.
-
-  Uses eight native threads, if matrix size is greater, than 100 000 elements.
 
   ## Example
 
