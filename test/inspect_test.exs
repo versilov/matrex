@@ -134,4 +134,18 @@ defmodule InspectTest do
 
     assert output == expected
   end
+
+  test "#heatmap marks special float values (NaN)" do
+    m = Matrex.reshape([1, 2, NaN, 4, 5, 6], 3, 2)
+
+    expected =
+      "\e[0m#Matrex[\e[33m3\e[0m×\e[33m2\e[0m]\n\e[0m┌  ┐\n│\e[48;5;0;38;5;196m▄\e[48;5;235;38;5;244m▄\e[0m│\n│\e[7m\e[38;5;249m▄\e[38;5;254m▄\e[0m│\n\e[0m└  ┘\n"
+
+    output =
+      capture_io(fn ->
+        assert Matrex.heatmap(m) == m
+      end)
+
+    assert output == expected
+  end
 end
