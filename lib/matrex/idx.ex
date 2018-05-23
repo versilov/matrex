@@ -1,4 +1,6 @@
 defmodule Matrex.IDX do
+  @moduledoc false
+
   # IDX format data types
   @unsigned_byte 0x08
   @signed_byte 0x09

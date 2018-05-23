@@ -1542,7 +1542,7 @@ defmodule Matrex do
   @doc """
   Prints monochrome or color heatmap of the matrix to the console.
 
-  Only on terminals, that support 24bit color. E.g., iTerm2 on MacOS.
+  Supports 8, 256 and 16mln of colors terminals. Monochrome on 256 color palette is the default.
 
   ## Examples
 
