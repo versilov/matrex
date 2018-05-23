@@ -769,14 +769,14 @@ static ERL_NIF_TERM
 row_to_list(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   float *matrix_data;
-  unsigned long row;
+  long row;
   ERL_NIF_TERM  result;
   int32_t rows, cols;
 
   (void)(argc);
 
   if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
-  enif_get_uint64(env, argv[1], &row);
+  enif_get_int64(env, argv[1], &row);
 
 
   matrix_data = (float *) matrix.data;
