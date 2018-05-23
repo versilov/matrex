@@ -254,6 +254,7 @@ defmodule Matrex.Inspect do
   def heatmap(%Matrex{} = m, type \\ :mono256) do
     mn = Matrex.min(m)
     mx = Matrex.max(m)
+    range = if mx != mn, do: mx - mn, else: 1
 
     IO.puts(header(m))
     IO.puts(top_row(m[:cols]))
@@ -262,7 +263,7 @@ defmodule Matrex.Inspect do
     |> Enum.each(fn rp ->
       top_row = m[rp * 2 - 1]
       bottom_row = if rp * 2 <= m[:rows], do: m[rp * 2], else: nil
-      {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, mx, type)
+      {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, range, type)
 
       <<"│", rows_pair::binary, "\e[0m│\n">>
       |> IO.write()
@@ -277,15 +278,27 @@ defmodule Matrex.Inspect do
     m
   end
 
-  defp rows_pair_to_ascii(top_row, bottom_row, min, max, ttype) do
-    range = if max != min, do: max - min, else: 1
+  # If we've got last odd row
+  defp rows_pair_to_ascii(top_row, nil, min, range, ttype) do
+    1..top_row[:columns]
+    |> Enum.reduce({"#{IO.ANSI.inverse()}", "", nil}, fn c, {result, prev_top_pixel_color, nil} ->
+      top_pixel_color = val_to_color(ttype, top_row[c], min, range)
 
+      {<<result::binary,
+         "#{
+           ascii_escape(
+             escape_color(ttype, :foreground, top_pixel_color, prev_top_pixel_color),
+             ""
+           )
+         }▄">>, top_pixel_color, nil}
+    end)
+  end
+
+  defp rows_pair_to_ascii(top_row, bottom_row, min, range, ttype) do
     1..top_row[:columns]
     |> Enum.reduce({"", "", ""}, fn c, {result, prev_top_pixel_color, prev_bottom_pixel_color} ->
       top_pixel_color = val_to_color(ttype, top_row[c], min, range)
-
-      bottom_pixel_color =
-        if bottom_row, do: val_to_color(ttype, bottom_row[c], min, range), else: nil
+      bottom_pixel_color = val_to_color(ttype, bottom_row[c], min, range)
 
       {<<result::binary,
          "#{
