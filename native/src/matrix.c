@@ -386,6 +386,16 @@ matrix_find(const Matrix matrix, const float value) {
   return -1;
 }
 
+int32_t
+matrix_find_nan(const Matrix matrix) {
+  uint64_t data_size = MX_LENGTH(matrix);
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    if (isnan(matrix[index])) return index - 2;
+  }
+  return -1;
+}
+
 float
 matrix_first(const Matrix matrix) {
   return matrix[2];

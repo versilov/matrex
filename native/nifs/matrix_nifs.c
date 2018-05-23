@@ -545,7 +545,11 @@ find(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   element_data = (float *) element.data;
 
 
-  index = matrix_find(matrix_data, *element_data);
+  if (isnan(*element_data)) {
+    index = matrix_find_nan(matrix_data);
+  } else {
+    index = matrix_find(matrix_data, *element_data);    
+  }
 
   if (index >= 0) {
     int row = index / MX_COLS(matrix_data) + 1;

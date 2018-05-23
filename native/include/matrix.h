@@ -90,6 +90,9 @@ matrix_fill(Matrix matrix, const float value);
 int32_t
 matrix_find(const Matrix matrix, const float value);
 
+int32_t
+matrix_find_nan(const Matrix matrix);
+
 float
 matrix_first(const Matrix matrix);
 

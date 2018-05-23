@@ -306,9 +306,16 @@ defmodule MatrexTest do
   end
 
   test "#find returns position tuple of the element" do
-    matrex = Enum.to_list(1..100) |> Matrex.reshape(10, 10)
+    matrex = Matrex.reshape(1..100, 10, 10)
     assert Matrex.find(matrex, 11) == {2, 1}
     assert Matrex.find(matrex, 101) == nil
+  end
+
+  test "#find finds special float values" do
+    matrex = Matrex.reshape([NegInf, 2, NaN, 4, Inf, 6], 2, 3)
+    assert Matrex.find(matrex, Inf) == {2, 2}
+    assert Matrex.find(matrex, NegInf) == {1, 1}
+    assert Matrex.find(matrex, NaN) == {1, 3}
   end
 
   test "#first returns the first element of the matrix" do
