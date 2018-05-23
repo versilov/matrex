@@ -522,11 +522,11 @@ defmodule Matrex.Algorithms do
 
     # IO.write(IO.ANSI.home())
     #
-    # data_side_size = trunc(:math.sqrt(theta1h[:cols]))
+    # data_side_size = trunc(:math.sqrt(theta1[:cols]))
     #
     # theta1
-    # |>Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
-    # |> Matrex.Algorithms.visual_net({5, 5}, {data_side_size, data_side_size})
+    # |> Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
+    # |> visual_net({5, 5}, {data_side_size, data_side_size})
     # |> Matrex.heatmap()
 
     m = x[:rows]
@@ -563,6 +563,7 @@ defmodule Matrex.Algorithms do
     # Check for special sum_C value
     sum_c =
       if sum_c == Inf or sum_c == NaN do
+        IO.inspect(sum_c, "Bad sum from a matrix")
         IO.inspect(c)
         1_000_000_000
       else
@@ -655,13 +656,19 @@ defmodule Matrex.Algorithms do
     {x_train, y_train, x_test, y_test} = {x, y, x, y}
 
     lambdas = [0.01, 5, 50]
-    iterations = 50
+    iterations = 100
+    epsilon = 0.13
 
-    lambdas
+    # lambdas
+    [50]
     |> Task.async_stream(
       fn lambda ->
-        initial_theta1 = random_weights(@input_layer_size, @hidden_layer_size) |> Matrex.to_row()
-        initial_theta2 = random_weights(@hidden_layer_size, @num_labels) |> Matrex.to_row()
+        initial_theta1 =
+          random_weights(@input_layer_size, @hidden_layer_size, epsilon) |> Matrex.to_row()
+
+        initial_theta2 =
+          random_weights(@hidden_layer_size, @num_labels, epsilon) |> Matrex.to_row()
+
         initial_nn_params = Matrex.concat(initial_theta1, initial_theta2) |> Matrex.transpose()
 
         {sX, fX, _i} =
@@ -708,19 +715,17 @@ defmodule Matrex.Algorithms do
         theta1
         |> Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
         |> visual_net({5, 5}, {@sample_side_size, @sample_side_size})
-        |> Matrex.resize(0.5)
-        |> Matrex.heatmap()
+        |> Matrex.resize(1)
+        |> Matrex.heatmap(:mono256)
 
       _ ->
         :noop
     end)
   end
 
-  defp random_weights(l_in, l_out) do
-    epsilon_init = 0.12
-
+  defp random_weights(l_in, l_out, epsilon) do
     Matrex.random(l_out, 1 + l_in)
-    |> Matrex.multiply(2 * epsilon_init)
-    |> Matrex.substract(epsilon_init)
+    |> Matrex.multiply(2 * epsilon)
+    |> Matrex.substract(epsilon)
   end
 end
