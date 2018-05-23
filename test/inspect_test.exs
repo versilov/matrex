@@ -1,6 +1,7 @@
 defmodule InspectTest do
   use ExUnit.Case, async: true
   import ExUnit.CaptureIO
+  import Matrex
 
   test "#inspect displays a matrix visualization to stdout" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
@@ -144,6 +145,34 @@ defmodule InspectTest do
     output =
       capture_io(fn ->
         assert Matrex.heatmap(m) == m
+      end)
+
+    assert output == expected
+  end
+
+  test "#heatmap displays matrices with inifinte values, marks infinity" do
+    m = reshape([Inf, 2, NegInf, 4, NaN, 6], 3, 2)
+
+    expected =
+      "\e[0m#Matrex[\e[33m3\e[0m×\e[33m2\e[0m]\n\e[0m┌  ┐\n│\e[48;5;87;38;5;27m▄\e[48;5;0;38;5;242m▄\e[0m│\n│\e[7m\e[38;5;196m▄\e[38;5;254m▄\e[0m│\n\e[0m└  ┘\n"
+
+    output =
+      capture_io(fn ->
+        assert heatmap(m) == m
+      end)
+
+    assert output == expected
+  end
+
+  test "#heatmap displays matrices without finite values" do
+    m = divide(eye(3), zeros(3))
+
+    expected =
+      "\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[48;5;87;38;5;196m▄\e[48;5;196;38;5;87m▄\e[38;5;196m▄\e[0m│\n│\e[7m\e[38;5;196m▄▄\e[38;5;87m▄\e[0m│\n\e[0m└   ┘\n"
+
+    output =
+      capture_io(fn ->
+        assert heatmap(m) == m
       end)
 
     assert output == expected

@@ -252,8 +252,8 @@ defmodule Matrex.Inspect do
   @spec heatmap(Matrex.t(), :mono24bit | :color24bit | :mono8 | :color8 | :mono256 | :color256) ::
           Matrex.t()
   def heatmap(%Matrex{} = m, type \\ :mono256) do
-    mn = Matrex.min(m)
-    mx = Matrex.max(m)
+    mn = Matrex.min_finite(m)
+    mx = Matrex.max_finite(m)
     range = if mx != mn, do: mx - mn, else: 1
 
     IO.puts(header(m))
