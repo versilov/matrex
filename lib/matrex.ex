@@ -1165,28 +1165,6 @@ defmodule Matrex do
             }."
         )
 
-  defp do_concat(result, <<>>, _, <<>>, _), do: result
-
-  defp do_concat(
-         result,
-         data1,
-         columns1,
-         data2,
-         columns2
-       ) do
-    row1 = binary_part(data1, 0, columns1 * @element_size)
-
-    rest1 =
-      binary_part(data1, columns1 * @element_size, byte_size(data1) - columns1 * @element_size)
-
-    row2 = binary_part(data2, 0, columns2 * @element_size)
-
-    rest2 =
-      binary_part(data2, columns2 * @element_size, byte_size(data2) - columns2 * @element_size)
-
-    do_concat(<<result::binary, row1::binary, row2::binary>>, rest1, columns1, rest2, columns2)
-  end
-
   @doc """
   Checks if given element exists in the matrix.
 
