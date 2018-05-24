@@ -370,8 +370,9 @@ defmodule Matrex.Inspect do
   end
 
   defp val_to_color(:mono256, val, mn, range) do
-    case trunc((val - mn) * 23 / range) do
+    case trunc((val - mn) * 25 / range) do
       0 -> "0"
+      25 -> "231"
       c -> "#{231 + c}"
     end
   end
