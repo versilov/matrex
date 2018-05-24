@@ -22,6 +22,8 @@
 # 1) Ported to Elixir
 
 defmodule Matrex.Algorithms do
+  alias Matrex.Dashboard
+
   @moduledoc """
   Machine learning algorithms using matrices.
   """
@@ -48,7 +50,7 @@ defmodule Matrex.Algorithms do
   defmodule FMinCG do
     @moduledoc false
 
-    defstruct ~w(f fParams fX d1 d2 d3 df0 df1 df2 df3 f0 f1 f2 f3 i length limit m s x x0 z1 z2 z3 line_search_failed)a
+    defstruct ~w(f fParams fX d1 d2 d3 df0 df1 df2 df3 f0 f1 f2 f3 i length limit m s x x0 z1 z2 z3 line_search_failed legend)a
   end
 
   @doc """
@@ -126,14 +128,15 @@ defmodule Matrex.Algorithms do
       f: f,
       fParams: fParams,
       x: x,
-      line_search_failed: false
+      line_search_failed: false,
+      legend: false
     }
     |> iteration()
   end
 
-  defp iteration(%FMinCG{i: i, length: length, fX: fX, x: x})
+  defp iteration(%FMinCG{i: i, length: length, fX: fX, x: x} = data)
        when i >= length do
-    IO.puts(legend(i, List.last(fX)))
+    if data.legend, do: IO.puts(legend(i, List.last(fX)))
 
     {x, fX, i}
   end
@@ -192,7 +195,7 @@ defmodule Matrex.Algorithms do
     f1 = data.f2
     fX = data.fX ++ [f1]
 
-    # IO.write(legend(data.i, f1) <> "\r")
+    if data.legend, do: IO.write(legend(data.i, f1) <> "\r")
 
     s =
       Matrex.substract(
@@ -456,7 +459,7 @@ defmodule Matrex.Algorithms do
 
       theta[2..785]
       |> Matrex.reshape(28, 28)
-      |> Matrex.heatmap(:color256, at: {r, c}, title: "##{digit} | #{j}")
+      |> Dashboard.heatmap(digit, :color256, at: {r, c}, title: "##{digit} | #{j}")
     end
 
     {j, grad}
@@ -490,21 +493,23 @@ defmodule Matrex.Algorithms do
   Run logistic regression one-vs-all MNIST digits recognition in parallel.
   """
   def run_lr() do
+    start_timestamp = :os.timestamp()
+
     {x, y} =
       case Mix.env() do
         :test ->
           {Matrex.load("test/data/X.mtx.gz"), Matrex.load("test/data/Y.mtx")}
 
         _ ->
-          IO.write("#{IO.ANSI.reset()}#{IO.ANSI.clear()}")
+          Dashboard.start()
           {Matrex.load("test/data/Xtest.mtx.gz"), Matrex.load("test/data/Ytest.mtx")}
       end
 
     x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
     theta = Matrex.zeros(x[:cols], 1)
 
-    lambda = 0.01
-    iterations = 200
+    lambda = 0.3
+    iterations = 100
 
     solutions =
       1..10
@@ -516,7 +521,7 @@ defmodule Matrex.Algorithms do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 10,
+        max_concurrency: 3,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
@@ -554,6 +559,9 @@ defmodule Matrex.Algorithms do
       |> Kernel./(predictions[:rows])
       |> Kernel.*(100)
       |> IO.inspect(label: "\rTraining set accuracy")
+
+    time_elapsed = :timer.now_diff(:os.timestamp(), start_timestamp)
+    IO.puts("Time elapsed: #{time_elapsed / 1_000_000} sec.")
 
     accuracy
   end
