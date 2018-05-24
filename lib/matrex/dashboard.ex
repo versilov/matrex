@@ -3,7 +3,7 @@ defmodule Matrex.Dashboard do
   # API
   def start do
     IO.write("#{IO.ANSI.reset()}#{IO.ANSI.clear()}")
-    GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
+    GenServer.start_link(__MODULE__, %{frames: 0, cells: %{}}, name: __MODULE__)
   end
 
   def heatmap(%Matrex{} = m, cell_id, type, opts) do
@@ -19,12 +19,18 @@ defmodule Matrex.Dashboard do
 
   @impl true
   def handle_cast({:heatmap, {cell_id, matrex, type, opts}}, state) do
-    {:noreply, Map.put(state, cell_id, {matrex, type, opts})}
+    {:noreply, put_in(state, [:cells, cell_id], {matrex, type, opts})}
   end
 
   @impl true
-  def handle_info(:print, state) do
-    state
+  def handle_info(:print, %{frames: _f, cells: cells} = state) when cells == %{} do
+    schedule_work(50)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(:print, %{frames: f, cells: cells}) do
+    cells
     |> Map.values()
     |> Enum.each(fn {matrex, type, opts} ->
       Matrex.heatmap(matrex, type, opts)
@@ -32,11 +38,10 @@ defmodule Matrex.Dashboard do
 
     # Reschedule once more
     schedule_work()
-    {:noreply, %{}}
+    {:noreply, %{frames: f + 1, cells: %{}}}
   end
 
-  defp schedule_work() do
-    # In 1 second
-    Process.send_after(self(), :print, 1)
+  defp schedule_work(millis \\ 20) do
+    Process.send_after(self(), :print, millis)
   end
 end

@@ -459,7 +459,7 @@ defmodule Matrex.Algorithms do
 
       theta[2..785]
       |> Matrex.reshape(28, 28)
-      |> Dashboard.heatmap(digit, :color256, at: {r, c}, title: "##{digit} | #{j}")
+      |> Dashboard.heatmap(digit, :mono256, at: {r, c}, title: "##{digit} | #{j}")
     end
 
     {j, grad}

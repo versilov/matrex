@@ -259,25 +259,29 @@ defmodule Matrex.Inspect do
     at_opts = Keyword.take(opts, [:at])
     title = Keyword.get(opts, :title, header(m))
 
-    IO.write("#{row_prefix(at_opts, 0)}#{title}")
+    IO.write("#{hide_cursor()}#{row_prefix(at_opts, 0)}#{title}")
     IO.write(row_prefix(at_opts, 1) <> top_row(m[:cols]))
 
     n_lines = div(m[:rows], 2) + rem(m[:rows], 2)
 
     1..n_lines
-    |> Enum.each(fn rp ->
+    |> Enum.map(fn rp ->
       top_row = m[rp * 2 - 1]
       bottom_row = if rp * 2 <= m[:rows], do: m[rp * 2], else: nil
       {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, range, type)
 
       <<"#{row_prefix(at_opts, rp + 1)}│", rows_pair::binary, "\e[0m│">>
-      |> IO.write()
     end)
+    |> Enum.join()
+    |> IO.write()
 
-    IO.puts(row_prefix(at_opts, n_lines + 2) <> bottom_row(m[:cols]))
+    IO.puts(row_prefix(at_opts, n_lines + 2) <> bottom_row(m[:cols]) <> show_cursor())
 
     m
   end
+
+  defp hide_cursor(), do: "\e[?25l"
+  defp show_cursor(), do: "\e[?25h"
 
   defp row_prefix([], 0), do: ""
   defp row_prefix([], _), do: "\n"
