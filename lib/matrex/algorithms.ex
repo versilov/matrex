@@ -86,7 +86,7 @@ defmodule Matrex.Algorithms do
           integer
         ) :: {Matrex.t(), [float], pos_integer}
   def fmincg(f, %Matrex{} = x, fParams, length)
-      when is_integer(length) and is_function(f, 2) do
+      when is_integer(length) and is_function(f, 3) do
     # Key to the variable names being used:
     #
     #   i     counts iterations or function evaluations ("epochs")
@@ -104,7 +104,7 @@ defmodule Matrex.Algorithms do
     fX = []
 
     # get function value and gradient
-    {f1, df1} = f.(x, fParams)
+    {f1, df1} = f.(x, fParams, i)
 
     # search direction is steepest
     s = Matrex.neg(df1)
@@ -161,7 +161,7 @@ defmodule Matrex.Algorithms do
         x: Matrex.add(x, s, 1.0, z1)
     }
 
-    {f2, df2} = f.(data.x, fParams)
+    {f2, df2} = f.(data.x, fParams, data.i)
 
     d2 = Matrex.dot_tn(df2, s) |> Matrex.scalar()
 
@@ -299,7 +299,7 @@ defmodule Matrex.Algorithms do
             x: Matrex.add(data.x, data.s, 1.0, z2)
         }
 
-        {f2, df2} = data.f.(data.x, data.fParams)
+        {f2, df2} = data.f.(data.x, data.fParams, data.i)
 
         data = %{
           data
@@ -346,7 +346,7 @@ defmodule Matrex.Algorithms do
     # update the step
     z1 = z1 + z2
     x = Matrex.add(data.x, data.s, 1.0, z2)
-    {f2, df2} = data.f.(x, data.fParams)
+    {f2, df2} = data.f.(x, data.fParams, data.i)
     m = data.m - 1
     d2 = Matrex.dot_tn(df2, data.s) |> Matrex.scalar()
 
@@ -417,9 +417,13 @@ defmodule Matrex.Algorithms do
   `lambda`  — regularization parameter.
 
   """
-  @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number, non_neg_integer}) ::
+  @spec lr_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number, non_neg_integer}, pos_integer) ::
           {float, Matrex.t()}
-  def lr_cost_fun(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda, digit} = _params)
+  def lr_cost_fun(
+        %Matrex{} = theta,
+        {%Matrex{} = x, %Matrex{} = y, lambda, digit} = _params,
+        iteration \\ 0
+      )
       when is_number(lambda) do
     m = y[:rows]
 
@@ -457,11 +461,17 @@ defmodule Matrex.Algorithms do
       r = div(digit - 1, 3) * 17 + 1
       c = rem(digit - 1, 3) * 30 + 1
 
-      j_str = j |> Matrex.element_to_string() |> String.pad_leading(25)
+      j_str = j |> Matrex.element_to_string() |> String.pad_leading(20)
+      iter_str = iteration |> Integer.to_string() |> String.pad_leading(3)
 
       theta[2..785]
       |> Matrex.reshape(28, 28)
-      |> Dashboard.heatmap(digit, :mono256, at: {r, c}, title: "[#{rem(digit, 10)}] #{j_str}")
+      |> Dashboard.heatmap(
+        digit,
+        :mono256,
+        at: {r, c},
+        title: "[#{IO.ANSI.bright()}#{rem(digit, 10)}#{IO.ANSI.normal()} | #{iter_str} #{j_str}]"
+      )
     end
 
     {j, grad}
@@ -472,7 +482,11 @@ defmodule Matrex.Algorithms do
 
   Works 2 times slower, than standard implementation. But it's a way more readable.
   """
-  def lr_cost_fun_ops(%Matrex{} = theta, {%Matrex{} = x, %Matrex{} = y, lambda} = _params)
+  def lr_cost_fun_ops(
+        %Matrex{} = theta,
+        {%Matrex{} = x, %Matrex{} = y, lambda} = _params,
+        iteration \\ 0
+      )
       when is_number(lambda) do
     # Turn off original operators
     import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
@@ -519,7 +533,7 @@ defmodule Matrex.Algorithms do
         fn digit ->
           y3 = Matrex.apply(y, fn val -> if(val == digit, do: 1.0, else: 0.0) end)
 
-          {sX, fX, _i} = fmincg(&lr_cost_fun/2, theta, {x, y3, lambda, digit}, iterations)
+          {sX, fX, _i} = fmincg(&lr_cost_fun/3, theta, {x, y3, lambda, digit}, iterations)
 
           {digit, List.last(fX), sX}
         end,

@@ -25,7 +25,7 @@ defmodule Matrex.Dashboard do
   @impl true
   def handle_info(:print, %{frames: _f, cells: cells} = state) when cells == %{} do
     # No work. Wait a bit and check one more time.
-    schedule_work(50)
+    schedule_work(1)
     {:noreply, state}
   end
 
