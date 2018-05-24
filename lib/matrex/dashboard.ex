@@ -13,7 +13,7 @@ defmodule Matrex.Dashboard do
   # Callbacks
   @impl true
   def init(state) do
-    schedule_work()
+    schedule_work(1)
     {:ok, state}
   end
 
@@ -24,6 +24,7 @@ defmodule Matrex.Dashboard do
 
   @impl true
   def handle_info(:print, %{frames: _f, cells: cells} = state) when cells == %{} do
+    # No work. Wait a bit and check one more time.
     schedule_work(50)
     {:noreply, state}
   end
@@ -36,12 +37,12 @@ defmodule Matrex.Dashboard do
       Matrex.heatmap(matrex, type, opts)
     end)
 
-    # Reschedule once more
-    schedule_work()
+    # Reschedule immediately once more
+    schedule_work(1)
     {:noreply, %{frames: f + 1, cells: %{}}}
   end
 
-  defp schedule_work(millis \\ 20) do
+  defp schedule_work(millis) do
     Process.send_after(self(), :print, millis)
   end
 end

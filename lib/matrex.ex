@@ -2338,13 +2338,14 @@ defmodule Matrex do
     end
   end
 
+  @doc false
   @spec element_to_string(element) :: binary
   # Save zero values without fraction part to save space
-  defp element_to_string(0.0), do: "0"
-  defp element_to_string(val) when is_float(val), do: Float.to_string(val)
-  defp element_to_string(NaN), do: "NaN"
-  defp element_to_string(Inf), do: "Inf"
-  defp element_to_string(NegInf), do: "-Inf"
+  def element_to_string(0.0), do: "0"
+  def element_to_string(val) when is_float(val), do: Float.to_string(val)
+  def element_to_string(NaN), do: "NaN"
+  def element_to_string(Inf), do: "Inf"
+  def element_to_string(NegInf), do: "-Inf"
 
   @doc """
   Transfer one-element matrix to a scalar value.

@@ -457,9 +457,11 @@ defmodule Matrex.Algorithms do
       r = div(digit - 1, 3) * 17 + 1
       c = rem(digit - 1, 3) * 30 + 1
 
+      j_str = j |> Matrex.element_to_string() |> String.pad_leading(25)
+
       theta[2..785]
       |> Matrex.reshape(28, 28)
-      |> Dashboard.heatmap(digit, :mono256, at: {r, c}, title: "##{digit} | #{j}")
+      |> Dashboard.heatmap(digit, :mono256, at: {r, c}, title: "[#{rem(digit, 10)}] #{j_str}")
     end
 
     {j, grad}
@@ -509,7 +511,7 @@ defmodule Matrex.Algorithms do
     theta = Matrex.zeros(x[:cols], 1)
 
     lambda = 0.3
-    iterations = 100
+    iterations = 130
 
     solutions =
       1..10
@@ -521,7 +523,7 @@ defmodule Matrex.Algorithms do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 3,
+        max_concurrency: 6,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
