@@ -67,6 +67,11 @@ defmodule SaveLoadTest do
     assert Matrex.size(m) == {10_000, 1}
   end
 
+  test "#load loads matrix from .idx format with explicit format set" do
+    m = Matrex.load("test/data/t10k-labels-idx1-ubyte.idx", :idx)
+    assert Matrex.size(m) == {10_000, 1}
+  end
+
   test "#load loads matrix from .idx.gz format" do
     m = Matrex.load("test/data/t10k-images-idx3-ubyte.idx.gz")
     assert Matrex.size(m) == {10_000, 28 * 28}

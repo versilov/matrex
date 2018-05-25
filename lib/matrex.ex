@@ -1735,25 +1735,29 @@ defmodule Matrex do
       :filename.extension(file_name) == ".gz" ->
         File.read!(file_name)
         |> :zlib.gunzip()
-        |> do_load(String.split(file_name, ".") |> Enum.at(-2))
+        |> do_load(String.split(file_name, ".") |> Enum.at(-2) |> String.to_existing_atom())
 
       :filename.extension(file_name) == ".csv" ->
-        do_load(File.read!(file_name), "csv")
+        do_load(File.read!(file_name), :csv)
 
       :filename.extension(file_name) == ".mtx" ->
-        do_load(File.read!(file_name), "mtx")
+        do_load(File.read!(file_name), :mtx)
 
       :filename.extension(file_name) == ".idx" ->
-        do_load(File.read!(file_name), "idx")
+        do_load(File.read!(file_name), :idx)
 
       true ->
         raise "Unknown file format: #{file_name}"
     end
   end
 
-  defp do_load(data, "csv"), do: new(data)
-  defp do_load(data, "mtx"), do: %Matrex{data: data}
-  defp do_load(data, "idx"), do: %Matrex{data: Matrex.IDX.load(data)}
+  @spec load(binary, :idx | :csv | :mtx) :: matrex
+  def load(file_name, format) when format in [:idx, :mtx, :csv],
+    do: do_load(File.read!(file_name), format)
+
+  defp do_load(data, :csv), do: new(data)
+  defp do_load(data, :mtx), do: %Matrex{data: data}
+  defp do_load(data, :idx), do: %Matrex{data: Matrex.IDX.load(data)}
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal.
