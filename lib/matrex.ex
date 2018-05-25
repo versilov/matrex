@@ -1522,13 +1522,22 @@ defmodule Matrex do
 
   Supports 8, 256 and 16mln of colors terminals. Monochrome on 256 color palette is the default.
 
+  `type` can be `:mono8`, `:color8`, `:mono256`, `:color256`, `:mono24bit` and `:color24bit`.
+
+  Special float values, like infinity and not-a-number are marked with contrast colors on the map.
+
+  ## Options
+
+    * `:at` — positions heatmap at the specified `{row, col}` position inside terminal.
+    * `:title` — sets the title of the heatmap.
+
   ## Examples
 
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="215px" />&nbsp;
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
   <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="180px" />&nbsp;
 
   """
   @spec heatmap(
