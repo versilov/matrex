@@ -464,14 +464,21 @@ defmodule Matrex.Algorithms do
       j_str = j |> Matrex.element_to_string() |> String.pad_leading(20)
       iter_str = iteration |> Integer.to_string() |> String.pad_leading(3)
 
+      IO.puts("#{IO.ANSI.home()}")
+
       theta[2..785]
       |> Matrex.reshape(28, 28)
-      |> Dashboard.heatmap(
-        digit,
+      |> Matrex.heatmap(
         :mono256,
-        at: {r, c},
         title: "[#{IO.ANSI.bright()}#{rem(digit, 10)}#{IO.ANSI.normal()} | #{iter_str} #{j_str}]"
       )
+
+      # |> Dashboard.heatmap(
+      #   digit,
+      #   :mono256,
+      #   at: {r, c},
+      #   title: "[#{IO.ANSI.bright()}#{rem(digit, 10)}#{IO.ANSI.normal()} | #{iter_str} #{j_str}]"
+      # )
     end
 
     {j, grad}
@@ -508,7 +515,7 @@ defmodule Matrex.Algorithms do
   @doc """
   Run logistic regression one-vs-all MNIST digits recognition in parallel.
   """
-  def run_lr() do
+  def run_lr(iterations \\ 56, concurrency \\ 1) do
     start_timestamp = :os.timestamp()
 
     {x, y} =
@@ -525,7 +532,6 @@ defmodule Matrex.Algorithms do
     theta = Matrex.zeros(x[:cols], 1)
 
     lambda = 0.3
-    iterations = 130
 
     solutions =
       1..10
@@ -537,7 +543,7 @@ defmodule Matrex.Algorithms do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 6,
+        max_concurrency: 1,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
@@ -596,6 +602,12 @@ defmodule Matrex.Algorithms do
       0.1 * :math.exp(-:math.pow(:math.pow(x - 4, 2) + :math.pow(y - 4, 2), 2))
   end
 
+  @doc """
+  Computes sigmoid gradinet for the given matrix.
+
+
+      g = sigmoid(X) * (1 - sigmoid(X))
+  """
   @spec sigmoid_gradient(Matrex.t()) :: Matrex.t()
   def sigmoid_gradient(%Matrex{} = z) do
     s = Matrex.apply(z, :sigmoid)
@@ -603,6 +615,13 @@ defmodule Matrex.Algorithms do
     Matrex.multiply(s, Matrex.substract(1, s))
   end
 
+  @doc """
+  Cost function for neural network with one hidden layer.
+
+  Does dleta computation in parallel.
+
+  Ported from Andrew Ng's course, ex4.
+  """
   @spec nn_cost_fun(
           Matrex.t(),
           {pos_integer, pos_integer, pos_integer, Matrex.t(), Matrex.t(), number}
@@ -721,6 +740,9 @@ defmodule Matrex.Algorithms do
     {j, theta}
   end
 
+  @doc """
+  Predict labels for the featurex with pre-trained neuron coefficients theta1 and theta2.
+  """
   @spec nn_predict(Matrex.t(), Matrex.t(), Matrex.t()) :: Matrex.t()
   def nn_predict(theta1, theta2, x) do
     m = x[:rows]
@@ -748,7 +770,12 @@ defmodule Matrex.Algorithms do
   @hidden_layer_size 25
   @num_labels 10
 
-  def run_nn() do
+  @doc """
+  Run neural network with one hidden layer.
+
+
+  """
+  def run_nn(epsilon \\ 0.12, iterations \\ 100, lambdas \\ [0.1, 5, 50]) do
     x = Matrex.load("test/data/X.mtx.gz")
     y = Matrex.load("test/data/Y.mtx")
 
@@ -756,12 +783,7 @@ defmodule Matrex.Algorithms do
 
     {x_train, y_train, x_test, y_test} = {x, y, x, y}
 
-    _lambdas = [0.01, 5, 50]
-    iterations = 100
-    epsilon = 0.13
-
-    # lambdas
-    [50]
+    lambdas
     |> Task.async_stream(
       fn lambda ->
         initial_theta1 =

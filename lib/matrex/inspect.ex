@@ -4,7 +4,8 @@ defmodule Matrex.Inspect do
   @ansi_formatting ~r/\e\[(\d{1,2};?)+m/
 
   def inspect(%Matrex{} = matrex) do
-    IO.puts(do_inspect(matrex))
+    {:ok, cols} = :io.columns()
+    IO.puts(do_inspect(matrex, cols))
     matrex
   end
 
@@ -194,6 +195,24 @@ defmodule Matrex.Inspect do
     |> Float.round(5)
     |> Float.to_string()
     |> String.pad_leading(@element_chars_size)
+  end
+
+  def ffloat(f) when is_float(f) do
+    af = abs(f)
+    frac = af - trunc(af)
+
+    precision =
+      cond do
+        af >= 10_000 -> 6
+        af >= 1_000 -> 5
+        af >= 100 -> 4
+        af >= 10 -> 3
+        frac == 0.0 -> 2
+        frac > 0 -> 3
+        true -> 3
+      end
+
+    :io_lib.format(" ~7.*g", [precision, f]) |> to_string()
   end
 
   defp insert_vertical_ellipsis_row(

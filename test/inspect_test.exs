@@ -2,6 +2,7 @@ defmodule InspectTest do
   use ExUnit.Case, async: true
   import ExUnit.CaptureIO
   import Matrex
+  alias Matrex.Inspect
 
   test "#inspect displays a matrix visualization to stdout" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
@@ -186,5 +187,22 @@ defmodule InspectTest do
 
     out = capture_io(fn -> assert heatmap(m, :mono256, at: {9, 12}) == m end)
     assert out == e
+  end
+
+  @tag skip: true
+  test "#format_float fits float into 7 chars nicely" do
+    assert Inspect.ffloat(1.0) == "     1.0"
+    assert Inspect.ffloat(15.0) == "    15.0"
+    assert Inspect.ffloat(150.0) == "   150.0"
+    assert Inspect.ffloat(1234.0) == "  1234.0"
+    assert Inspect.ffloat(12345.0) == " 12345.0"
+    assert Inspect.ffloat(123_456.0) == " 1.23e+3"
+    assert Inspect.ffloat(123_456_000_000.0) == " 1.2e+11"
+    assert Inspect.ffloat(0.1) == "     0.1"
+    assert Inspect.ffloat(0.0001) == " 0.00001"
+    assert Inspect.ffloat(0.00001) == "  1.0e-5"
+    assert Inspect.ffloat(0.000000000001) == " 1.0e-10"
+    assert Inspect.ffloat(150.05) == "  150.05"
+    assert Inspect.ffloat(150.005) == " 150.005"
   end
 end

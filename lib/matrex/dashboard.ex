@@ -1,4 +1,6 @@
 defmodule Matrex.Dashboard do
+  @moduledoc false
+
   use GenServer
   # API
   def start do

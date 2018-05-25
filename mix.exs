@@ -117,7 +117,7 @@ defmodule Matrex.MixProject do
 
   defp docs() do
     [
-      main: "readme",
+      main: "Matrex",
       name: "Matrex",
       source_ref: "v#{@version}",
       canonical: "http://hexdocs.pm/matrex",

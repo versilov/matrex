@@ -479,8 +479,10 @@ defmodule Matrex do
 
   defimpl Inspect do
     @doc false
-    def inspect(%Matrex{} = matrex, %{width: screen_width}),
-      do: Matrex.Inspect.do_inspect(matrex, screen_width)
+    def inspect(%Matrex{} = matrex, %{width: _screen_width}) do
+      {:ok, columns} = :io.columns()
+      Matrex.Inspect.do_inspect(matrex, columns)
+    end
   end
 
   defimpl Enumerable do
@@ -1634,7 +1636,7 @@ defmodule Matrex do
   defp do_load(data, "idx"), do: %Matrex{data: Matrex.IDX.load(data)}
 
   @doc """
-  Creates "magic" n*n matrix, where sums of all dimensions are equal
+  Creates "magic" n*n matrix, where sums of all dimensions are equal.
 
 
   ## Example
@@ -1673,6 +1675,9 @@ defmodule Matrex do
       iex> Matrex.max(m)
       25.0
 
+      iex> Matrex.reshape([1, 2, Inf, 4, 5, 6], 2, 3) |> max()
+      Inf
+
   """
   @spec max(matrex) :: element
   def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
@@ -1708,6 +1713,9 @@ defmodule Matrex do
       └                                         ┘
       iex> Matrex.min(m)
       1.0
+
+      iex> Matrex.reshape([1, 2, NegInf, 4, 5, 6], 2, 3) |> max()
+      NegInf
 
   """
   @spec min(matrex) :: element
@@ -1781,7 +1789,7 @@ defmodule Matrex do
   @doc """
   Creates new matrix with values provided by the given function.
 
-  If function accepts two arguments one-based row and column of each element are passed to it.
+  If function accepts two arguments one-based row and column index of each element are passed to it.
 
   ## Examples
 
@@ -2111,9 +2119,9 @@ defmodule Matrex do
 
   Takes a list or anything, that implements `Enumerable.to_list/1`.
 
-  Can take a list of matrices and concatenate into one big matrix.
+  Can take a list of matrices and concatenate them into one big matrix.
 
-  Raises `ArgumentError` if lsit size and given shape do not match.
+  Raises `ArgumentError` if list size and given shape do not match.
 
   ## Example
 
@@ -2151,16 +2159,16 @@ defmodule Matrex do
       └                 ┘
 
   """
-  @spec reshape([element], index, index) :: matrex
-  @spec reshape(Enumerable.t(), index, index) :: matrex
   def reshape([], _, _), do: raise(ArgumentError)
 
-  def reshape([%Matrex{} | _] = list_of_ma, _rows, columns) do
-    list_of_ma
+  @spec reshape([matrex], index, index) :: matrex
+  def reshape([%Matrex{} | _] = enum, _rows, columns) do
+    enum
     |> Enum.chunk(columns)
     |> new()
   end
 
+  @spec reshape([element], index, index) :: matrex
   def reshape([_ | _] = list, rows, columns),
     do: %Matrex{
       data:
@@ -2172,6 +2180,7 @@ defmodule Matrex do
         )
     }
 
+  @spec reshape(matrex, index, index) :: matrex
   def reshape(
         %Matrex{
           data:
@@ -2200,6 +2209,7 @@ defmodule Matrex do
             matrix::binary>>
       }
 
+  @spec reshape(Enumerable.t(), index, index) :: matrex
   def reshape(input, rows, columns), do: input |> Enum.to_list() |> reshape(rows, columns)
 
   defp do_reshape(data, [], 1, 0), do: data

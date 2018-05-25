@@ -45,7 +45,7 @@ defmodule AlgorithmsTest do
   @tag skip: false
   @tag timeout: 120_000
   test "#fmincg does linear regression" do
-    accuracy = Algorithms.run_lr()
+    accuracy = Algorithms.run_lr(100, 5)
     assert accuracy >= 95
   end
 
