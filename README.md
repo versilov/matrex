@@ -1,4 +1,4 @@
-# ![Matrex Logo](https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_logo_small.png) Matrex
+# <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/matrex_logo_small.png" width="40px" /> Matrex
 
 [![Build Status](https://travis-ci.org/versilov/matrex.svg?branch=master)](https://travis-ci.org/versilov/matrex)
 [![Coverage Status](https://coveralls.io/repos/github/versilov/matrex/badge.svg?branch=master)](https://coveralls.io/github/versilov/matrex?branch=master)
