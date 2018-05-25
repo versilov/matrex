@@ -285,6 +285,8 @@ defmodule Matrex do
             sum: 1,
             to_list: 1,
             to_list_of_lists: 1,
+            to_row: 1,
+            to_column: 1,
             transpose: 1,
             zeros: 2,
             zeros: 1}
@@ -728,7 +730,7 @@ defmodule Matrex do
         ) :: matrex
   def apply(%Matrex{data: data} = matrix, function_atom)
       when function_atom in @math_functions do
-    {rows, cols} = size(matrix)
+    # {rows, cols} = size(matrix)
 
     %Matrex{
       data:
@@ -2317,6 +2319,14 @@ defmodule Matrex do
         )
 
   def reshape(
+        %Matrex{data: <<rows::binary-4, columns::binary-4, _matrix::binary>>} = matrex,
+        rows,
+        columns
+      ),
+      # No need to reshape.
+      do: matrex
+
+  def reshape(
         %Matrex{data: <<_rows::binary-4, _columns::binary-4, matrix::binary>>},
         new_rows,
         new_columns
@@ -2810,6 +2820,49 @@ defmodule Matrex do
   def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
 
   @doc """
+  Convert any matrix m×n to a column matrix (m*n)×1.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.to_column(m)
+      #Matrex[1×9]
+      ┌                                                                         ┐
+      │     8.0     1.0     6.0     3.0     5.0     7.0     4.0     9.0     2.0 │
+      └                                                                         ┘
+
+  """
+  @spec to_column(matrex) :: matrex
+  def to_column(
+        %Matrex{
+          data: <<
+            _rows::unsigned-integer-little-32,
+            1::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = m
+      ),
+      # No need to reshape
+      do: m
+
+  def to_column(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _rest::binary
+          >>
+        } = m
+      ),
+      do: reshape(m, rows * columns, 1)
+
+  @doc """
   Convert any matrix m×n to a row matrix 1×(m*n).
 
   ## Example
@@ -2837,6 +2890,7 @@ defmodule Matrex do
           >>
         } = m
       ),
+      # No need to reshape
       do: m
 
   def to_row(

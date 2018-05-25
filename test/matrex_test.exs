@@ -645,6 +645,13 @@ defmodule MatrexTest do
     assert Matrex.to_row(m) == expected
   end
 
+  test "#to_column converts any matrix into a column matrix" do
+    m = Matrex.magic(3)
+    expected = Matrex.new("8.0; 1.0; 6.0; 3.0; 5.0; 7.0; 4.0; 9.0; 2.0")
+
+    assert Matrex.to_column(m) == expected
+  end
+
   test "#transpose transposes a matrix" do
     input = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = Matrex.new([[1, 4], [2, 5], [3, 6]])
