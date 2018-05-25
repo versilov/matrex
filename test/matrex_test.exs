@@ -330,6 +330,11 @@ defmodule MatrexTest do
     assert list_of_rows(m, 3..5) == [new([[5, 6]]), new([[7, 8]]), new([[9, 10]])]
   end
 
+  test "#list_of_rows returns all rows when no range is given" do
+    m = reshape(1..6, 3, 2)
+    assert list_of_rows(m) == [new([[1, 2]]), new([[3, 4]]), new([[5, 6]])]
+  end
+
   test "#max returns the maximum element from the matrix" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = 6

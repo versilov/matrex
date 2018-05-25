@@ -1603,6 +1603,45 @@ defmodule Matrex do
   defp undot(f, true) when is_float(f), do: f
 
   @doc """
+  Returns list of all rows of a matrix as single-row matrices.
+
+  ## Example
+
+      iex> m = Matrex.reshape(1..6, 3, 2)
+      #Matrex[6×2]
+      ┌                 ┐
+      │     1.0     2.0 │
+      │     3.0     4.0 │
+      │     5.0     6.0 │
+      └                 ┘
+      iex> Matrex.list_of_rows(m)
+      [#Matrex[1×2]
+      ┌                 ┐
+      │     1.0     2.0 │
+      └                 ┘,
+      #Matrex[1×2]
+      ┌                 ┐
+      │     3.0     4.0 │
+      └                 ┘,
+      #Matrex[1×2]
+      ┌                 ┐
+      │     5.0     6.0 │
+      └                 ┘]
+
+
+  """
+  @spec list_of_rows(matrex) :: [matrex]
+  def list_of_rows(%Matrex{
+        data: <<
+          rows::unsigned-integer-little-32,
+          columns::unsigned-integer-little-32,
+          matrix::binary
+        >>
+      }) do
+    do_list_rows(matrix, rows, columns)
+  end
+
+  @doc """
   Returns range of rows of a matrix as list of 1-row matrices.
 
   ## Example
@@ -1630,7 +1669,7 @@ defmodule Matrex do
       ┌                 ┐
       │     7.0     8.0 │
       └                 ┘]
-      
+
   """
   @spec list_of_rows(matrex, Range.t()) :: [matrex]
   def list_of_rows(
