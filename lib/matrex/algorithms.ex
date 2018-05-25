@@ -468,17 +468,12 @@ defmodule Matrex.Algorithms do
 
       theta[2..785]
       |> Matrex.reshape(28, 28)
-      |> Matrex.heatmap(
+      |> Dashboard.heatmap(
+        digit,
         :mono256,
+        at: {r, c},
         title: "[#{IO.ANSI.bright()}#{rem(digit, 10)}#{IO.ANSI.normal()} | #{iter_str} #{j_str}]"
       )
-
-      # |> Dashboard.heatmap(
-      #   digit,
-      #   :mono256,
-      #   at: {r, c},
-      #   title: "[#{IO.ANSI.bright()}#{rem(digit, 10)}#{IO.ANSI.normal()} | #{iter_str} #{j_str}]"
-      # )
     end
 
     {j, grad}
@@ -543,7 +538,7 @@ defmodule Matrex.Algorithms do
 
           {digit, List.last(fX), sX}
         end,
-        max_concurrency: 1,
+        max_concurrency: concurrency,
         timeout: 100_000
       )
       |> Enum.map(fn {:ok, {_d, _l, theta}} -> Matrex.to_list(theta) end)
