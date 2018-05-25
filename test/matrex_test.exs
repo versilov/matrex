@@ -325,10 +325,9 @@ defmodule MatrexTest do
     assert Matrex.first(matrix) == 1
   end
 
-  test "#size returns the size of the matrix" do
-    matrix = Matrex.new([[4, 8, 22], [20, 0, 9]])
-
-    assert Matrex.size(matrix) == {2, 3}
+  test "#list_of_rows returns row matrices list" do
+    m = reshape(1..12, 6, 2)
+    assert list_of_rows(m, 3..5) == [new([[5, 6]]), new([[7, 8]]), new([[9, 10]])]
   end
 
   test "#max returns the maximum element from the matrix" do
@@ -543,6 +542,12 @@ defmodule MatrexTest do
     expected = Matrex.new([[1, NaN, 3], [4, 5, 6]])
 
     assert Matrex.set(matrix, 1, 2, NaN) == expected
+  end
+
+  test "#size returns the size of the matrix" do
+    matrix = Matrex.new([[4, 8, 22], [20, 0, 9]])
+
+    assert Matrex.size(matrix) == {2, 3}
   end
 
   test "#submatrix returns part of original matrix" do

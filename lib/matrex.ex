@@ -1603,6 +1603,75 @@ defmodule Matrex do
   defp undot(f, true) when is_float(f), do: f
 
   @doc """
+  Returns range of rows of a matrix as list of 1-row matrices.
+
+  ## Example
+
+      iex> m = Matrex.reshape(1..12, 6, 2)
+      #Matrex[6×2]
+      ┌                 ┐
+      │     1.0     2.0 │
+      │     3.0     4.0 │
+      │     5.0     6.0 │
+      │     7.0     8.0 │
+      │     9.0    10.0 │
+      │    11.0    12.0 │
+      └                 ┘
+      iex> Matrex.list_of_rows(m, 2..4)
+      [#Matrex[1×2]
+      ┌                 ┐
+      │     3.0     4.0 │
+      └                 ┘,
+      #Matrex[1×2]
+      ┌                 ┐
+      │     5.0     6.0 │
+      └                 ┘,
+      #Matrex[1×2]
+      ┌                 ┐
+      │     7.0     8.0 │
+      └                 ┘]
+      
+  """
+  @spec list_of_rows(matrex, Range.t()) :: [matrex]
+  def list_of_rows(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            matrix::binary
+          >>
+        },
+        from..to
+      )
+      when from <= to and to <= rows do
+    part =
+      binary_part(
+        matrix,
+        (from - 1) * columns * @element_size,
+        (to - from + 1) * columns * @element_size
+      )
+
+    do_list_rows(part, to - from + 1, columns)
+  end
+
+  defp do_list_rows(<<>>, 0, _), do: []
+
+  defp do_list_rows(<<rows::binary>>, row_num, columns) do
+    [
+      %Matrex{
+        data:
+          <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
+            binary_part(rows, 0, columns * @element_size)::binary>>
+      }
+      | do_list_rows(
+          binary_part(rows, columns * @element_size, (row_num - 1) * columns * @element_size),
+          row_num - 1,
+          columns
+        )
+    ]
+  end
+
+  @doc """
   Load matrex from file.
 
   .csv and .mtx (binary) formats are supported.
