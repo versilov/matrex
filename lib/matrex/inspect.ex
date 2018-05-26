@@ -79,12 +79,20 @@ defmodule Matrex.Inspect do
       end
 
     row_length = row_length(columns, suffix_size, prefix_size)
+    prefix_length = prefix_size * @element_chars_size
+    suffix_length = suffix_size * @element_chars_size
     half_row_length = div(row_length, 2)
 
     contents_str =
       rows_as_strings
       |> Enum.join(joiner(columns, suffix_size, prefix_size))
-      |> insert_vertical_ellipsis_row(half_row_length, columns, suffix_size, prefix_size)
+      |> insert_vertical_ellipsis_row(
+        prefix_length,
+        suffix_length,
+        columns,
+        suffix_size,
+        prefix_size
+      )
 
     contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
 
@@ -221,7 +229,8 @@ defmodule Matrex.Inspect do
 
   defp insert_vertical_ellipsis_row(
          matrix_as_string,
-         _half_row_length,
+         _prefix_length,
+         _suffix_length,
          columns,
          suffix_size,
          prefix_size
@@ -236,7 +245,8 @@ defmodule Matrex.Inspect do
 
   defp insert_vertical_ellipsis_row(
          matrix_as_string,
-         half_row_length,
+         prefix_length,
+         suffix_length,
          _columns,
          _suffix_size,
          _prefix_size
@@ -244,8 +254,8 @@ defmodule Matrex.Inspect do
     String.replace(
       matrix_as_string,
       ~r/\n.*⋮.*\n/,
-      "\n│#{String.pad_leading("", half_row_length, "     ⋮  ")}… #{
-        String.pad_trailing("", half_row_length - 1, "     ⋮  ")
+      "\n│#{String.pad_leading("", prefix_length + 2, "     ⋮  ")}… #{
+        String.pad_trailing("", suffix_length + 1, "     ⋮  ")
       }│\n"
     )
   end
