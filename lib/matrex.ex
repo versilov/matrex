@@ -120,10 +120,10 @@ defmodule Matrex do
         j =
           y
           |> Matrex.dot_tn(Matrex.apply(h, :log), -1)
-          |> Matrex.substract(
+          |> Matrex.subtract(
             Matrex.dot_tn(
-              Matrex.substract(1, y),
-              Matrex.apply(Matrex.substract(1, h), :log)
+              Matrex.subtract(1, y),
+              Matrex.apply(Matrex.subtract(1, h), :log)
             )
           )
           |> Matrex.scalar()
@@ -134,7 +134,7 @@ defmodule Matrex do
 
         grad =
           x
-          |> Matrex.dot_tn(Matrex.substract(h, y))
+          |> Matrex.dot_tn(Matrex.subtract(h, y))
           |> Matrex.add(Matrex.multiply(theta, l), 1.0, lambda)
           |> Matrex.divide(m)
 
@@ -281,8 +281,8 @@ defmodule Matrex do
             set: 4,
             size: 1,
             square: 1,
-            substract: 2,
-            substract_inverse: 2,
+            subtract: 2,
+            subtract_inverse: 2,
             sum: 1,
             to_list: 1,
             to_list_of_lists: 1,
@@ -2700,54 +2700,54 @@ defmodule Matrex do
       )
 
   @doc """
-  Substracts two matrices or matrix from scalar element-wise. NIF.
+  Subtracts two matrices or matrix from scalar element-wise. NIF.
 
   Raises `ErlangError` if matrices' sizes do not match.
 
   ## Examples
 
       iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.substract(Matrex.new([[5, 2, 1], [3, 4, 6]]))
+      ...> Matrex.subtract(Matrex.new([[5, 2, 1], [3, 4, 6]]))
       #Matrex[2×3]
       ┌                         ┐
       │    -4.0     0.0     2.0 │
       │     1.0     1.0     0.0 │
       └                         ┘
 
-      iex> Matrex.substract(1, Matrex.new([[1, 2, 3], [4, 5, 6]]))
+      iex> Matrex.subtract(1, Matrex.new([[1, 2, 3], [4, 5, 6]]))
       #Matrex[2×3]
       ┌                         ┐
       │     0.0     -1.0   -2.0 │
       │    -3.0    -4.0    -5.0 │
       └                         ┘
   """
-  @spec substract(matrex | number, matrex) :: matrex
-  def substract(%Matrex{data: first}, %Matrex{data: second}),
-    do: %Matrex{data: NIFs.substract(first, second)}
+  @spec subtract(matrex | number, matrex) :: matrex
+  def subtract(%Matrex{data: first}, %Matrex{data: second}),
+    do: %Matrex{data: NIFs.subtract(first, second)}
 
-  def substract(scalar, %Matrex{data: matrix}) when is_number(scalar),
-    do: %Matrex{data: NIFs.substract_from_scalar(scalar, matrix)}
+  def subtract(scalar, %Matrex{data: matrix}) when is_number(scalar),
+    do: %Matrex{data: NIFs.subtract_from_scalar(scalar, matrix)}
 
-  def substract(%Matrex{data: matrix}, scalar) when is_number(scalar),
+  def subtract(%Matrex{data: matrix}, scalar) when is_number(scalar),
     do: %Matrex{data: NIFs.add_scalar(matrix, -scalar)}
 
   @doc """
-  Substracts the second matrix from the first. Inlined.
+  Subtracts the second matrix from the first. Inlined.
 
   Raises `ErlangError` if matrices' sizes do not match.
 
   ## Example
 
       iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.substract_inverse(Matrex.new([[5, 2, 1], [3, 4, 6]]))
+      ...> Matrex.subtract_inverse(Matrex.new([[5, 2, 1], [3, 4, 6]]))
       #Matrex[2×3]
       ┌                         ┐
       │     4.0     0.0    -2.0 │
       │    -1.0    -1.0     0.0 │
       └                         ┘
   """
-  @spec substract_inverse(matrex, matrex) :: matrex
-  def substract_inverse(%Matrex{} = first, %Matrex{} = second), do: substract(second, first)
+  @spec subtract_inverse(matrex, matrex) :: matrex
+  def subtract_inverse(%Matrex{} = first, %Matrex{} = second), do: subtract(second, first)
 
   @doc """
   Sums all elements. NIF.
@@ -2956,7 +2956,7 @@ defmodule Matrex do
   def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
 
   @doc """
-  Updates the element at the given position in matirx with function.
+  Updates the element at the given position in matrix with function.
 
   Function is invoked with the current element value
 
@@ -2977,7 +2977,7 @@ defmodule Matrex do
       │     3.0    16.0 │
       │     5.0     6.0 │
       └                 ┘
-      
+
   """
   @spec update(matrex, index, index, (element -> element)) :: matrex
   def update(

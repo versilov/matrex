@@ -42,7 +42,7 @@ defmodule Matrex.Operators do
 
   @doc false
   def a - b when is_number(a) and is_number(b), do: Kernel.-(a, b)
-  def a - b, do: Matrex.substract(a, b)
+  def a - b, do: Matrex.subtract(a, b)
 
   @doc false
   def a * b when is_number(a) and is_number(b), do: Kernel.*(a, b)

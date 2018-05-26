@@ -143,10 +143,10 @@ matrix_submatrix(const Matrix matrix, const uint32_t row_from, const uint32_t ro
   const uint32_t column_from, const uint32_t column_to, Matrix result);
 
 void
-matrix_substract(const Matrix first, const Matrix second, Matrix result);
+matrix_subtract(const Matrix first, const Matrix second, Matrix result);
 
 void
-matrix_substract_from_scalar(const float scalar, const Matrix matrix, Matrix result);
+matrix_subtract_from_scalar(const float scalar, const Matrix matrix, Matrix result);
 
 double
 matrix_sum(const Matrix matrix);

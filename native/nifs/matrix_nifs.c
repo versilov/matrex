@@ -952,7 +952,7 @@ submatrix(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 
 
 static ERL_NIF_TERM
-substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+subtract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
@@ -974,13 +974,13 @@ substract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_substract(first_data, second_data, result_data);
+  matrix_subtract(first_data, second_data, result_data);
 
   return result;
 }
 
 static ERL_NIF_TERM
-substract_from_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+subtract_from_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
   float         scalar;
@@ -999,7 +999,7 @@ substract_from_scalar(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_substract_from_scalar(scalar, matrix_data, result_data);
+  matrix_subtract_from_scalar(scalar, matrix_data, result_data);
 
   return result;
 }
@@ -1153,8 +1153,8 @@ static ErlNifFunc nif_functions[] = {
   {"set",                  4, set,                  0},
   {"set_column",           3, set_column,           0},
   {"submatrix",            5, submatrix,            0},
-  {"substract",            2, substract,            0},
-  {"substract_from_scalar",2, substract_from_scalar,0},
+  {"subtract",             2, subtract,             0},
+  {"subtract_from_scalar", 2, subtract_from_scalar, 0},
   {"sum",                  1, sum,                  0},
   {"to_list",              1, to_list,              0},
   {"to_list_of_lists",     1, to_list_of_lists,     0},

@@ -610,7 +610,7 @@ matrix_submatrix(const Matrix matrix, const uint32_t row_from, const uint32_t ro
 }
 
 void
-matrix_substract(const Matrix first, const Matrix second, Matrix result) {
+matrix_subtract(const Matrix first, const Matrix second, Matrix result) {
   uint64_t data_size = MX_LENGTH(first);
 
   MX_SET_ROWS(result, MX_ROWS(first));
@@ -622,7 +622,7 @@ matrix_substract(const Matrix first, const Matrix second, Matrix result) {
 }
 
 void
-matrix_substract_from_scalar(const float scalar, const Matrix matrix, Matrix result) {
+matrix_subtract_from_scalar(const float scalar, const Matrix matrix, Matrix result) {
   uint64_t data_size = MX_LENGTH(matrix);
 
   MX_SET_ROWS(result, MX_ROWS(matrix));

@@ -257,13 +257,13 @@ defmodule Matrex.NIFs do
              is_integer(col_from) and is_integer(col_to),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec substract(binary, binary) :: binary
-  def substract(first, second)
+  @spec subtract(binary, binary) :: binary
+  def subtract(first, second)
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec substract_from_scalar(number, binary) :: binary
-  def substract_from_scalar(
+  @spec subtract_from_scalar(number, binary) :: binary
+  def subtract_from_scalar(
         scalar,
         <<
           rows::unsigned-integer-little-32,

@@ -207,10 +207,10 @@ The same function, coded with module methods calls (2.5 times faster):
       j =
         y
         |> Matrex.dot_tn(Matrex.apply(h, :log), -1)
-        |> Matrex.substract(
+        |> Matrex.subtract(
           Matrex.dot_tn(
-            Matrex.substract(1, y),
-            Matrex.apply(Matrex.substract(1, h), :log)
+            Matrex.subtract(1, y),
+            Matrex.apply(Matrex.subtract(1, h), :log)
           )
         )
         |> Matrex.scalar()
@@ -221,7 +221,7 @@ The same function, coded with module methods calls (2.5 times faster):
 
       grad =
         x
-        |> Matrex.dot_tn(Matrex.substract(h, y))
+        |> Matrex.dot_tn(Matrex.subtract(h, y))
         |> Matrex.add(Matrex.multiply(theta, l), 1.0, lambda)
         |> Matrex.divide(m)
 

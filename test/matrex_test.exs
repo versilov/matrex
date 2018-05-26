@@ -575,36 +575,36 @@ defmodule MatrexTest do
     assert Matrex.submatrix(matrix, 2..4, 3..5) == expected
   end
 
-  test "#substract substracts two matrices" do
+  test "#subtract subtracts two matrices" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2, 1], [3, 4, 6]])
     expected = Matrex.new([[-4, 0, 2], [1, 1, 0]])
 
-    assert Matrex.substract(first, second) == expected
+    assert Matrex.subtract(first, second) == expected
   end
 
-  test "#substract raises when sizes do not match" do
+  test "#subtract raises when sizes do not match" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2], [3, 4]])
 
     assert_raise ErlangError, ~r/Matrices sizes mismatch./, fn ->
-      Matrex.substract(first, second)
+      Matrex.subtract(first, second)
     end
   end
 
-  test "#substract_inverse substracts the second matrix from the first" do
+  test "#subtract_inverse subtracts the second matrix from the first" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2, 1], [3, 4, 6]])
     expected = Matrex.new([[4, 0, -2], [-1, -1, 0]])
 
-    assert Matrex.substract_inverse(first, second) == expected
+    assert Matrex.subtract_inverse(first, second) == expected
   end
 
-  test "#substract substracts matrix from scalar" do
+  test "#subtract subtracts matrix from scalar" do
     input = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = Matrex.new([[0, -1, -2], [-3, -4, -5]])
 
-    assert Matrex.substract(1, input) == expected
+    assert Matrex.subtract(1, input) == expected
   end
 
   test "#sum/1 returns the sum of all elements in the matrix" do

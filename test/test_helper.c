@@ -27,7 +27,7 @@ int main() {
   test_matrix_max();
   test_matrix_multiply();
   test_matrix_multiply_with_scalar();
-  test_matrix_substract();
+  test_matrix_subtract();
   test_matrix_sum();
   test_matrix_transpose();
 }

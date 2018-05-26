@@ -253,13 +253,13 @@ static void test_matrix_multiply_with_scalar() {
   }
 }
 
-static void test_matrix_substract() {
+static void test_matrix_subtract() {
   float first[8]    = {2, 3,  1, 2, 3, 4, 5, 6};
   float second[8]   = {2, 3,  5, 2, 1, 3, 4, 6};
   float expected[8] = {2, 3, -4, 0, 2, 1, 1, 0};
   float result[8];
 
-  matrix_substract(first, second, result);
+  matrix_subtract(first, second, result);
 
   for(int32_t index = 0; index < 8; index += 1) {
     assert(expected[index] == result[index]); /* LCOV_EXCL_BR_LINE */

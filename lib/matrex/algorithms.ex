@@ -198,14 +198,14 @@ defmodule Matrex.Algorithms do
     if data.legend, do: IO.write(legend(data.i, f1) <> "\r")
 
     s =
-      Matrex.substract(
+      Matrex.subtract(
         Matrex.dot_tn(data.df2, data.df2),
         Matrex.dot_tn(data.df1, data.df2)
       )
       |> Matrex.scalar()
       |> Kernel./(Matrex.dot_tn(data.df1, data.df1) |> Matrex.scalar())
       |> Matrex.multiply(data.s)
-      |> Matrex.substract(data.df2)
+      |> Matrex.subtract(data.df2)
 
     {df1, df2} = {data.df2, data.df1}
 
@@ -438,10 +438,10 @@ defmodule Matrex.Algorithms do
     j =
       y
       |> Matrex.dot_tn(Matrex.apply(h, :log), -1)
-      |> Matrex.substract(
+      |> Matrex.subtract(
         Matrex.dot_tn(
-          Matrex.substract(1, y),
-          Matrex.apply(Matrex.substract(1, h), :log)
+          Matrex.subtract(1, y),
+          Matrex.apply(Matrex.subtract(1, h), :log)
         )
       )
       |> Matrex.scalar()
@@ -453,7 +453,7 @@ defmodule Matrex.Algorithms do
 
     grad =
       x
-      |> Matrex.dot_tn(Matrex.substract(h, y))
+      |> Matrex.dot_tn(Matrex.subtract(h, y))
       |> Matrex.add(Matrex.multiply(theta, l), 1.0, lambda)
       |> Matrex.divide(m)
 
@@ -607,7 +607,7 @@ defmodule Matrex.Algorithms do
   def sigmoid_gradient(%Matrex{} = z) do
     s = Matrex.apply(z, :sigmoid)
 
-    Matrex.multiply(s, Matrex.substract(1, s))
+    Matrex.multiply(s, Matrex.subtract(1, s))
   end
 
   @doc """
@@ -657,7 +657,7 @@ defmodule Matrex.Algorithms do
     c =
       M.neg(y_b)
       |> M.multiply(M.apply(a3, :log))
-      |> M.substract(M.multiply(M.substract(1, y_b), M.apply(M.substract(1, a3), :log)))
+      |> M.subtract(M.multiply(M.subtract(1, y_b), M.apply(M.subtract(1, a3), :log)))
 
     theta1_sum =
       theta1
@@ -707,7 +707,7 @@ defmodule Matrex.Algorithms do
 
           a3 = M.dot_and_apply(theta2, a2, :sigmoid)
 
-          sigma3 = M.substract(a3, M.apply(classes, &if(&1 == y[t], do: 1.0, else: 0.0)))
+          sigma3 = M.subtract(a3, M.apply(classes, &if(&1 == y[t], do: 1.0, else: 0.0)))
 
           sigma2 =
             theta2
@@ -844,6 +844,6 @@ defmodule Matrex.Algorithms do
   defp random_weights(l_in, l_out, epsilon) do
     Matrex.random(l_out, 1 + l_in)
     |> Matrex.multiply(2 * epsilon)
-    |> Matrex.substract(epsilon)
+    |> Matrex.subtract(epsilon)
   end
 end
