@@ -62,7 +62,7 @@ defmodule Matrex.Inspect do
     prefix_size = prefix_size + rem(available_columns, 2)
 
     rows_as_strings =
-      for row <- displayable_rows(rows),
+      for row <- displayable_rows(rows, display_rows),
           do: format_row(matrex, row, rows, columns, suffix_size, prefix_size)
 
     rows_as_strings =
@@ -99,10 +99,12 @@ defmodule Matrex.Inspect do
     "#{header(rows, columns)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
-  defp displayable_rows(rows) when rows > 21,
-    do: Enum.to_list(1..10) ++ [-1] ++ Enum.to_list((rows - 9)..rows)
+  defp displayable_rows(rows, display_rows) when rows > display_rows,
+    do:
+      Enum.to_list(1..(div(display_rows, 2) + rem(display_rows, 2))) ++
+        [-1] ++ Enum.to_list((rows - div(display_rows, 2))..rows)
 
-  defp displayable_rows(rows), do: 1..rows
+  defp displayable_rows(rows, _), do: 1..rows
 
   @spec top_row(pos_integer) :: binary
   defp top_row(length), do: "#{IO.ANSI.reset()}┌#{String.pad_trailing("", length)}┐"

@@ -483,9 +483,9 @@ defmodule Matrex do
 
   defimpl Inspect do
     @doc false
-    def inspect(%Matrex{} = matrex, %{width: _screen_width}) do
+    def inspect(%Matrex{} = matrex, opts) do
       {:ok, columns} = :io.columns()
-      Matrex.Inspect.do_inspect(matrex, columns)
+      Matrex.Inspect.do_inspect(matrex, columns, Map.get(opts, :rows, 21))
     end
   end
 
@@ -1559,52 +1559,45 @@ defmodule Matrex do
   defdelegate identity(size), to: __MODULE__, as: :eye
 
   @doc """
-  Displays a visualization of the matrix.
+  Prints matrix to the console.
 
-  Set the second parameter to true to show full numbers.
-  Otherwise, they are truncated.
+  Accepted options:
+    * `:rows` — number of rows of matrix to show. Defaults to 21
+    * `:columns` — number of columns of matrix to show. Defaults to maximum number of column,
+    that fits into current terminal width.
+
+    Returns the matrix itself, so can be used in pipes.
+
+    ## Example
+
+        iex> print(m, rows: 5, columns: 3)
+        #Matrex[20×20]
+        ┌                             ┐
+        │     1.0   399.0  …     20.0 │
+        │   380.0    22.0  …    361.0 │
+        │   360.0    42.0  …    341.0 │
+        │     ⋮       ⋮     …      ⋮  │
+        │    40.0   362.0  …     21.0 │
+        │   381.0    19.0  …    400.0 │
+        └                             ┘
 
   """
-  @spec inspect(matrex, boolean) :: matrex
-  def inspect(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            rest::binary
-          >>
-        } = matrex,
-        full \\ false
-      ) do
-    IO.puts("Rows: #{rows} Columns: #{columns}")
+  @spec print(matrex, Keyword.t()) :: matrex
+  def print(%Matrex{} = matrex, opts \\ [rows: 21]) do
+    {:ok, terminal_columns} = :io.columns()
 
-    inspect_element(1, columns, rest, full)
+    columns =
+      case Keyword.get(opts, :columns) do
+        nil -> terminal_columns
+        cols -> cols * 8 + 10
+      end
+
+    matrex
+    |> Matrex.Inspect.do_inspect(columns, Keyword.get(opts, :rows, 21))
+    |> IO.puts()
 
     matrex
   end
-
-  defp inspect_element(_, _, <<>>, _), do: :ok
-
-  defp inspect_element(column, columns, <<element::float-little-32, rest::binary>>, full) do
-    next_column =
-      case column == columns do
-        true ->
-          IO.puts(undot(element, full))
-
-          1.0
-
-        false ->
-          IO.write("#{undot(element, full)} ")
-
-          column + 1.0
-      end
-
-    inspect_element(next_column, columns, rest, full)
-  end
-
-  defp undot(f, false) when is_float(f) and f - trunc(f) == 0.0, do: trunc(f)
-  defp undot(f, false) when is_float(f), do: :io_lib.format("~7.3f", [f])
-  defp undot(f, true) when is_float(f), do: f
 
   @doc """
   Returns list of all rows of a matrix as single-row matrices.
