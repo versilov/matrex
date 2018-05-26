@@ -36,9 +36,11 @@ ifeq ($(shell uname -s), Darwin)
 ifeq ($(BLAS), openblas)
 	CFLAGS += -I/usr/local/opt/openblas/include
 	LDFLAGS += -L/usr/local/opt/openblas/lib
+else
+	CFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
 endif
 
-else
+else  # Linux
 	CFLAGS += -shared
 	LDFLAGS += -lm -lcblas
 
