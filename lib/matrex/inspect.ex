@@ -329,12 +329,13 @@ defmodule Matrex.Inspect do
       bottom_pixel_color = val_to_color(ttype, bottom_row[c], min, range)
 
       {<<result::binary,
-         "#{
-           ascii_escape(
-             escape_color(ttype, :background, top_pixel_color, prev_top_pixel_color),
-             escape_color(ttype, :foreground, bottom_pixel_color, prev_bottom_pixel_color)
-           )
-         }▄">>, top_pixel_color, bottom_pixel_color}
+         pixels(
+           ttype,
+           top_pixel_color,
+           prev_top_pixel_color,
+           bottom_pixel_color,
+           prev_bottom_pixel_color
+         )::binary>>, top_pixel_color, bottom_pixel_color}
     end)
   end
 
@@ -366,6 +367,46 @@ defmodule Matrex.Inspect do
   defp ascii_escape(color1, ""), do: "\e[#{color1}m"
   defp ascii_escape("", color2), do: "\e[#{color2}m"
   defp ascii_escape(color1, color2), do: "\e[#{color1};#{color2}m"
+
+  defp pixels(
+         ttype,
+         pixel_color,
+         prev_top_pixel_color,
+         pixel_color,
+         _prev_bottom_pixel_color
+       ) do
+    "#{ascii_escape(escape_color(ttype, :background, pixel_color, prev_top_pixel_color), "")} "
+  end
+
+  defp pixels(
+         ttype,
+         top_pixel_color,
+         prev_pixel_color,
+         bottom_pixel_color,
+         prev_pixel_color
+       ) do
+    "#{
+      ascii_escape(
+        escape_color(ttype, :background, top_pixel_color, prev_pixel_color),
+        escape_color(ttype, :foreground, bottom_pixel_color, nil)
+      )
+    }▄"
+  end
+
+  defp pixels(
+         ttype,
+         top_pixel_color,
+         prev_top_pixel_color,
+         bottom_pixel_color,
+         prev_bottom_pixel_color
+       ) do
+    "#{
+      ascii_escape(
+        escape_color(ttype, :background, top_pixel_color, prev_top_pixel_color),
+        escape_color(ttype, :foreground, bottom_pixel_color, prev_bottom_pixel_color)
+      )
+    }▄"
+  end
 
   # Mark float special values on the heatmap
   defp val_to_color(:mono24bit, NaN, _, _), do: "255;0;0"

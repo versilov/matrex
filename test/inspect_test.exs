@@ -71,7 +71,7 @@ defmodule InspectTest do
     m = Matrex.zeros(3)
 
     expected =
-      "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[48;2;0;0;0;38;2;0;0;0m▄▄▄\e[0m│\n│\e[7m\e[38;2;0;0;0m▄▄▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
+      "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[48;2;0;0;0m   \e[0m│\n│\e[7m\e[38;2;0;0;0m▄▄▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
 
     output =
       capture_io(fn ->
@@ -113,7 +113,7 @@ defmodule InspectTest do
     m = Matrex.reshape(1..16, 4, 4)
 
     expected =
-      "\e[?25l\e[0m#Matrex[\e[33m4\e[0m×\e[33m4\e[0m]\n\e[0m┌    ┐\n│\e[40;34m▄\e[44m▄\e[36m▄\e[32m▄\e[0m│\n│\e[42;33m▄▄\e[31m▄\e[43m▄\e[0m│\n\e[0m└    ┘\e[?25h\n"
+      "\e[?25l\e[0m#Matrex[\e[33m4\e[0m×\e[33m4\e[0m]\n\e[0m┌    ┐\n│\e[40;34m▄\e[44m \e[36m▄\e[32m▄\e[0m│\n│\e[42;33m▄▄\e[31m▄\e[43m▄\e[0m│\n\e[0m└    ┘\e[?25h\n"
 
     output =
       capture_io(fn ->
@@ -127,7 +127,7 @@ defmodule InspectTest do
     m = Matrex.reshape(1..15, 5, 3)
 
     expected =
-      "\e[?25l\e[0m#Matrex[\e[33m5\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[40;30m▄▄▄\e[0m│\n│\e[40;37m▄\e[47m▄▄\e[0m│\n│\e[7m\e[37m▄▄▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
+      "\e[?25l\e[0m#Matrex[\e[33m5\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[40m   \e[0m│\n│\e[40;37m▄\e[47m  \e[0m│\n│\e[7m\e[37m▄▄▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
 
     output =
       capture_io(fn ->
@@ -169,7 +169,7 @@ defmodule InspectTest do
     m = divide(eye(3), zeros(3))
 
     expected =
-      "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[48;5;87;38;5;196m▄\e[48;5;196;38;5;87m▄\e[38;5;196m▄\e[0m│\n│\e[7m\e[38;5;196m▄▄\e[38;5;87m▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
+      "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[48;5;87;38;5;196m▄\e[48;5;196;38;5;87m▄ \e[0m│\n│\e[7m\e[38;5;196m▄▄\e[38;5;87m▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
 
     output =
       capture_io(fn ->
