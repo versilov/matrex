@@ -232,6 +232,7 @@ defmodule Matrex do
   """
 
   alias Matrex.NIFs
+  import Matrex.Guards
 
   @enforce_keys [:data]
   defstruct [:data]
@@ -288,6 +289,7 @@ defmodule Matrex do
             to_row: 1,
             to_column: 1,
             transpose: 1,
+            update: 4,
             zeros: 2,
             zeros: 1}
 
@@ -2952,6 +2954,76 @@ defmodule Matrex do
       do: reshape(m, 1, rows)
 
   def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
+
+  @doc """
+  Updates the element at the given position in matirx with function.
+
+  Function is invoked with the current element value
+
+
+  ## Example
+
+      iex> m = Matrex.reshape(1..6, 3, 2)
+      #Matrex[3×2]
+      ┌                 ┐
+      │     1.0     2.0 │
+      │     3.0     4.0 │
+      │     5.0     6.0 │
+      └                 ┘
+      iex> Matrex.update(m, 2, 2, fn x -> x * x end)
+      #Matrex[3×2]
+      ┌                 ┐
+      │     1.0     2.0 │
+      │     3.0    16.0 │
+      │     5.0     6.0 │
+      └                 ┘
+      
+  """
+  @spec update(matrex, index, index, (element -> element)) :: matrex
+  def update(
+        %Matrex{
+          data: <<
+            rows::unsigned-integer-little-32,
+            columns::unsigned-integer-little-32,
+            _data::binary
+          >>
+        },
+        row,
+        col,
+        _fun
+      )
+      when not inside_matrex(row, col, rows, columns),
+      do:
+        raise(
+          ArgumentError,
+          message: "Position (#{row}, #{col}) is out of matrex [#{rows}×#{columns}]"
+        )
+
+  def update(
+        %Matrex{
+          data:
+            <<
+              _rows::unsigned-integer-little-32,
+              columns::unsigned-integer-little-32,
+              data::binary
+            >> = matrix
+        },
+        row,
+        col,
+        fun
+      )
+      when is_function(fun, 1) do
+    new_value =
+      data
+      |> binary_part(((row - 1) * columns + (col - 1)) * @element_size, @element_size)
+      |> binary_to_float()
+      |> fun.()
+      |> float_to_binary()
+
+    %Matrex{
+      data: NIFs.set(matrix, row - 1, col - 1, new_value)
+    }
+  end
 
   @doc """
   Create matrix of zeros of the specified size. NIF, using `memset()`.

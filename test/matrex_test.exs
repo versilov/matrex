@@ -658,4 +658,15 @@ defmodule MatrexTest do
 
     assert Matrex.transpose(input) == expected
   end
+
+  test "#update updates element of a matrix with a function" do
+    m = reshape(1..6, 3, 2)
+    e = new("1 2; 3 16; 5 6")
+    assert update(m, 2, 2, fn x -> x * x end) == e
+  end
+
+  test "#update raises when position is out of bounds" do
+    m = reshape(1..6, 3, 2)
+    assert_raise ArgumentError, fn -> update(m, 2, 3, fn x -> x * x end) end
+  end
 end
