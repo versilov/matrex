@@ -487,7 +487,7 @@ defmodule Matrex.Algorithms do
   def lr_cost_fun_ops(
         %Matrex{} = theta,
         {%Matrex{} = x, %Matrex{} = y, lambda} = _params,
-        iteration \\ 0
+        _iteration \\ 0
       )
       when is_number(lambda) do
     # Turn off original operators

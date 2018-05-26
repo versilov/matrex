@@ -730,7 +730,7 @@ defmodule Matrex do
           | (element, index -> element)
           | (element, index, index -> element)
         ) :: matrex
-  def apply(%Matrex{data: data} = matrix, function_atom)
+  def apply(%Matrex{data: data} = _matrix, function_atom)
       when function_atom in @math_functions do
     # {rows, cols} = size(matrix)
 
