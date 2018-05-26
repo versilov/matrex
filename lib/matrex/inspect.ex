@@ -3,13 +3,13 @@ defmodule Matrex.Inspect do
 
   @ansi_formatting ~r/\e\[(\d{1,2};?)+m/
 
-  def inspect(%Matrex{} = matrex) do
+  def inspect(%Matrex{} = matrex, rows \\ 21) do
     {:ok, cols} = :io.columns()
-    IO.puts(do_inspect(matrex, cols))
+    IO.puts(do_inspect(matrex, cols, rows))
     matrex
   end
 
-  def do_inspect(matrex, screen_width \\ 80)
+  def do_inspect(matrex, screen_width \\ 80, display_rows \\ 21)
 
   def do_inspect(
         %Matrex{
@@ -19,9 +19,10 @@ defmodule Matrex.Inspect do
             _rest::binary
           >>
         } = matrex,
-        screen_width
+        screen_width,
+        display_rows
       )
-      when columns < screen_width / 8 and rows <= 21 do
+      when columns < (screen_width - 3) / 8 and rows <= display_rows do
     rows_as_strings =
       for(
         row <- 1..rows,
@@ -52,10 +53,13 @@ defmodule Matrex.Inspect do
             body::binary
           >>
         } = matrex,
-        screen_width
+        screen_width,
+        display_rows
       )
-      when columns >= screen_width / 8 or rows > 21 do
-    suffix_size = prefix_size = div(screen_width, 16)
+      when columns >= (screen_width - 3) / 8 or rows > display_rows do
+    available_columns = div(screen_width - 7, 8)
+    prefix_size = suffix_size = div(available_columns, 2)
+    prefix_size = prefix_size + rem(available_columns, 2)
 
     rows_as_strings =
       for row <- displayable_rows(rows),
