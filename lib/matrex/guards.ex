@@ -1,4 +1,9 @@
 defmodule Matrex.Guards do
-  defguard inside_matrex(row, col, rows, columns)
-           when row >= 1 and row <= rows and col >= 1 and col <= columns
+  defmacro inside_matrex(row, col, rows, columns),
+    do:
+      quote(
+        do:
+          unquote(row) >= 1 and unquote(row) <= unquote(rows) and unquote(col) >= 1 and
+            unquote(col) <= unquote(columns)
+      )
 end
