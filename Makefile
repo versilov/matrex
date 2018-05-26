@@ -37,7 +37,7 @@ ifeq ($(BLAS), openblas)
 	CFLAGS += -I/usr/local/opt/openblas/include
 	LDFLAGS += -L/usr/local/opt/openblas/lib
 else
-	CFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/Headers
+	CFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers
 endif
 
 else  # Linux
