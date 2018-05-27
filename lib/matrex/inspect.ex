@@ -81,7 +81,6 @@ defmodule Matrex.Inspect do
     row_length = row_length(columns, suffix_size, prefix_size)
     prefix_length = prefix_size * @element_chars_size
     suffix_length = suffix_size * @element_chars_size
-    half_row_length = div(row_length, 2)
 
     contents_str =
       rows_as_strings
