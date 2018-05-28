@@ -2257,7 +2257,6 @@ defmodule Matrex do
   @spec set(matrex, index, index, element) :: matrex
   def set(matrex_data(rows, cols, _rest, matrix), row, column, value)
       when (is_number(value) or value in [:nan, :inf, :neg_inf]) and row > 0 and column > 0 and
-
              row <= rows and column <= cols,
       do: %Matrex{data: NIFs.set(matrix, row - 1, column - 1, float_to_binary(value))}
 
