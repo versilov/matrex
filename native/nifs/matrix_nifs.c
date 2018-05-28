@@ -582,11 +582,11 @@ make_cell_value(ErlNifEnv* env, const float value) {
   if (isfinite(value))
     return enif_make_double(env, value);
   else if (isnan(value))
-    return enif_make_atom(env, "Elixir.NaN");
+    return enif_make_atom(env, "nan");
   else if (value == INFINITY)
-    return enif_make_atom(env, "Elixir.Inf");
+    return enif_make_atom(env, "inf");
   else if (value == -INFINITY)
-    return enif_make_atom(env, "Elixir.NegInf");
+    return enif_make_atom(env, "neg_inf");
   else
     return enif_make_badarg(env);
 }

@@ -36,7 +36,7 @@ defmodule CreationTest do
 
   test "#fill fills matrix with special float value" do
     e = new("NegInf NegInf; NegInf NegInf")
-    assert fill(2, NegInf) == e
+    assert fill(2, :neg_inf) == e
   end
 
   test "#magic raises error, when too small is requested" do

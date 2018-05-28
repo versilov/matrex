@@ -313,10 +313,10 @@ defmodule MatrexTest do
   end
 
   test "#find finds special float values" do
-    matrex = Matrex.reshape([NegInf, 2, NaN, 4, Inf, 6], 2, 3)
-    assert Matrex.find(matrex, Inf) == {2, 2}
-    assert Matrex.find(matrex, NegInf) == {1, 1}
-    assert Matrex.find(matrex, NaN) == {1, 3}
+    matrex = Matrex.reshape([:neg_inf, 2, :nan, 4, :inf, 6], 2, 3)
+    assert Matrex.find(matrex, :inf) == {2, 2}
+    assert Matrex.find(matrex, :neg_inf) == {1, 1}
+    assert Matrex.find(matrex, :nan) == {1, 3}
   end
 
   test "#first returns the first element of the matrix" do
@@ -342,9 +342,9 @@ defmodule MatrexTest do
     assert Matrex.max(matrix) == expected
   end
 
-  test "#max returns Inf" do
-    matrix = Matrex.new([[1, Inf, 3], [4, NegInf, 6]])
-    expected = Inf
+  test "#max returns :inf" do
+    matrix = Matrex.new([[1, :inf, 3], [4, :neg_inf, 6]])
+    expected = :inf
 
     assert Matrex.max(matrix) == expected
   end
@@ -356,30 +356,30 @@ defmodule MatrexTest do
     assert Matrex.min(matrix) == expected
   end
 
-  test "#min returns NegInf" do
-    matrix = Matrex.new([[1, 2, 0.5], [4, 5, NegInf]])
-    expected = NegInf
+  test "#min returns :neg_inf" do
+    matrix = Matrex.new([[1, 2, 0.5], [4, 5, :neg_inf]])
+    expected = :neg_inf
 
     assert Matrex.min(matrix) == expected
   end
 
   test "#max_finite returns max finite element" do
-    m = reshape([Inf, 2, 3, Inf], 2, 2)
+    m = reshape([:inf, 2, 3, :inf], 2, 2)
     assert max_finite(m) == 3.0
   end
 
   test "#max_finite returns nil for totally infinite matrix" do
-    m = fill(3, 3, Inf)
+    m = fill(3, 3, :inf)
     assert max_finite(m) == nil
   end
 
   test "#min_finite returns min finite element" do
-    m = reshape([NegInf, -2, NaN, 5], 2, 2)
+    m = reshape([:neg_inf, -2, :nan, 5], 2, 2)
     assert min_finite(m) == -2.0
   end
 
   test "#min_finite returns nil for totally infinite matrix" do
-    m = fill(3, 3, NegInf)
+    m = fill(3, 3, :neg_inf)
     assert min_finite(m) == nil
   end
 
@@ -477,7 +477,7 @@ defmodule MatrexTest do
   end
 
   test "#reshape respects special float values" do
-    list = Enum.to_list(1..4) ++ [NaN, NegInf]
+    list = Enum.to_list(1..4) ++ [:nan, :neg_inf]
     expected = Matrex.new("1 2; 3 4; NaN NegInf")
 
     assert Matrex.reshape(list, 3, 2) == expected
@@ -544,9 +544,9 @@ defmodule MatrexTest do
 
   test "#set can handle special values" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
-    expected = Matrex.new([[1, NaN, 3], [4, 5, 6]])
+    expected = Matrex.new([[1, :nan, 3], [4, 5, 6]])
 
-    assert Matrex.set(matrix, 1, 2, NaN) == expected
+    assert Matrex.set(matrix, 1, 2, :nan) == expected
   end
 
   test "#size returns the size of the matrix" do
@@ -622,8 +622,8 @@ defmodule MatrexTest do
   end
 
   test "#sum returns special float values" do
-    input = Matrex.new([[Inf, 1.5, 0.0]])
-    assert Matrex.sum(input) == Inf
+    input = Matrex.new([[:inf, 1.5, 0.0]])
+    assert Matrex.sum(input) == :inf
   end
 
   test "#to_list returs whole matrix as a list" do
