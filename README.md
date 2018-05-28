@@ -311,8 +311,8 @@ because BEAM does not accept special values as valid floats.
     └                         ┘
 
     iex> n[1][1]
-    Inf
+    :inf
 
     iex> n[1][2]
-    NaN
+    :nan
 ```
