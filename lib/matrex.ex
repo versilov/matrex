@@ -295,191 +295,99 @@ defmodule Matrex do
 
   @behaviour Access
 
-  # Horizontal vector
-  @doc false
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            _columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = matrex,
-        key
-      )
-      when is_integer(key) and key > 0 and rows == 1,
-      do: {:ok, at(matrex, 1, key)}
-
-  # Vertical vector
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            _rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = matrex,
-        key
-      )
-      when is_integer(key) and key > 0 and columns == 1,
-      do: {:ok, at(matrex, key, 1)}
-
-  # Return a row
-  @impl Access
-  def fetch(
-        %Matrex{} = matrex,
-        key
-      )
-      when is_integer(key) and key > 0,
-      do: {:ok, row(matrex, key)}
-
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            1::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        a..b
-      )
-      when b > a and a > 0 and b <= columns,
-      do:
-        {:ok,
-         %Matrex{
-           data:
-             <<1::unsigned-integer-little-32, b - a + 1::unsigned-integer-little-32,
-               binary_part(data, (a - 1) * @element_size, (b - a + 1) * @element_size)::binary>>
-         }}
-
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        a..b
-      )
-      when b > a and a > 0 and b <= rows,
-      do:
-        {:ok,
-         %Matrex{
-           data:
-             <<b - a + 1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-               binary_part(
-                 data,
-                 (a - 1) * columns * @element_size,
-                 (b - a + 1) * columns * @element_size
-               )::binary>>
-         }}
-
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            _columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        },
-        :rows
-      ),
-      do: {:ok, rows}
-
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            _rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        },
-        :cols
-      ),
-      do: {:ok, columns}
-
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            _rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        },
-        :columns
-      ),
-      do: {:ok, columns}
-
-  @impl Access
-  def fetch(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        },
-        :size
-      ),
-      do: {:ok, {rows, columns}}
-
-  @impl Access
-  def fetch(%Matrex{} = matrex, :sum), do: {:ok, sum(matrex)}
-  def fetch(%Matrex{} = matrex, :max), do: {:ok, max(matrex)}
-  def fetch(%Matrex{} = matrex, :min), do: {:ok, min(matrex)}
-  def fetch(%Matrex{} = matrex, :argmax), do: {:ok, argmax(matrex)}
-
-  @doc false
-  @impl Access
-  def get(%Matrex{} = matrex, key, default) do
-    case fetch(matrex, key) do
-      {:ok, value} -> value
-      :error -> default
+  defmacrop matrex_data(rows, columns, body) do
+    quote do
+      %Matrex{
+        data: <<
+          unquote(rows)::unsigned-integer-little-32,
+          unquote(columns)::unsigned-integer-little-32,
+          unquote(body)::binary
+        >>
+      }
     end
   end
 
-  @doc false
+  defmacrop matrex_data(rows, columns, body, data) do
+    quote do
+      %Matrex{
+        data:
+          <<
+            unquote(rows)::unsigned-integer-little-32,
+            unquote(columns)::unsigned-integer-little-32,
+            unquote(body)::binary
+          >> = unquote(data)
+      }
+    end
+  end
+
   @impl Access
-  def pop(
-        %Matrex{
-          data:
-            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-              body::binary>>
-        },
-        row
-      )
+  def fetch(matrex, key)
+
+  # Horizontal vector
+  def fetch(matrex_data(1, _, _) = matrex, key)
+      when is_integer(key) and key > 0,
+      do: {:ok, at(matrex, 1, key)}
+
+  # Vertical vector
+  def fetch(matrex_data(_, 1, _) = matrex, key)
+      when is_integer(key) and key > 0,
+      do: {:ok, at(matrex, key, 1)}
+
+  # Return a row
+  def fetch(matrex, key)
+      when is_integer(key) and key > 0,
+      do: {:ok, row(matrex, key)}
+
+  # Slice on horizontal vector
+  def fetch(matrex_data(1, columns, data), a..b)
+      when b > a and a > 0 and b <= columns do
+    data = binary_part(data, (a - 1) * @element_size, (b - a + 1) * @element_size)
+    {:ok, matrex_data(1, b - a + 1, data)}
+  end
+
+  def fetch(matrex_data(rows, columns, data), a..b)
+      when b > a and a > 0 and b <= rows do
+    data =
+      binary_part(data, (a - 1) * columns * @element_size, (b - a + 1) * columns * @element_size)
+
+    {:ok, matrex_data(b - a + 1, columns, data)}
+  end
+
+  def fetch(matrex_data(rows, _, _), :rows), do: {:ok, rows}
+  def fetch(matrex_data(_, cols, _), :cols), do: {:ok, cols}
+  def fetch(matrex_data(_, cols, _), :columns), do: {:ok, cols}
+  def fetch(matrex_data(rows, cols, _), :size), do: {:ok, {rows, cols}}
+  def fetch(matrex, :sum), do: {:ok, sum(matrex)}
+  def fetch(matrex, :max), do: {:ok, max(matrex)}
+  def fetch(matrex, :min), do: {:ok, min(matrex)}
+  def fetch(matrex, :argmax), do: {:ok, argmax(matrex)}
+
+  @impl Access
+  def pop(matrex_data(rows, columns, body), row)
       when is_integer(row) and row >= 1 and row <= rows do
-    {%Matrex{
-       data:
-         <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-           binary_part(body, (row - 1) * columns * @element_size, columns * @element_size)::binary>>
-     },
-     %Matrex{
-       data:
-         <<rows - 1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-           binary_part(body, 0, (row - 1) * columns * @element_size)::binary,
-           binary_part(
-             body,
-             row * columns * @element_size,
-             (rows - row) * columns * @element_size
-           )::binary>>
-     }}
+    get =
+      matrex_data(
+        1,
+        columns,
+        binary_part(body, (row - 1) * columns * @element_size, columns * @element_size)
+      )
+
+    update =
+      matrex_data(
+        rows - 1,
+        columns,
+        binary_part(body, 0, (row - 1) * columns * @element_size) <>
+          binary_part(body, row * columns * @element_size, (rows - row) * columns * @element_size)
+      )
+
+    {get, update}
   end
 
   def pop(%Matrex{} = matrex, _), do: {nil, matrex}
 
   # To silence warnings
-  @doc false
   @impl Access
-  def get_and_update(%Matrex{}, _row, _fun), do: :not_implemented
+  def get_and_update(%Matrex{}, _row, _fun), do: raise("not implemented")
 
   defimpl Inspect do
     @doc false
@@ -498,50 +406,49 @@ defmodule Matrex do
     # Matrix element size in bytes
     @element_size 4
 
+    defmacrop matrex_data(rows, columns, data) do
+      quote do
+        %Matrex{
+          data: <<
+            unquote(rows)::unsigned-integer-little-32,
+            unquote(columns)::unsigned-integer-little-32,
+            unquote(data)::binary
+          >>
+        }
+      end
+    end
+
     @doc false
-    def count(%Matrex{
-          data:
-            <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, _body::binary>>
-        }),
-        do: {:ok, rows * cols}
+    def count(matrex_data(rows, cols, _data)),
+      do: {:ok, rows * cols}
 
     @doc false
     def member?(%Matrex{} = matrex, element), do: {:ok, Matrex.contains?(matrex, element)}
 
     @doc false
-    def slice(%Matrex{
-          data:
-            <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, body::binary>>
-        }),
-        do:
-          {:ok, rows * cols,
-           fn start, length ->
-             Matrex.binary_to_list(
-               binary_part(body, start * @element_size, length * @element_size)
-             )
-           end}
+    def slice(matrex_data(rows, cols, body)) do
+      {:ok, rows * cols,
+       fn start, length ->
+         Matrex.binary_to_list(binary_part(body, start * @element_size, length * @element_size))
+       end}
+    end
 
     @doc false
-    def reduce(
-          %Matrex{
-            data:
-              <<_rows::unsigned-integer-little-32, _cols::unsigned-integer-little-32,
-                body::binary>>
-          },
-          {:cont, acc},
-          fun
-        ),
-        do: reduce(body, {:cont, acc}, fun)
+    def reduce(matrex_data(_rows, _cols, body), acc, fun) do
+      reduce_each(body, acc, fun)
+    end
 
-    def reduce(_, {:halt, acc}, _fun), do: {:halted, acc}
+    defp reduce_each(_, {:halt, acc}, _fun),
+      do: {:halted, acc}
 
-    def reduce(<<matrix::binary>>, {:suspend, acc}, fun),
-      do: {:suspended, acc, &reduce(matrix, &1, fun)}
+    defp reduce_each(matrix, {:suspend, acc}, fun),
+      do: {:suspended, acc, &reduce_each(matrix, &1, fun)}
 
-    def reduce(<<elem::binary-4, rest::binary>>, {:cont, acc}, fun),
-      do: reduce(rest, fun.(Matrex.binary_to_float(elem), acc), fun)
+    defp reduce_each(<<elem::binary-@element_size, rest::binary>>, {:cont, acc}, fun),
+      do: reduce_each(rest, fun.(Matrex.binary_to_float(elem), acc), fun)
 
-    def reduce(<<>>, {:cont, acc}, _fun), do: {:done, acc}
+    defp reduce_each(<<>>, {:cont, acc}, _fun),
+      do: {:done, acc}
   end
 
   @doc """
@@ -764,33 +671,14 @@ defmodule Matrex do
     %Matrex{data: apply_on_matrix(data, function, initial)}
   end
 
-  def apply(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        function
-      )
+  def apply(matrex_data(rows, columns, data), function)
       when is_function(function, 2) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
     size = rows * columns
-
     %Matrex{data: apply_on_matrix(data, function, 1, size, initial)}
   end
 
-  def apply(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        function
-      )
+  def apply(matrex_data(rows, columns, data), function)
       when is_function(function, 3) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
@@ -865,27 +753,10 @@ defmodule Matrex do
       └                                         ┘
   """
   @spec apply(matrex, matrex, (element, element -> element)) :: matrex
-  def apply(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            first_data::binary
-          >>
-        },
-        %Matrex{
-          data: <<
-            rows2::unsigned-integer-little-32,
-            columns2::unsigned-integer-little-32,
-            second_data::binary
-          >>
-        },
-        function
-      )
-      when is_function(function, 2) and rows == rows2 and columns == columns2 do
+  def apply(matrex_data(rows, columns, data1), matrex_data(rows, columns, data2), function)
+      when is_function(function, 2) do
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
-
-    %Matrex{data: apply_on_matrices(first_data, second_data, function, initial)}
+    %Matrex{data: apply_on_matrices(data1, data2, function, initial)}
   end
 
   defp apply_on_matrices(<<>>, <<>>, _, accumulator), do: accumulator
@@ -927,6 +798,8 @@ defmodule Matrex do
   @doc """
   Get element of a matrix at given one-based (row, column) position.
 
+  Negative or out of bound indices will raise an exception.
+
   ## Example
 
       iex> m = Matrex.magic(3)
@@ -947,23 +820,13 @@ defmodule Matrex do
 
   """
   @spec at(matrex, index, index) :: element
-  def at(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        row,
-        col
-      )
+  def at(matrex_data(rows, columns, data), row, col)
       when is_integer(row) and is_integer(col) do
     if row < 1 or row > rows,
-      do: raise(ArgumentError, message: "Row position out of range: #{row}")
+      do: raise(ArgumentError, "row position out of range: #{row}")
 
     if col < 1 or col > columns,
-      do: raise(ArgumentError, message: "Column position out of range: #{col}")
+      do: raise(ArgumentError, "column position out of range: #{col}")
 
     data
     |> binary_part(((row - 1) * columns + (col - 1)) * @element_size, @element_size)
@@ -978,7 +841,8 @@ defmodule Matrex do
   def binary_to_float(<<val::float-little-32>>), do: val
 
   @doc false
-  def binary_to_list(<<elem::binary-4, rest::binary>>),
+  @spec binary_to_list(<<_::_*32>>) :: [element | NaN | Inf | NegInf]
+  def binary_to_list(<<elem::binary-@element_size, rest::binary>>),
     do: [binary_to_float(elem) | binary_to_list(rest)]
 
   def binary_to_list(<<>>), do: []
@@ -1005,27 +869,16 @@ defmodule Matrex do
 
   """
   @spec column(matrex, index) :: matrex
-  def column(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        col
-      )
+  def column(matrex_data(rows, columns, data), col)
       when is_integer(col) and col > 0 and col <= columns do
     column = <<rows::unsigned-integer-little-32, 1::unsigned-integer-little-32>>
 
-    %Matrex{
-      data:
-        0..(rows - 1)
-        |> Enum.reduce(column, fn row, acc ->
-          <<acc::binary,
-            binary_part(data, (row * columns + (col - 1)) * @element_size, @element_size)::binary>>
-        end)
-    }
+    data =
+      Enum.map(0..(rows - 1), fn row ->
+        binary_part(data, (row * columns + (col - 1)) * @element_size, @element_size)
+      end)
+
+    %Matrex{data: IO.iodata_to_binary([column | data])}
   end
 
   @doc """
@@ -1123,56 +976,16 @@ defmodule Matrex do
       when rows1 == rows2,
       do: %Matrex{data: Matrex.NIFs.concat_columns(first, second)}
 
-  def concat(
-        %Matrex{
-          data: <<
-            rows1::unsigned-integer-little-32,
-            columns1::unsigned-integer-little-32,
-            data1::binary
-          >>
-        },
-        %Matrex{
-          data: <<
-            rows2::unsigned-integer-little-32,
-            columns2::unsigned-integer-little-32,
-            data2::binary
-          >>
-        },
-        :rows
-      )
-      when columns1 == columns2 do
-    %Matrex{
-      data:
-        <<rows1 + rows2::unsigned-integer-little-32, columns1::unsigned-integer-little-32,
-          data1::binary, data2::binary>>
-    }
+  def concat(matrex_data(rows1, columns, data1), matrex_data(rows2, columns, data2), :rows) do
+    matrex_data(rows1 + rows2, columns, data1 <> data2)
   end
 
-  def concat(
-        %Matrex{
-          data: <<
-            rows1::unsigned-integer-little-32,
-            columns1::unsigned-integer-little-32,
-            _data1::binary
-          >>
-        },
-        %Matrex{
-          data: <<
-            rows2::unsigned-integer-little-32,
-            columns2::unsigned-integer-little-32,
-            _data2::binary
-          >>
-        },
-        type
-      ),
-      do:
-        raise(
-          ArgumentError,
-          message:
-            "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{
-              type
-            }."
-        )
+  def concat(matrex_data(rows1, columns1, _data1), matrex_data(rows2, columns2, _data2), type) do
+    raise(
+      ArgumentError,
+      "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{type}."
+    )
+  end
 
   @doc """
   Checks if given element exists in the matrix.
@@ -1258,22 +1071,8 @@ defmodule Matrex do
   """
   @spec dot(matrex, matrex) :: matrex
   def dot(
-        %Matrex{
-          data:
-            <<
-              _rows1::unsigned-integer-little-32,
-              columns1::unsigned-integer-little-32,
-              _data1::binary
-            >> = first
-        },
-        %Matrex{
-          data:
-            <<
-              rows2::unsigned-integer-little-32,
-              _columns2::unsigned-integer-little-32,
-              _data2::binary
-            >> = second
-        }
+        matrex_data(_rows1, columns1, _data1, first),
+        matrex_data(rows2, _columns2, _data2, second)
       )
       when columns1 == rows2,
       do: %Matrex{data: NIFs.dot(first, second)}
@@ -1296,22 +1095,8 @@ defmodule Matrex do
   """
   @spec dot_and_add(matrex, matrex, matrex) :: matrex
   def dot_and_add(
-        %Matrex{
-          data:
-            <<
-              _rows1::unsigned-integer-little-32,
-              columns1::unsigned-integer-little-32,
-              _data1::binary
-            >> = first
-        },
-        %Matrex{
-          data:
-            <<
-              rows2::unsigned-integer-little-32,
-              _columns2::unsigned-integer-little-32,
-              _data2::binary
-            >> = second
-        },
+        matrex_data(_rows1, columns1, _data1, first),
+        matrex_data(rows2, _columns2, _data2, second),
         %Matrex{data: third}
       )
       when columns1 == rows2,
@@ -1333,22 +1118,8 @@ defmodule Matrex do
   """
   @spec dot_and_apply(matrex, matrex, atom) :: matrex
   def dot_and_apply(
-        %Matrex{
-          data:
-            <<
-              _rows1::unsigned-integer-little-32,
-              columns1::unsigned-integer-little-32,
-              _data1::binary
-            >> = first
-        },
-        %Matrex{
-          data:
-            <<
-              rows2::unsigned-integer-little-32,
-              _columns2::unsigned-integer-little-32,
-              _data2::binary
-            >> = second
-        },
+        matrex_data(_rows1, columns1, _data1, first),
+        matrex_data(rows2, _columns2, _data2, second),
         function
       )
       when columns1 == rows2 and function in @math_functions,
@@ -1372,22 +1143,8 @@ defmodule Matrex do
   """
   @spec dot_nt(matrex, matrex) :: matrex
   def dot_nt(
-        %Matrex{
-          data:
-            <<
-              _rows1::unsigned-integer-little-32,
-              columns1::unsigned-integer-little-32,
-              _data1::binary
-            >> = first
-        },
-        %Matrex{
-          data:
-            <<
-              _rows2::unsigned-integer-little-32,
-              columns2::unsigned-integer-little-32,
-              _data2::binary
-            >> = second
-        }
+        matrex_data(_rows1, columns1, _data1, first),
+        matrex_data(_rows2, columns2, _data2, second)
       )
       when columns1 == columns2,
       do: %Matrex{data: NIFs.dot_nt(first, second)}
@@ -1412,22 +1169,8 @@ defmodule Matrex do
   """
   @spec dot_tn(matrex, matrex, number) :: matrex
   def dot_tn(
-        %Matrex{
-          data:
-            <<
-              rows1::unsigned-integer-little-32,
-              _columns1::unsigned-integer-little-32,
-              _data1::binary
-            >> = first
-        },
-        %Matrex{
-          data:
-            <<
-              rows2::unsigned-integer-little-32,
-              _columns2::unsigned-integer-little-32,
-              _data2::binary
-            >> = second
-        },
+        matrex_data(rows1, _columns1, _data1, first),
+        matrex_data(rows2, _columns2, _data2, second),
         alpha \\ 1.0
       )
       when rows1 == rows2 and is_number(alpha),
@@ -1516,15 +1259,8 @@ defmodule Matrex do
 
   """
   @spec first(matrex) :: element
-  def first(%Matrex{
-        data: <<
-          _rows::unsigned-integer-little-32,
-          _columns::unsigned-integer-little-32,
-          element::binary-4,
-          _rest::binary
-        >>
-      }),
-      do: binary_to_float(element)
+  def first(matrex_data(_rows, _columns, <<element::binary-@element_size, _::binary>>)),
+    do: binary_to_float(element)
 
   @doc """
   Prints monochrome or color heatmap of the matrix to the console.
@@ -1592,13 +1328,7 @@ defmodule Matrex do
 
   """
   @spec list_of_rows(matrex) :: [matrex]
-  def list_of_rows(%Matrex{
-        data: <<
-          rows::unsigned-integer-little-32,
-          columns::unsigned-integer-little-32,
-          matrix::binary
-        >>
-      }) do
+  def list_of_rows(matrex_data(rows, columns, matrix)) do
     do_list_rows(matrix, rows, columns)
   end
 
@@ -1633,16 +1363,7 @@ defmodule Matrex do
 
   """
   @spec list_of_rows(matrex, Range.t()) :: [matrex]
-  def list_of_rows(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            matrix::binary
-          >>
-        },
-        from..to
-      )
+  def list_of_rows(matrex_data(rows, columns, matrix), from..to)
       when from <= to and to <= rows do
     part =
       binary_part(
@@ -1658,11 +1379,7 @@ defmodule Matrex do
 
   defp do_list_rows(<<rows::binary>>, row_num, columns) do
     [
-      %Matrex{
-        data:
-          <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-            binary_part(rows, 0, columns * @element_size)::binary>>
-      }
+      matrex_data(1, columns, binary_part(rows, 0, columns * @element_size))
       | do_list_rows(
           binary_part(rows, columns * @element_size, (row_num - 1) * columns * @element_size),
           row_num - 1,
@@ -2345,11 +2062,7 @@ defmodule Matrex do
         new_rows,
         new_columns
       ),
-      do: %Matrex{
-        data:
-          <<new_rows::unsigned-integer-little-32, new_columns::unsigned-integer-little-32,
-            matrix::binary>>
-      }
+      do: matrex_data(new_rows, new_columns, matrix)
 
   @spec reshape(Enumerable.t(), index, index) :: matrex
   def reshape(input, rows, columns), do: input |> Enum.to_list() |> reshape(rows, columns)
@@ -2431,22 +2144,14 @@ defmodule Matrex do
       └                                         ┘
   """
   @spec row(matrex, index) :: matrex
-  def row(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            data::binary
-          >>
-        },
-        row
-      )
-      when is_integer(row) and row > 0 and row <= rows,
-      do: %Matrex{
-        data:
-          <<1::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-            binary_part(data, (row - 1) * columns * @element_size, columns * @element_size)::binary>>
-      }
+  def row(matrex_data(rows, columns, data), row)
+      when is_integer(row) and row > 0 and row <= rows do
+    matrex_data(
+      1,
+      columns,
+      binary_part(data, (row - 1) * columns * @element_size, columns * @element_size)
+    )
+  end
 
   @doc """
   Saves matrex into file.
@@ -2550,24 +2255,10 @@ defmodule Matrex do
       └                         ┘
   """
   @spec set(matrex, index, index, element) :: matrex
-  def set(
-        %Matrex{
-          data:
-            <<
-              rows::unsigned-integer-little-32,
-              cols::unsigned-integer-little-32,
-              _data::binary
-            >> = matrix
-        },
-        row,
-        column,
-        value
-      )
+  def set(matrex_data(rows, cols, _rest, matrix), row, column, value)
       when (is_number(value) or value in [:nan, :inf, :neg_inf]) and row > 0 and column > 0 and
              row <= rows and column <= cols,
-      do: %Matrex{
-        data: NIFs.set(matrix, row - 1, column - 1, float_to_binary(value))
-      }
+      do: %Matrex{data: NIFs.set(matrix, row - 1, column - 1, float_to_binary(value))}
 
   @doc """
   Set column of a matrix to the values from the given 1-column matrix. NIF.
@@ -2592,20 +2283,9 @@ defmodule Matrex do
   """
   @spec set_column(matrex, index, matrex) :: matrex
   def set_column(
-        %Matrex{
-          data:
-            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-              _rest::binary>> = matrix
-        },
+        matrex_data(rows, columns, _rest1, matrix),
         column,
-        %Matrex{
-          data:
-            <<
-              rows::unsigned-integer-little-32,
-              1::unsigned-integer-little-32,
-              _rest2::binary
-            >> = column_matrix
-        }
+        matrex_data(rows, 1, _rest2, column_matrix)
       )
       when column in 1..columns,
       do: %Matrex{data: NIFs.set_column(matrix, column - 1, column_matrix)}
@@ -2625,14 +2305,8 @@ defmodule Matrex do
       {2, 3}
   """
   @spec size(matrex) :: {index, index}
-  def size(%Matrex{
-        data: <<
-          rows::unsigned-integer-little-32,
-          cols::unsigned-integer-little-32,
-          _rest::binary
-        >>
-      }),
-      do: {rows, cols}
+  def size(matrex_data(rows, cols, _)),
+    do: {rows, cols}
 
   @doc """
   Produces element-wise squared matrix. NIF through `multiply/4`.
@@ -2679,33 +2353,19 @@ defmodule Matrex do
       └                ┘
   """
   @spec submatrix(matrex, Range.t(), Range.t()) :: matrex
-  def submatrix(
-        %Matrex{
-          data:
-            <<
-              rows::unsigned-integer-little-32,
-              cols::unsigned-integer-little-32,
-              _rest::binary
-            >> = data
-        },
-        row_from..row_to,
-        col_from..col_to
-      )
+  def submatrix(matrex_data(rows, cols, _rest, data), row_from..row_to, col_from..col_to)
       when row_from in 1..rows and row_to in row_from..rows and col_from in 1..cols and
              col_to in col_from..cols,
       do: %Matrex{data: NIFs.submatrix(data, row_from - 1, row_to - 1, col_from - 1, col_to - 1)}
 
-  def submatrix(%Matrex{} = matrex, rows, cols),
-    do:
-      raise(
-        RuntimeError,
-        message:
-          "Submatrix position out of range or malformed: position is (#{Kernel.inspect(rows)}, #{
-            Kernel.inspect(cols)
-          }), source size is (#{Kernel.inspect(1..matrex[:rows])}, #{
-            Kernel.inspect(1..matrex[:columns])
-          })"
-      )
+  def submatrix(%Matrex{} = matrex, rows, cols) do
+    raise(
+      RuntimeError,
+      "Submatrix position out of range or malformed: position is " <>
+        "(#{Kernel.inspect(rows)}, #{Kernel.inspect(cols)}), source size is " <>
+        "(#{Kernel.inspect(1..matrex[:rows])}, #{Kernel.inspect(1..matrex[:columns])})"
+    )
+  end
 
   @doc """
   Subtracts two matrices or matrix from scalar element-wise. NIF.
@@ -2853,28 +2513,8 @@ defmodule Matrex do
 
   """
   @spec to_column(matrex) :: matrex
-  def to_column(
-        %Matrex{
-          data: <<
-            _rows::unsigned-integer-little-32,
-            1::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = m
-      ),
-      # No need to reshape
-      do: m
-
-  def to_column(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = m
-      ),
-      do: reshape(m, rows * columns, 1)
+  def to_column(matrex_data(_rows, 1, _rest) = m), do: m
+  def to_column(matrex_data(rows, columns, _rest) = m), do: reshape(m, rows * columns, 1)
 
   @doc """
   Convert any matrix m×n to a row matrix 1×(m*n).
@@ -2896,27 +2536,8 @@ defmodule Matrex do
 
   """
   @spec to_row(matrex) :: matrex
-  def to_row(
-        %Matrex{
-          data: <<
-            1::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = m
-      ),
-      # No need to reshape
-      do: m
-
-  def to_row(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = m
-      ),
-      do: reshape(m, 1, rows * columns)
+  def to_row(matrex_data(1, _columns, _rest) = m), do: m
+  def to_row(matrex_data(rows, columns, _rest) = m), do: reshape(m, 1, rows * columns)
 
   @doc """
   Transposes a matrix. NIF.
@@ -2939,28 +2560,8 @@ defmodule Matrex do
   """
   @spec transpose(matrex) :: matrex
   # Vectors are transposed by simply reshaping
-  def transpose(
-        %Matrex{
-          data: <<
-            1::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = m
-      ),
-      do: reshape(m, columns, 1)
-
-  def transpose(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            1::unsigned-integer-little-32,
-            _rest::binary
-          >>
-        } = m
-      ),
-      do: reshape(m, 1, rows)
-
+  def transpose(matrex_data(1, columns, _rest) = m), do: reshape(m, columns, 1)
+  def transpose(matrex_data(rows, 1, _rest) = m), do: reshape(m, 1, rows)
   def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
 
   @doc """
@@ -2988,18 +2589,7 @@ defmodule Matrex do
 
   """
   @spec update(matrex, index, index, (element -> element)) :: matrex
-  def update(
-        %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _data::binary
-          >>
-        },
-        row,
-        col,
-        _fun
-      )
+  def update(matrex_data(rows, columns, _data), row, col, _fun)
       when not inside_matrex(row, col, rows, columns),
       do:
         raise(
@@ -3007,19 +2597,7 @@ defmodule Matrex do
           message: "Position (#{row}, #{col}) is out of matrex [#{rows}×#{columns}]"
         )
 
-  def update(
-        %Matrex{
-          data:
-            <<
-              _rows::unsigned-integer-little-32,
-              columns::unsigned-integer-little-32,
-              data::binary
-            >> = matrix
-        },
-        row,
-        col,
-        fun
-      )
+  def update(matrex_data(_rows, columns, data, matrix), row, col, fun)
       when is_function(fun, 1) do
     new_value =
       data
@@ -3028,9 +2606,7 @@ defmodule Matrex do
       |> fun.()
       |> float_to_binary()
 
-    %Matrex{
-      data: NIFs.set(matrix, row - 1, col - 1, new_value)
-    }
+    %Matrex{data: NIFs.set(matrix, row - 1, col - 1, new_value)}
   end
 
   @doc """
