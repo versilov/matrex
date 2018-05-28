@@ -140,7 +140,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap marks special float values (NaN)" do
-    m = Matrex.reshape([1, 2, NaN, 4, 5, 6], 3, 2)
+    m = Matrex.reshape([1, 2, :nan, 4, 5, 6], 3, 2)
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m2\e[0m]\n\e[0m┌  ┐\n│\e[48;5;0;38;5;196m▄\e[48;5;236;38;5;246m▄\e[0m│\n│\e[7m\e[38;5;251m▄\e[38;5;231m▄\e[0m│\n\e[0m└  ┘\e[?25h\n"
@@ -154,7 +154,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap displays matrices with inifinte values, marks infinity" do
-    m = reshape([Inf, 2, NegInf, 4, NaN, 6], 3, 2)
+    m = reshape([:inf, 2, :neg_inf, 4, :nan, 6], 3, 2)
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m2\e[0m]\n\e[0m┌  ┐\n│\e[48;5;87;38;5;27m▄\e[48;5;0;38;5;243m▄\e[0m│\n│\e[7m\e[38;5;196m▄\e[38;5;231m▄\e[0m│\n\e[0m└  ┘\e[?25h\n"

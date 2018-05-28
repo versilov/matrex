@@ -418,20 +418,20 @@ defmodule Matrex.Inspect do
   end
 
   # Mark float special values on the heatmap
-  defp val_to_color(:mono24bit, NaN, _, _), do: "255;0;0"
-  defp val_to_color(:color24bit, NaN, _, _), do: "255;255;255"
-  defp val_to_color(ttype, Inf, _, _) when ttype in [:mono24bit, :color24bit], do: "0;128;255"
-  defp val_to_color(ttype, NegInf, _, _) when ttype in [:mono24bit, :color24bit], do: "0;0;255"
+  defp val_to_color(:mono24bit, :nan, _, _), do: "255;0;0"
+  defp val_to_color(:color24bit, :nan, _, _), do: "255;255;255"
+  defp val_to_color(ttype, :inf, _, _) when ttype in [:mono24bit, :color24bit], do: "0;128;255"
+  defp val_to_color(ttype, :neg_inf, _, _) when ttype in [:mono24bit, :color24bit], do: "0;0;255"
 
-  defp val_to_color(:mono256, NaN, _, _), do: "196"
-  defp val_to_color(:color256, NaN, _, _), do: "0"
-  defp val_to_color(ttype, Inf, _, _) when ttype in [:mono256, :color256], do: "87"
-  defp val_to_color(ttype, NegInf, _, _) when ttype in [:mono256, :color256], do: "27"
+  defp val_to_color(:mono256, :nan, _, _), do: "196"
+  defp val_to_color(:color256, :nan, _, _), do: "0"
+  defp val_to_color(ttype, :inf, _, _) when ttype in [:mono256, :color256], do: "87"
+  defp val_to_color(ttype, :neg_inf, _, _) when ttype in [:mono256, :color256], do: "27"
 
-  defp val_to_color(:mono8, NaN, _, _), do: "1"
-  defp val_to_color(:color8, NaN, _, _), do: "7"
-  defp val_to_color(ttype, Inf, _, _) when ttype in [:mono8, :color8], do: "6"
-  defp val_to_color(ttype, NegInf, _, _) when ttype in [:mono8, :color8], do: "1"
+  defp val_to_color(:mono8, :nan, _, _), do: "1"
+  defp val_to_color(:color8, :nan, _, _), do: "7"
+  defp val_to_color(ttype, :inf, _, _) when ttype in [:mono8, :color8], do: "6"
+  defp val_to_color(ttype, :neg_inf, _, _) when ttype in [:mono8, :color8], do: "1"
 
   defp val_to_color(:mono24bit, val, mn, range) do
     c = trunc((val - mn) * 255 / range)

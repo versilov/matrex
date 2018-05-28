@@ -215,7 +215,7 @@ The same function, coded with module methods calls (2.5 times faster):
         )
         |> Matrex.scalar()
         |> (fn
-              NaN -> NaN
+              :nan -> :nan
               x -> x / m + regularization
             end).()
 
@@ -288,9 +288,9 @@ so you can use it to exchange data between two systems.
 
 ## NaN and Infinity
 
-Float special values, like `NaN` and `Inf` live well inside matrices,
+Float special values, like `:nan` and `:inf` live well inside matrices,
 can be loaded from and saved to files.
-But when getting them into Elixir they are transferred to `NaN`,`Inf` and `NegInf` atoms,
+But when getting them into Elixir they are transferred to `:nan`,`:inf` and `:neg_inf` atoms,
 because BEAM does not accept special values as valid floats.
 
 ```elixir

@@ -271,7 +271,7 @@ defmodule Matrex.Algorithms do
     data = tighten(data)
 
     cond do
-      data.f2 in [NaN, Inf, NegInf] ->
+      data.f2 in [:nan, :inf, :neg_inf] ->
         {false, data}
 
       data.f2 > data.f1 + data.z1 * @rho * data.d1 or data.d2 > -@sig * data.d1 ->
@@ -314,7 +314,7 @@ defmodule Matrex.Algorithms do
   end
 
   defp tighten(%FMinCG{f2: f2, f1: f1, z1: z1, d1: d1, d2: d2, m: m} = data)
-       when not (((f2 != NaN and f2 > f1 + z1 * @rho * d1) or d2 > -@sig * d1) and m > 0),
+       when not (((f2 != :nan and f2 > f1 + z1 * @rho * d1) or d2 > -@sig * d1) and m > 0),
        do: data
 
   defp tighten(%FMinCG{d2: d2, d3: d3, f1: f1, f2: f2, f3: f3, z1: z1, z3: z3} = data) do
@@ -446,8 +446,8 @@ defmodule Matrex.Algorithms do
       )
       |> Matrex.scalar()
       |> (fn
-            NaN -> NaN
-            Inf -> Inf
+            :nan -> :nan
+            :inf -> :inf
             x -> x / m + regularization
           end).()
 
@@ -679,7 +679,7 @@ defmodule Matrex.Algorithms do
 
     # Check for special sum_C value
     sum_c =
-      if sum_c == Inf or sum_c == NaN do
+      if sum_c == :inf or sum_c == :nan do
         IO.inspect(sum_c, label: "Bad sum from a matrix")
         IO.inspect(c)
         1_000_000_000

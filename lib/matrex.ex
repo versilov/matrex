@@ -128,7 +128,7 @@ defmodule Matrex do
           )
           |> Matrex.scalar()
           |> (fn
-                NaN -> NaN
+                :nan -> :nan
                 x -> x / m + regularization
               end).()
 
@@ -200,9 +200,9 @@ defmodule Matrex do
 
   ## NaN and Infinity
 
-  Float special values, like `NaN` and `Inf` live well inside matrices,
+  Float special values, like `:nan` and `:inf` live well inside matrices,
   can be loaded from and saved to files.
-  But when getting them into Elixir they are transferred to `NaN`,`Inf` and `NegInf` atoms,
+  But when getting them into Elixir they are transferred to `:nan`,`:inf` and `:neg_inf` atoms,
   because BEAM does not accept special values as valid floats.
 
   ```elixir
@@ -223,10 +223,10 @@ defmodule Matrex do
       └                         ┘
 
       iex> n[1][1]
-      Inf
+      :inf
 
       iex> n[1][2]
-      NaN
+      :nan
   ```
 
   """
@@ -236,7 +236,7 @@ defmodule Matrex do
 
   @enforce_keys [:data]
   defstruct [:data]
-  @type element :: number | NaN | Inf | NegInf
+  @type element :: number | :nan | :inf | :neg_inf
   @type index :: pos_integer
   @type matrex :: %Matrex{data: binary}
   @type t :: matrex
@@ -971,10 +971,10 @@ defmodule Matrex do
   end
 
   @doc false
-  @spec binary_to_float(<<_::32>>) :: element | NaN | Inf | NegInf
-  def binary_to_float(@not_a_number), do: NaN
-  def binary_to_float(@positive_infinity), do: Inf
-  def binary_to_float(@negative_infinity), do: NegInf
+  @spec binary_to_float(<<_::32>>) :: element | :nan | :inf | :neg_inf
+  def binary_to_float(@not_a_number), do: :nan
+  def binary_to_float(@positive_infinity), do: :inf
+  def binary_to_float(@negative_infinity), do: :neg_inf
   def binary_to_float(<<val::float-little-32>>), do: val
 
   @doc false
@@ -1187,7 +1187,7 @@ defmodule Matrex do
       └                         ┘
       iex> Matrex.contains?(m, 1.0)
       true
-      iex> Matrex.contains?(m, NaN)
+      iex> Matrex.contains?(m, :nan)
       true
       iex> Matrex.contains?(m, 9)
       false
@@ -1503,7 +1503,7 @@ defmodule Matrex do
 
   """
   @spec find(matrex, element) :: {index, index} | nil
-  def find(%Matrex{data: data}, value) when is_number(value) or value in [NaN, Inf, NegInf],
+  def find(%Matrex{data: data}, value) when is_number(value) or value in [:nan, :inf, :neg_inf],
     do: NIFs.find(data, float_to_binary(value))
 
   @doc """
@@ -1758,8 +1758,8 @@ defmodule Matrex do
       iex> Matrex.max(m)
       25.0
 
-      iex> Matrex.reshape([1, 2, Inf, 4, 5, 6], 2, 3) |> max()
-      Inf
+      iex> Matrex.reshape([1, 2, :inf, 4, 5, 6], 2, 3) |> max()
+      :inf
 
   """
   @spec max(matrex) :: element
@@ -1772,7 +1772,7 @@ defmodule Matrex do
 
   ## Example
 
-      iex>Matrex.reshape([1, 2, Inf, 3, NaN, 5], 3, 2) |> Matrex.max_finite()
+      iex>Matrex.reshape([1, 2, :inf, 3, :nan, 5], 3, 2) |> Matrex.max_finite()
       5.0
 
   """
@@ -1797,8 +1797,8 @@ defmodule Matrex do
       iex> Matrex.min(m)
       1.0
 
-      iex> Matrex.reshape([1, 2, NegInf, 4, 5, 6], 2, 3) |> max()
-      NegInf
+      iex> Matrex.reshape([1, 2, :neg_inf, 4, 5, 6], 2, 3) |> max()
+      :neg_inf
 
   """
   @spec min(matrex) :: element
@@ -1811,7 +1811,7 @@ defmodule Matrex do
 
   ## Example
 
-      iex>Matrex.reshape([1, 2, NegInf, 3, 4, 5], 3, 2) |> Matrex.min_finite()
+      iex>Matrex.reshape([1, 2, :neg_inf, 3, 4, 5], 3, 2) |> Matrex.min_finite()
       1.0
 
   """
@@ -1908,11 +1908,14 @@ defmodule Matrex do
     new_matrix_from_function(size, rows, columns, function, initial)
   end
 
-  @spec float_to_binary(element | NaN | Inf | NegInf) :: binary
+  @spec float_to_binary(element | :nan | :inf | :neg_inf) :: binary
   defp float_to_binary(val) when is_number(val), do: <<val::float-little-32>>
-  defp float_to_binary(NaN), do: @not_a_number
-  defp float_to_binary(Inf), do: @positive_infinity
-  defp float_to_binary(NegInf), do: @negative_infinity
+  defp float_to_binary(:nan), do: @not_a_number
+  defp float_to_binary(:inf), do: @positive_infinity
+  defp float_to_binary(:neg_inf), do: @negative_infinity
+
+  defp float_to_binary(unknown_val),
+    do: raise(ArgumentError, message: "Unknown matrix element value: #{unknown_val}")
 
   @doc """
   Creates new matrix from list of lists or text representation (compatible with MathLab/Octave).
@@ -2006,12 +2009,19 @@ defmodule Matrex do
     |> new()
   end
 
-  @spec parse_float(binary) :: element | NaN | Inf | NegInf
-  defp parse_float("NaN"), do: NaN
-  defp parse_float("Inf"), do: Inf
-  defp parse_float("-Inf"), do: NegInf
-  defp parse_float("NegInf"), do: NegInf
-  defp parse_float(string), do: Float.parse(string) |> elem(0)
+  @spec parse_float(binary) :: element | :nan | :inf | :neg_inf
+  defp parse_float("NaN"), do: :nan
+  defp parse_float("Inf"), do: :inf
+  defp parse_float("+Inf"), do: :inf
+  defp parse_float("-Inf"), do: :neg_inf
+  defp parse_float("NegInf"), do: :neg_inf
+
+  defp parse_float(string) do
+    case Float.parse(string) do
+      {value, _rem} -> value
+      :error -> raise ArgumentError, message: "Unparseable matrix element value: #{string}"
+    end
+  end
 
   defp new_matrix_from_function(0, _, accumulator), do: %Matrex{data: accumulator}
 
@@ -2485,9 +2495,9 @@ defmodule Matrex do
   # Save zero values without fraction part to save space
   def element_to_string(0.0), do: "0"
   def element_to_string(val) when is_float(val), do: Float.to_string(val)
-  def element_to_string(NaN), do: "NaN"
-  def element_to_string(Inf), do: "Inf"
-  def element_to_string(NegInf), do: "-Inf"
+  def element_to_string(:nan), do: "NaN"
+  def element_to_string(:inf), do: "Inf"
+  def element_to_string(:neg_inf), do: "-Inf"
 
   @doc """
   Transfer one-element matrix to a scalar value.
@@ -2501,7 +2511,7 @@ defmodule Matrex do
       1.234
 
       iex> Matrex.new([[0]]) |> Matrex.divide(0) |> Matrex.scalar()
-      NaN
+      :nan
 
       iex> Matrex.new([[1.234, 5.678]]) |> Matrex.scalar()
       ** (FunctionClauseError) no function clause matching in Matrex.scalar/1
@@ -2531,12 +2541,12 @@ defmodule Matrex do
       │     1.0     0.0     1.0 │
       │     1.0     1.0     1.0 │
       └                         ┘
-      iex> m = Matrex.set(m, 3, 2, NegInf)
+      iex> m = Matrex.set(m, 3, 2, :neg_inf)
       #Matrex[3×3]
       ┌                         ┐
       │     1.0     1.0     1.0 │
       │     1.0     0.0     1.0 │
-      │     1.0     1.0     1.0 │
+      │     1.0     -∞      1.0 │
       └                         ┘
   """
   @spec set(matrex, index, index, element) :: matrex
@@ -2553,7 +2563,7 @@ defmodule Matrex do
         column,
         value
       )
-      when (is_number(value) or value in [NaN, Inf, NegInf]) and row > 0 and column > 0 and
+      when (is_number(value) or value in [:nan, :inf, :neg_inf]) and row > 0 and column > 0 and
              row <= rows and column <= cols,
       do: %Matrex{
         data: NIFs.set(matrix, row - 1, column - 1, float_to_binary(value))
@@ -2771,7 +2781,7 @@ defmodule Matrex do
       │     2.0     3.0 │
       └                 ┘
       iex> sum(m)
-      Inf
+      :inf
   """
   @spec sum(matrex) :: element
   def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
@@ -2817,7 +2827,7 @@ defmodule Matrex do
       │    NaN     NaN      ∞   │
       └                         ┘
       iex> Matrex.to_list_of_lists(r)
-      [[Inf, NaN, NaN], [NaN, Inf, NaN], [NaN, NaN, Inf]]
+      [[:inf, :nan, :nan], [:nan, :inf, :nan], [:nan, :nan, :inf]]
 
   """
   @spec to_list_of_lists(matrex) :: list(list(element))
