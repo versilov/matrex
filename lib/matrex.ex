@@ -485,7 +485,7 @@ defmodule Matrex do
     @doc false
     def inspect(%Matrex{} = matrex, opts) do
       {:ok, columns} = :io.columns()
-      Matrex.Inspect.do_inspect(matrex, columns, Map.get(opts, :rows, 21))
+      Matrex.Inspect.do_inspect(matrex, columns, 21)
     end
   end
 

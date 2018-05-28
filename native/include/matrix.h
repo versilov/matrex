@@ -1,7 +1,6 @@
 #ifndef INCLUDED_MATRIX_H
 #define INCLUDED_MATRIX_H
 
-#include <cblas.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -21,6 +20,11 @@ typedef float* Matrix;
 #define MX_LENGTH(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)
 #define MX_BYTE_SIZE(matrix) ((((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1]) + 2)*MX_ELEMENT_SIZE
 #define MX_DATA_BYTE_SIZE(matrix) (((uint32_t*)matrix)[0])*(((uint32_t*)matrix)[1])*MX_ELEMENT_SIZE
+
+
+void
+matrix_dot_pure(const Matrix first, const Matrix second, Matrix result);
+
 
 void
 matrix_clone(Matrix destination, Matrix source);
@@ -61,25 +65,6 @@ matrix_divide_scalar(const float scalar, const Matrix divisor, Matrix result);
 
 void
 matrix_divide_by_scalar(const Matrix dividend, const float scalar, Matrix result);
-
-void
-matrix_dot(const Matrix first, const Matrix second, Matrix result);
-
-void
-matrix_dot_and_add(
-  const Matrix first, const Matrix second, const Matrix third, Matrix result
-);
-
-void
-matrix_dot_and_apply(
-  const float alpha, const Matrix first, const Matrix second, const char *function_name, Matrix result
-);
-
-void
-matrix_dot_nt(const Matrix first, const Matrix second, Matrix result);
-
-void
-matrix_dot_tn(const float alpha, const Matrix first, const Matrix second, Matrix result);
 
 void
 matrix_eye(Matrix matrix, const float value);

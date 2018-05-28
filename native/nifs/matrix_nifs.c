@@ -3,6 +3,7 @@
 #include "erl_nif.h"
 
 #include "../include/matrix.h"
+#include "../include/matrix_dot.h"
 
 #define ASSERT_SIZES_MATCH(m1, m2) if (MX_ROWS(m1) != MX_ROWS(m2) || MX_COLS(m1) != MX_COLS(m2)) \
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
@@ -350,7 +351,7 @@ dot(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_dot(first_data, second_data, result_data);
+  matrix_dot(1.0, first_data, second_data, result_data);
 
   return result;
 }
@@ -383,7 +384,7 @@ dot_and_add(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_dot_and_add(first_data, second_data, third_data, result_data);
+  matrix_dot_and_add(1.0, first_data, second_data, third_data, result_data);
 
   return result;
 }
@@ -445,7 +446,7 @@ dot_nt(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_dot_nt(first_data, second_data, result_data);
+  matrix_dot_nt(1.0, first_data, second_data, result_data);
 
   return result;
 }

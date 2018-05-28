@@ -80,7 +80,7 @@ defmodule Matrex.Algorithms do
   """
 
   @spec fmincg(
-          (Matrex.t(), any -> {float, Matrex.t()}),
+          (Matrex.t(), any, pos_integer -> {float, Matrex.t()}),
           Matrex.t(),
           any,
           integer
@@ -613,17 +613,19 @@ defmodule Matrex.Algorithms do
   @doc """
   Cost function for neural network with one hidden layer.
 
-  Does dleta computation in parallel.
+  Does delta computation in parallel.
 
   Ported from Andrew Ng's course, ex4.
   """
   @spec nn_cost_fun(
           Matrex.t(),
-          {pos_integer, pos_integer, pos_integer, Matrex.t(), Matrex.t(), number}
+          {pos_integer, pos_integer, pos_integer, Matrex.t(), Matrex.t(), number},
+          pos_integer
         ) :: {number, Matrex.t()}
   def nn_cost_fun(
         %Matrex{} = theta,
-        {input_layer_size, hidden_layer_size, num_labels, x, y, lambda} = _params
+        {input_layer_size, hidden_layer_size, num_labels, x, y, lambda} = _params,
+        _iteration \\ 0
       ) do
     alias Matrex, as: M
 
@@ -771,6 +773,8 @@ defmodule Matrex.Algorithms do
 
   """
   def run_nn(epsilon \\ 0.12, iterations \\ 100, lambdas \\ [0.1, 5, 50]) do
+    start_timestamp = :os.timestamp()
+
     x = Matrex.load("test/data/X.mtx.gz")
     y = Matrex.load("test/data/Y.mtx")
 
@@ -791,7 +795,7 @@ defmodule Matrex.Algorithms do
 
         {sX, fX, _i} =
           fmincg(
-            &nn_cost_fun/2,
+            &nn_cost_fun/3,
             initial_nn_params,
             {@input_layer_size, @hidden_layer_size, @num_labels, x_train, y_train, lambda},
             iterations
@@ -800,7 +804,7 @@ defmodule Matrex.Algorithms do
         {lambda, List.last(fX), sX}
       end,
       timeout: 600_000,
-      max_concurrency: 4
+      max_concurrency: 8
     )
     |> Enum.each(fn
       {:ok, {lambda, cost, sX}} ->
@@ -833,12 +837,14 @@ defmodule Matrex.Algorithms do
         theta1
         |> Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
         |> visual_net({5, 5}, {@sample_side_size, @sample_side_size})
-        |> Matrex.resize(1)
-        |> Matrex.heatmap(:mono256)
+        |> Matrex.heatmap()
 
       _ ->
         :noop
     end)
+
+    time_elapsed = :timer.now_diff(:os.timestamp(), start_timestamp)
+    IO.puts("Time elapsed: #{time_elapsed / 1_000_000} sec.")
   end
 
   defp random_weights(l_in, l_out, epsilon) do

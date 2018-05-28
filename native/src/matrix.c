@@ -139,8 +139,8 @@ math_func_ptr_t math_func_from_name(const char* name) {
 
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
-  uint64_t data_size = MX_LENGTH(matrix);
-  math_func_ptr_t func = math_func_from_name(function_name);
+  const uint64_t data_size = MX_LENGTH(matrix);
+  const math_func_ptr_t func = math_func_from_name(function_name);
 
   if (func == NULL) return 0;
 
@@ -156,10 +156,10 @@ matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
 
 int32_t
 matrix_argmax(const Matrix matrix) {
-  uint64_t data_size = MX_LENGTH(matrix);
+  const int64_t data_size = MX_LENGTH(matrix);
   uint64_t argmax    = 2;
 
-  for (uint64_t index = 3; index < data_size; index += 1) {
+  for (int64_t index = 3; index < data_size; index += 1) {
     if (matrix[argmax] < matrix[index]) {
       argmax = index;
     }
@@ -170,12 +170,12 @@ matrix_argmax(const Matrix matrix) {
 
 void
 matrix_concat_columns(const Matrix first, const Matrix second, Matrix result) {
-  uint64_t result_cols = MX_COLS(first) + MX_COLS(second);
+  const int64_t result_cols = MX_COLS(first) + MX_COLS(second);
 
   MX_SET_ROWS(result, MX_ROWS(first));
   MX_SET_COLS(result, result_cols);
 
-  for (uint64_t row = 0; row < MX_ROWS(first); row++) {
+  for (int64_t row = 0; row < MX_ROWS(first); row++) {
     memcpy(&result[2 + row*result_cols], &first[2 + row*MX_COLS(first)], MX_COLS(first)*sizeof(float));
     memcpy(&result[2 + row*result_cols + MX_COLS(first)], &second[2 + row*MX_COLS(second)], MX_COLS(second)*sizeof(float));
   }
@@ -184,24 +184,24 @@ matrix_concat_columns(const Matrix first, const Matrix second, Matrix result) {
 
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result) {
-  uint64_t data_size = MX_LENGTH(first);
+  const int64_t data_size = MX_LENGTH(first);
 
   MX_SET_ROWS(result, MX_ROWS(first));
   MX_SET_COLS(result, MX_COLS(first));
 
-  for (uint64_t index = 2; index < data_size; index += 1) {
+  for (int64_t index = 2; index < data_size; index += 1) {
     result[index] = first[index] / second[index];
   }
 }
 
 void
 matrix_divide_scalar(const float scalar, const Matrix divisor, Matrix result) {
-  uint64_t data_size = MX_LENGTH(divisor);
+  const int64_t data_size = MX_LENGTH(divisor);
 
   MX_SET_ROWS(result, MX_ROWS(divisor));
   MX_SET_COLS(result, MX_COLS(divisor));
 
-  for (uint64_t index = 2; index < data_size; index += 1) {
+  for (int64_t index = 2; index < data_size; index += 1) {
     result[index] = scalar / divisor[index];
   }
 }
@@ -216,140 +216,6 @@ matrix_divide_by_scalar(const Matrix dividend, const float scalar, Matrix result
   for (uint64_t index = 2; index < data_size; index += 1) {
     result[index] = dividend[index] / scalar;
   }
-}
-
-void
-matrix_dot(const Matrix first, const Matrix second, Matrix result) {
-  MX_SET_ROWS(result, MX_ROWS(first));
-  MX_SET_COLS(result, MX_COLS(second));
-
-  cblas_sgemm(
-    CblasRowMajor,
-    CblasNoTrans,
-    CblasNoTrans,
-    MX_ROWS(first),
-    MX_COLS(second),
-    MX_COLS(first),
-    1.0,
-    first + 2,
-    MX_COLS(first),
-    second + 2,
-    MX_COLS(second),
-    0.0,
-    result + 2,
-    MX_COLS(result)
-  );
-}
-
-void
-matrix_dot_and_add(
-  const Matrix first, const Matrix second, const Matrix third, Matrix result
-) {
-  uint64_t data_size = MX_ROWS(first) * MX_COLS(second) + 2;
-
-  MX_SET_ROWS(result, MX_ROWS(first));
-  MX_SET_COLS(result, MX_COLS(second));
-
-  cblas_sgemm(
-    CblasRowMajor,
-    CblasNoTrans,
-    CblasNoTrans,
-    MX_ROWS(first),
-    MX_COLS(second),
-    MX_COLS(first),
-    1.0,
-    first + 2,
-    MX_COLS(first),
-    second + 2,
-    MX_COLS(second),
-    0.0,
-    result + 2,
-    MX_COLS(result)
-  );
-
-  for(uint64_t index = 2; index < data_size; index += 1) {
-    result[index] += third[index];
-  }
-}
-
-void
-matrix_dot_and_apply(
-  const float alpha, const Matrix first, const Matrix second, const char *function_name, Matrix result
-) {
-  math_func_ptr_t func = math_func_from_name(function_name);
-
-  uint64_t data_size = MX_ROWS(first) * MX_COLS(second) + 2;
-
-  MX_SET_ROWS(result, MX_ROWS(first));
-  MX_SET_COLS(result, MX_COLS(second));
-
-  cblas_sgemm(
-    CblasRowMajor,
-    CblasNoTrans,
-    CblasNoTrans,
-    MX_ROWS(first),
-    MX_COLS(second),
-    MX_COLS(first),
-    alpha,
-    first + 2,
-    MX_COLS(first),
-    second + 2,
-    MX_COLS(second),
-    0.0,
-    result + 2,
-    MX_COLS(result)
-  );
-
-  for(uint64_t index = 2; index < data_size; index += 1) {
-    result[index] = func(result[index]);
-  }
-}
-
-
-void
-matrix_dot_nt(const Matrix first, const Matrix second, Matrix result) {
-  MX_SET_ROWS(result, MX_ROWS(first));
-  MX_SET_COLS(result, MX_ROWS(second));
-
-  cblas_sgemm(
-    CblasRowMajor,
-    CblasNoTrans,
-    CblasTrans,
-    MX_ROWS(first),
-    MX_ROWS(second),
-    MX_COLS(first),
-    1.0,
-    first + 2,
-    MX_COLS(first),
-    second + 2,
-    MX_COLS(second),
-    0.0,
-    result + 2,
-    MX_COLS(result)
-  );
-}
-
-void
-matrix_dot_tn(const float alpha, const Matrix first, const Matrix second, Matrix result) {
-  MX_SET_ROWS(result, MX_COLS(first));
-  MX_SET_COLS(result, MX_COLS(second));
-
-  cblas_sgemm(
-    CblasRowMajor,
-    CblasTrans,
-    CblasNoTrans,
-    MX_COLS(first),
-    MX_COLS(second),
-    MX_ROWS(first),
-    alpha,
-    first + 2,
-    MX_COLS(first),
-    second + 2,
-    MX_COLS(second),
-    0.0,
-    result + 2,
-    MX_COLS(result)
-  );
 }
 
 void
@@ -579,6 +445,7 @@ void
 matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const float scalar, Matrix result) {
   uint64_t data_size = MX_BYTE_SIZE(matrix);
 
+
   memcpy(result, matrix, data_size);
   // cblas_scopy(MX_LENGTH(matrix), matrix, 1, result, 1);
   result[2 + row*MX_COLS(matrix) + column] = scalar;
@@ -586,7 +453,8 @@ matrix_set(const Matrix matrix, const uint32_t row, const uint32_t column, const
 
 void
 matrix_set_column(const Matrix matrix, const uint32_t column, const Matrix column_matrix, Matrix result) {
-  cblas_scopy(MX_LENGTH(matrix), matrix, 1, result, 1);
+  memcpy(result, matrix, MX_BYTE_SIZE(matrix));
+  // cblas_scopy(MX_LENGTH(matrix), matrix, 1, result, 1);
   for (uint64_t row = 0; row < MX_ROWS(matrix); row++ )
     result[2 + row*MX_COLS(matrix) + column] = column_matrix[2 + row];
 }
@@ -605,8 +473,11 @@ matrix_submatrix(const Matrix matrix, const uint32_t row_from, const uint32_t ro
   MX_SET_COLS(result, columns);
 
   for (uint32_t row = row_from; row <= row_to; row++)
-    cblas_scopy(columns, &matrix[2 + row*source_columns + column_from], 1,
-                         &result[2 + (row - row_from)*columns], 1);
+    memcpy(&result[2 + (row - row_from)*columns],
+           &matrix[2 + row*source_columns + column_from],
+           columns * sizeof(float));
+    // cblas_scopy(columns, &matrix[2 + row*source_columns + column_from], 1,
+    //                      &result[2 + (row - row_from)*columns], 1);
 }
 
 void

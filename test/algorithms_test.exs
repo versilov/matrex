@@ -70,7 +70,7 @@ defmodule AlgorithmsTest do
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert j == 0.287629150390625
+    assert Float.round(j, 7) == Float.round(0.287629150390625, 7)
     lambda = 1
 
     {j, _grads} =
@@ -79,7 +79,7 @@ defmodule AlgorithmsTest do
         {@input_layer_size, @hidden_layer_size, @num_labels, x, y, lambda}
       )
 
-    assert j == 0.38376984558105465
+    assert Float.round(j, 6) == Float.round(0.38376984558105465, 6)
   end
 
   @tag timeout: 600_000
