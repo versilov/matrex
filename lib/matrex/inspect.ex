@@ -3,12 +3,6 @@ defmodule Matrex.Inspect do
 
   @ansi_formatting ~r/\e\[(\d{1,2};?)+m/
 
-  def inspect(%Matrex{} = matrex, rows \\ 21) do
-    {:ok, cols} = :io.columns()
-    IO.puts(do_inspect(matrex, cols, rows))
-    matrex
-  end
-
   def do_inspect(matrex, screen_width \\ 80, display_rows \\ 21)
 
   def do_inspect(

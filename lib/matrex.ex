@@ -484,7 +484,12 @@ defmodule Matrex do
   defimpl Inspect do
     @doc false
     def inspect(%Matrex{} = matrex, opts) do
-      {:ok, columns} = :io.columns()
+      columns =
+        case opts.width do
+          :infinity -> 80
+          width -> width
+        end
+
       Matrex.Inspect.do_inspect(matrex, columns, 21)
     end
   end
@@ -1559,47 +1564,6 @@ defmodule Matrex do
   defdelegate identity(size), to: __MODULE__, as: :eye
 
   @doc """
-  Prints matrix to the console.
-
-  Accepted options:
-    * `:rows` — number of rows of matrix to show. Defaults to 21
-    * `:columns` — number of columns of matrix to show. Defaults to maximum number of column,
-    that fits into current terminal width.
-
-    Returns the matrix itself, so can be used in pipes.
-
-    ## Example
-
-        iex> print(m, rows: 5, columns: 3)
-        #Matrex[20×20]
-        ┌                             ┐
-        │     1.0   399.0  …     20.0 │
-        │   380.0    22.0  …    361.0 │
-        │   360.0    42.0  …    341.0 │
-        │     ⋮       ⋮     …      ⋮  │
-        │    40.0   362.0  …     21.0 │
-        │   381.0    19.0  …    400.0 │
-        └                             ┘
-
-  """
-  @spec print(matrex, Keyword.t()) :: matrex
-  def print(%Matrex{} = matrex, opts \\ [rows: 21]) do
-    {:ok, terminal_columns} = :io.columns()
-
-    columns =
-      case Keyword.get(opts, :columns) do
-        nil -> terminal_columns
-        cols -> cols * 8 + 10
-      end
-
-    matrex
-    |> Matrex.Inspect.do_inspect(columns, Keyword.get(opts, :rows, 21))
-    |> IO.puts()
-
-    matrex
-  end
-
-  @doc """
   Returns list of all rows of a matrix as single-row matrices.
 
   ## Example
@@ -2145,6 +2109,47 @@ defmodule Matrex do
   def ones({rows, cols}), do: ones(rows, cols)
 
   def ones(size) when is_integer(size), do: fill(size, 1)
+
+  @doc """
+  Prints matrix to the console.
+
+  Accepted options:
+    * `:rows` — number of rows of matrix to show. Defaults to 21
+    * `:columns` — number of columns of matrix to show. Defaults to maximum number of column,
+    that fits into current terminal width.
+
+    Returns the matrix itself, so can be used in pipes.
+
+    ## Example
+
+        iex> print(m, rows: 5, columns: 3)
+        #Matrex[20×20]
+        ┌                             ┐
+        │     1.0   399.0  …     20.0 │
+        │   380.0    22.0  …    361.0 │
+        │   360.0    42.0  …    341.0 │
+        │     ⋮       ⋮     …      ⋮  │
+        │    40.0   362.0  …     21.0 │
+        │   381.0    19.0  …    400.0 │
+        └                             ┘
+
+  """
+  @spec print(matrex, Keyword.t()) :: matrex
+  def print(%Matrex{} = matrex, opts \\ [rows: 21]) do
+    {:ok, terminal_columns} = :io.columns()
+
+    columns =
+      case Keyword.get(opts, :columns) do
+        nil -> terminal_columns
+        cols -> cols * 8 + 10
+      end
+
+    matrex
+    |> Matrex.Inspect.do_inspect(columns, Keyword.get(opts, :rows, 21))
+    |> IO.puts()
+
+    matrex
+  end
 
   @doc """
   Create matrix of random floats in [0, 1] range. NIF.
