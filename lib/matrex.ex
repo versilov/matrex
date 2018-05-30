@@ -419,8 +419,7 @@ defmodule Matrex do
     end
 
     @doc false
-    def count(matrex_data(rows, cols, _data)),
-      do: {:ok, rows * cols}
+    def count(matrex_data(rows, cols, _data)), do: {:ok, rows * cols}
 
     @doc false
     def member?(%Matrex{} = matrex, element), do: {:ok, Matrex.contains?(matrex, element)}
@@ -438,8 +437,7 @@ defmodule Matrex do
       reduce_each(body, acc, fun)
     end
 
-    defp reduce_each(_, {:halt, acc}, _fun),
-      do: {:halted, acc}
+    defp reduce_each(_, {:halt, acc}, _fun), do: {:halted, acc}
 
     defp reduce_each(matrix, {:suspend, acc}, fun),
       do: {:suspended, acc, &reduce_each(matrix, &1, fun)}
@@ -447,8 +445,7 @@ defmodule Matrex do
     defp reduce_each(<<elem::binary-@element_size, rest::binary>>, {:cont, acc}, fun),
       do: reduce_each(rest, fun.(Matrex.binary_to_float(elem), acc), fun)
 
-    defp reduce_each(<<>>, {:cont, acc}, _fun),
-      do: {:done, acc}
+    defp reduce_each(<<>>, {:cont, acc}, _fun), do: {:done, acc}
   end
 
   @doc """
@@ -822,11 +819,9 @@ defmodule Matrex do
   @spec at(matrex, index, index) :: element
   def at(matrex_data(rows, columns, data), row, col)
       when is_integer(row) and is_integer(col) do
-    if row < 1 or row > rows,
-      do: raise(ArgumentError, "row position out of range: #{row}")
+    if row < 1 or row > rows, do: raise(ArgumentError, "row position out of range: #{row}")
 
-    if col < 1 or col > columns,
-      do: raise(ArgumentError, "column position out of range: #{col}")
+    if col < 1 or col > columns, do: raise(ArgumentError, "column position out of range: #{col}")
 
     data
     |> binary_part(((row - 1) * columns + (col - 1)) * @element_size, @element_size)
@@ -2305,8 +2300,7 @@ defmodule Matrex do
       {2, 3}
   """
   @spec size(matrex) :: {index, index}
-  def size(matrex_data(rows, cols, _)),
-    do: {rows, cols}
+  def size(matrex_data(rows, cols, _)), do: {rows, cols}
 
   @doc """
   Produces element-wise squared matrix. NIF through `multiply/4`.
@@ -2389,7 +2383,7 @@ defmodule Matrex do
       │    -3.0    -4.0    -5.0 │
       └                         ┘
   """
-  @spec subtract(matrex | number, matrex) :: matrex
+  @spec subtract(matrex | number, matrex | number) :: matrex
   def subtract(%Matrex{data: first}, %Matrex{data: second}),
     do: %Matrex{data: NIFs.subtract(first, second)}
 
@@ -2400,7 +2394,7 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.add_scalar(matrix, -scalar)}
 
   @doc """
-  Subtracts the second matrix from the first. Inlined.
+  Subtracts the second matrix or scalar from the first. Inlined.
 
   Raises `ErlangError` if matrices' sizes do not match.
 
@@ -2413,9 +2407,24 @@ defmodule Matrex do
       │     4.0     0.0    -2.0 │
       │    -1.0    -1.0     0.0 │
       └                         ┘
+
+      iex> Matrex.eye(3) |> Matrex.subtract_inverse(1)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     0.0     1.0     1.0 │
+      │     1.0     0.0     1.0 │
+      │     1.0     1.0     0.0 │
+      └                         ┘
+
   """
-  @spec subtract_inverse(matrex, matrex) :: matrex
+  @spec subtract_inverse(matrex | number, matrex | number) :: matrex
   def subtract_inverse(%Matrex{} = first, %Matrex{} = second), do: subtract(second, first)
+
+  def subtract_inverse(%Matrex{} = first, scalar) when is_number(scalar),
+    do: subtract(scalar, first)
+
+  def subtract_inverse(scalar, %Matrex{} = second) when is_number(scalar),
+    do: subtract(second, scalar)
 
   @doc """
   Sums all elements. NIF.

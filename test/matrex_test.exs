@@ -592,6 +592,20 @@ defmodule MatrexTest do
     end
   end
 
+  test "#subtract subtracts matrix from scalar" do
+    input = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    expected = Matrex.new([[0, -1, -2], [-3, -4, -5]])
+
+    assert Matrex.subtract(1, input) == expected
+  end
+
+  test "#subtract subtracts scalar from matrix" do
+    input = Matrex.reshape(1..6, 2, 3)
+    expected = Matrex.reshape(0..5, 2, 3)
+
+    assert Matrex.subtract(input, 1) == expected
+  end
+
   test "#subtract_inverse subtracts the second matrix from the first" do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[5, 2, 1], [3, 4, 6]])
@@ -600,11 +614,18 @@ defmodule MatrexTest do
     assert Matrex.subtract_inverse(first, second) == expected
   end
 
-  test "#subtract subtracts matrix from scalar" do
+  test "#subtract_inverse subtracts matrix from scalar" do
     input = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = Matrex.new([[0, -1, -2], [-3, -4, -5]])
 
-    assert Matrex.subtract(1, input) == expected
+    assert Matrex.subtract_inverse(input, 1) == expected
+  end
+
+  test "#subtract_inverse subtracts scalar from matrix" do
+    input = Matrex.reshape(1..6, 2, 3)
+    expected = Matrex.reshape(0..5, 2, 3)
+
+    assert Matrex.subtract_inverse(1, input) == expected
   end
 
   test "#sum/1 returns the sum of all elements in the matrix" do
