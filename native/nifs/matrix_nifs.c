@@ -563,6 +563,28 @@ find(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   return enif_make_atom(env, "nil");
 }
 
+static ERL_NIF_TERM
+from_range(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM  result;
+  int64_t      from, to, rows, cols;
+  float        *result_data;
+  size_t        result_size;
+
+  (void)(argc);
+
+  enif_get_int64(env, argv[0], &from);
+  enif_get_int64(env, argv[1], &to);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &cols);
+
+  result_size = sizeof(float) * (2 + rows * cols);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_from_range(from, to, rows, cols, result_data);
+
+  return result;
+}
+
 // Inner function for getting scalar from args list and casting it to float.
 // Scalars come as doubles or long integers.
 static double
@@ -767,7 +789,7 @@ normalize(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  long rows, cols;
+  int64_t rows, cols;
   float *result_data;
   size_t result_size;
 
@@ -1140,6 +1162,7 @@ static ErlNifFunc nif_functions[] = {
   {"eye",                  2, eye,                  0},
   {"fill",                 3, fill,                 0},
   {"find",                 2, find,                 0},
+  {"from_range",           4, from_range,           0},
   {"max",                  1, max,                  0},
   {"min",                  1, minimum,              0},
   {"max_finite",           1, max_finite,           0},

@@ -82,6 +82,9 @@ float
 matrix_first(const Matrix matrix);
 
 void
+matrix_from_range(const int64_t from, const int64_t to, const int64_t rows, const int64_t cols, Matrix result);
+
+void
 matrix_inspect(const Matrix matrix);
 
 void

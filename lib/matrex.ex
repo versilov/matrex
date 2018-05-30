@@ -2028,11 +2028,7 @@ defmodule Matrex do
 
   @spec reshape(matrex, index, index) :: matrex
   def reshape(
-        %Matrex{
-          data:
-            <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32,
-              _matrix::binary>>
-        },
+        matrex_data(rows, columns, _matrix),
         new_rows,
         new_columns
       )
@@ -2045,7 +2041,7 @@ defmodule Matrex do
         )
 
   def reshape(
-        %Matrex{data: <<rows::binary-4, columns::binary-4, _matrix::binary>>} = matrex,
+        matrex_data(rows, columns, _matrix) = matrex,
         rows,
         columns
       ),
@@ -2053,11 +2049,21 @@ defmodule Matrex do
       do: matrex
 
   def reshape(
-        %Matrex{data: <<_rows::binary-4, _columns::binary-4, matrix::binary>>},
+        matrex_data(_rows, _columns, matrix),
         new_rows,
         new_columns
       ),
       do: matrex_data(new_rows, new_columns, matrix)
+
+  @spec reshape(Range.t(), index, index) :: matrex
+  def reshape(a..b, rows, cols) when b - a + 1 != rows * cols,
+    do:
+      raise(
+        ArgumentError,
+        message: "range #{a}..#{b} cannot be reshaped into #{rows}×#{cols} matrix."
+      )
+
+  def reshape(a..b, rows, cols), do: %Matrex{data: NIFs.from_range(a, b, rows, cols)}
 
   @spec reshape(Enumerable.t(), index, index) :: matrex
   def reshape(input, rows, columns), do: input |> Enum.to_list() |> reshape(rows, columns)

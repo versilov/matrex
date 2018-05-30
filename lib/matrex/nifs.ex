@@ -151,6 +151,11 @@ defmodule Matrex.NIFs do
   defp do_find(<<_elem::binary-4, rest::binary>>, <<value::binary-4>>, index, columns),
     do: do_find(rest, value, index + 1, columns)
 
+  @spec from_range(pos_integer, pos_integer, pos_integer, pos_integer) :: binary
+  def from_range(from, to, rows, cols)
+      when is_integer(from) and is_integer(to) and is_integer(rows) and is_integer(cols),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec max(binary) :: float
   def max(_matrix), do: :erlang.nif_error(:nif_library_not_loaded)
 

@@ -220,9 +220,9 @@ matrix_divide_by_scalar(const Matrix dividend, const float scalar, Matrix result
 
 void
 matrix_eye(Matrix matrix, const float value) {
-  uint64_t length = MX_DATA_BYTE_SIZE(matrix);
-  uint64_t rows = MX_ROWS(matrix);
-  uint64_t cols = MX_COLS(matrix);
+  const uint64_t length = MX_DATA_BYTE_SIZE(matrix);
+  const uint64_t rows = MX_ROWS(matrix);
+  const uint64_t cols = MX_COLS(matrix);
 
   // Set it all to zeros
   memset((void*)&matrix[2], 0, length);
@@ -265,6 +265,18 @@ matrix_find_nan(const Matrix matrix) {
 float
 matrix_first(const Matrix matrix) {
   return matrix[2];
+}
+
+void
+matrix_from_range(const int64_t from, const int64_t to, const int64_t rows, const int64_t cols, Matrix result) {
+  const int64_t data_size = rows*cols + 2;
+
+  MX_SET_ROWS(result, rows);
+  MX_SET_COLS(result, cols);
+
+  for (uint64_t index = 2; index < data_size; index += 1) {
+    result[index] = from + index - 2;
+  }
 }
 
 void
