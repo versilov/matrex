@@ -208,7 +208,7 @@ matrix_divide_scalar(const float scalar, const Matrix divisor, Matrix result) {
 
 void
 matrix_divide_by_scalar(const Matrix dividend, const float scalar, Matrix result) {
-  uint64_t data_size = MX_LENGTH(dividend);
+  const uint64_t data_size = MX_LENGTH(dividend);
 
   MX_SET_ROWS(result, MX_ROWS(dividend));
   MX_SET_COLS(result, MX_COLS(dividend));
@@ -256,7 +256,7 @@ int32_t
 matrix_find_nan(const Matrix matrix) {
   uint64_t data_size = MX_LENGTH(matrix);
 
-  for (uint64_t index = 2; index < data_size; index += 1) {
+  for (int64_t index = 2; index < data_size; index += 1) {
     if (isnan(matrix[index])) return index - 2;
   }
   return -1;
@@ -274,7 +274,7 @@ matrix_from_range(const int64_t from, const int64_t to, const int64_t rows, cons
   MX_SET_ROWS(result, rows);
   MX_SET_COLS(result, cols);
 
-  for (uint64_t index = 2; index < data_size; index += 1) {
+  for (int64_t index = 2; index < data_size; index += 1) {
     result[index] = from + index - 2;
   }
 }
