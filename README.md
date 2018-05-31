@@ -131,6 +131,20 @@ You need to install scientific libraries for this package to compile:
 It will definitely work on Windows, but we need a makefile
 and installation instruction. Please, contribute.
 
+### Choosing which BLAS to use
+
+With the help of `MATREX_BLAS` environment variable you can choose which BLAS library to link with.
+It can take values `blas` (the default), `atlas`, `openblas` or `noblas`.
+
+The last option means that you compile C code without any external dependencies, so, it should work
+anywhere with a C compiler place:
+
+```bash
+$ mix clean
+$ MATREX_BLAS=noblas mix compile
+```
+
+
 ## Access behaviour
 
 Access behaviour is partly implemented for Matrex, so you can do:

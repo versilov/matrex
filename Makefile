@@ -17,15 +17,21 @@ ERL_INCLUDE_PATH = $(shell erl -eval 'io:format("~s", [lists:concat([code:root_d
 
 # Switches between different BLAS implementations
 # Can be blas, openblas, atlas, noblas
-BLAS = noblas
+ifdef MATREX_BLAS
+	BLAS = $(MATREX_BLAS)
+else
+	BLAS = blas
+endif
 
 # For compiling and linking the final NIF shared objects.
 
 CFLAGS = -fPIC -I$(ERL_INCLUDE_PATH) -O3 -std=gnu11 -Wall -Wextra
 LDFLAGS =
 
-ifeq (BLAS, blas)
+ifeq ($(BLAS), blas)
 	LDFLAGS += -lblas
+else ifeq ($(BLAS), noblas)
+	CFLAGS += -D MATREX_NO_BLAS
 endif
 
 
@@ -36,7 +42,7 @@ ifeq ($(shell uname -s), Darwin)
 ifeq ($(BLAS), openblas)
 	CFLAGS += -I/usr/local/opt/openblas/include
 	LDFLAGS += -L/usr/local/opt/openblas/lib
-else
+else ifeq ($(BLAS), blas)
 	CFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers
 endif
 
@@ -46,9 +52,7 @@ else  # Linux
 
 ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
-endif
-
-ifeq ($(BLAS), atlas)
+else ifeq ($(BLAS), atlas)
 	LDFLAGS += -latlas
 endif
 
