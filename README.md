@@ -48,7 +48,7 @@ Slaughter of the innocents, actually.
 
 2015 MacBook Pro, 2.2 GHz Core i7, 16 GB RAM
 
-Dot product of 500x500 matrices
+Dot product of 500×500 matrices
 
 | Library      | Ops/sec  | Compared to Matrex  |
 | ------------ | -------- | ------------------- |
@@ -57,6 +57,17 @@ Dot product of 500x500 matrices
 | Numexy       | 0.0173   | 38 906.14× slower   |
 | ExMatrix     | 0.0129   | 52 327.40× slower   |
 
+
+Dot product of 3×3 matrices
+
+
+| Library      | Ops/sec  | Compared to Matrex  |
+| ------------ | -------- | ------------------- |
+| Matrex       | 3624.36 K|                     |
+| GraphMath    | 1310.16 K| 2.77x slower
+| Matrix       |  372.58 K| 9.73x slower
+| Numexy       |   89.72 K| 40.40x slower
+| ExMatrix     |   35.76 K| 101.35x slower
 
 Transposing 1000x1000 matrix
 
