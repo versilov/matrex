@@ -254,7 +254,7 @@ matrix_find(const Matrix matrix, const float value) {
 
 int32_t
 matrix_find_nan(const Matrix matrix) {
-  uint64_t data_size = MX_LENGTH(matrix);
+  const int64_t data_size = MX_LENGTH(matrix);
 
   for (int64_t index = 2; index < data_size; index += 1) {
     if (isnan(matrix[index])) return index - 2;
@@ -270,6 +270,8 @@ matrix_first(const Matrix matrix) {
 void
 matrix_from_range(const int64_t from, const int64_t to, const int64_t rows, const int64_t cols, Matrix result) {
   const int64_t data_size = rows*cols + 2;
+
+  (void)(to);
 
   MX_SET_ROWS(result, rows);
   MX_SET_COLS(result, cols);

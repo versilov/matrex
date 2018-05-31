@@ -566,7 +566,7 @@ find(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 from_range(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM  result;
-  int64_t      from, to, rows, cols;
+  long      from, to, rows, cols;
   float        *result_data;
   size_t        result_size;
 
@@ -789,7 +789,7 @@ normalize(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 static ERL_NIF_TERM
 random_matrix(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
-  int64_t rows, cols;
+  long rows, cols;
   float *result_data;
   size_t result_size;
 
