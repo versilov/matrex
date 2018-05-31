@@ -1,4 +1,5 @@
 defmodule Matrex.Guards do
+  @moduledoc false
   defmacro inside_matrex(row, col, rows, columns),
     do:
       quote(
