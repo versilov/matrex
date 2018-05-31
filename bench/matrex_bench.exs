@@ -146,16 +146,16 @@ defmodule MatrexBench do
   #   0
   # end
 
-  @x Matrex.load("test/X.mtx")
-  @y Matrex.apply(Matrex.load("test/y.mtx"), fn val -> if(val == 5, do: 1.0, else: 0.0) end)
+  @x Matrex.concat(Matrex.ones(5_000, 1), Matrex.load("test/data/X.mtx.gz"))
+  @y Matrex.apply(Matrex.load("test/data/y.mtx"), fn val -> if(val == 5, do: 1.0, else: 0.0) end)
   @theta Matrex.zeros(401, 1)
 
   bench "Linear regression cost function on 5_000 MNIST digits" do
-    Matrex.Algorithms.lr_cost_fun(@theta, {@x, @y, 0.01})
+    Matrex.Algorithms.lr_cost_fun(@theta, {@x, @y, 0.01, 5}, 0)
   end
 
   bench "fmincg(20)" do
-    Matrex.Algorithms.fmincg(&Matrex.Algorithms.lr_cost_fun/2, @theta, {@x, @y, 0.01}, 20)
+    Matrex.Algorithms.fmincg(&Matrex.Algorithms.lr_cost_fun/3, @theta, {@x, @y, 0.01, 5}, 20)
     true
   end
 
