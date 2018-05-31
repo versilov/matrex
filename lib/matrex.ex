@@ -363,6 +363,14 @@ defmodule Matrex do
   def fetch(matrex, :argmax), do: {:ok, argmax(matrex)}
 
   @impl Access
+  def get(%Matrex{} = matrex, key, default) do
+    case fetch(matrex, key) do
+      {:ok, value} -> value
+      :error -> default
+    end
+  end
+
+  @impl Access
   def pop(matrex_data(rows, columns, body), row)
       when is_integer(row) and row >= 1 and row <= rows do
     get =
