@@ -1104,7 +1104,7 @@ defmodule Matrex do
   ## Example
 
       iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.dot_and_add(Matrex.new([[1, 2], [3, 4], [5, 6]]), :sqrt)
+      ...> Matrex.dot_and_apply(Matrex.new([[1, 2], [3, 4], [5, 6]]), :sqrt)
       #Matrex[2×2]
       ┌                 ┐
       │ 4.69042  5.2915 │
