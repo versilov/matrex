@@ -35,6 +35,24 @@ defmodule Matrex.Array do
     f
   end
 
+  @spec inspect(array) :: array
+  def inspect(%Array{data: data, type: type} = array) do
+    binary_to_text(data, type)
+    |> String.trim()
+    |> IO.puts()
+
+    array
+  end
+
+  defp binary_to_text(<<>>, _type), do: ""
+  defp binary_to_text(<<e, rest::binary>>, :byte), do: "#{e} " <> binary_to_text(rest, :byte)
+
+  defp binary_to_text(<<e::float-little-32, rest::binary>>, :float),
+    do: "#{e} " <> binary_to_text(rest, :float)
+
+  defp binary_to_text(<<e::float, rest::binary>>, :double),
+    do: "#{e} " <> binary_to_text(rest, :double)
+
   @spec random(tuple, type) :: array
   def random(shape, type \\ :float) do
     %Array{
@@ -84,6 +102,13 @@ defmodule Matrex.Array do
     do:
       Enum.reduce(1..count, <<>>, fn _, bin ->
         <<:rand.uniform()::float-little-32, bin::binary>>
+      end)
+
+  @spec random_binary(pos_integer, type) :: binary
+  defp random_binary(count, :double),
+    do:
+      Enum.reduce(1..count, <<>>, fn _, bin ->
+        <<:rand.uniform()::float, bin::binary>>
       end)
 
   defp random_binary(count, :byte),

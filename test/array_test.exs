@@ -1,6 +1,21 @@
 defmodule ArrayTest do
   use ExUnit.Case, async: true
+  import ExUnit.CaptureIO
   import Matrex.Array
+  alias Matrex.Array
+
+  test "#inspect shows array in console" do
+    a = reshape(1..9, {3, 3}, :byte)
+
+    expected = "1 2 3 4 5 6 7 8 9\n"
+
+    output =
+      capture_io(fn ->
+        assert Array.inspect(a) == a
+      end)
+
+    assert output == expected
+  end
 
   test "#random creates array of random values" do
     a = random({10, 25, 25})
