@@ -15,6 +15,15 @@ defmodule ArrayTest do
     assert c == expected
   end
 
+  test "#add sums two arrays of bytes" do
+    a = reshape(1..12, {3, 4}, :byte)
+    b = reshape(12..1, {3, 4}, :byte)
+
+    expected = fill(13, {3, 4}, :byte)
+
+    assert add(a, b) == expected
+  end
+
   test "#inspect shows array in console" do
     a = reshape(1..9, {3, 3}, :byte)
 
@@ -57,18 +66,18 @@ defmodule ArrayTest do
   end
 
   test "#strides generates strides tuple" do
-    assert strides({3, 4}, :float) == {4 * 4, 4}
-    assert strides({10, 5, 5}, :float) == {25 * 4, 5 * 4, 4}
-    assert strides({10, 5, 5}, :float) == {25 * 4, 5 * 4, 4}
+    assert strides({3, 4}, :float32) == {4 * 4, 4}
+    assert strides({10, 5, 5}, :float32) == {25 * 4, 5 * 4, 4}
+    assert strides({10, 5, 5}, :float32) == {25 * 4, 5 * 4, 4}
   end
 
   test "#zeros creates 3-dim array of floats" do
-    a = zeros({10, 28, 28}, :float)
+    a = zeros({10, 28, 28}, :float32)
     assert at(a, {5, 10, 15}) == 0.0
   end
 
   test "#zeros creates 3-dim array of doubles" do
-    a = zeros({10, 28, 28}, :double)
+    a = zeros({10, 28, 28}, :float64)
     assert at(a, {5, 10, 15}) == 0.0
   end
 end

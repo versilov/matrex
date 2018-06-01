@@ -5,11 +5,11 @@ defmodule Matrex.Array do
   alias Matrex.Array
 
   @enforce_keys [:data, :type, :shape, :strides]
-  defstruct data: nil, type: :float, strides: {}, shape: {}
-  @element_types [:float, :double, :integer, :byte, :bool]
+  defstruct data: nil, type: :float32, strides: {}, shape: {}
+  @element_types [:float32, :float64, :int16, :int32, :int64, :byte, :bool]
 
   @type element :: number | :nan | :inf | :neg_inf
-  @type type :: :float | :double | :integer | :byte | :bool
+  @type type :: :float32 | :float64 | :int61 | :int32 | :int64 | :byte | :bool
   @type index :: pos_integer
   @type array :: %Array{data: binary, type: atom, shape: tuple, strides: tuple}
   @type t :: array
@@ -33,23 +33,31 @@ defmodule Matrex.Array do
   defp add_data(
          <<e1::float-little-32, rest1::binary>>,
          <<e2::float-little-32, rest2::binary>>,
-         :float
+         :float32
        ) do
-    <<e1 + e2::float-little-32, add_data(rest1, rest2, :float)::binary>>
+    <<e1 + e2::float-little-32, add_data(rest1, rest2, :float32)::binary>>
+  end
+
+  defp add_data(
+         <<e1, rest1::binary>>,
+         <<e2, rest2::binary>>,
+         :byte = type
+       ) do
+    <<e1 + e2, add_data(rest1, rest2, type)::binary>>
   end
 
   @spec at(array, index, index) :: element
   def at(%Array{} = array, row, col), do: at(array, {row, col})
 
   @spec at(array, tuple) :: element
-  def at(%Array{data: data, strides: strides, type: :float}, pos) when is_tuple(pos) do
-    <<f::float-little-32>> = binary_part(data, offset(strides, pos), bytesize(:float))
+  def at(%Array{data: data, strides: strides, type: :float32}, pos) when is_tuple(pos) do
+    <<f::float-little-32>> = binary_part(data, offset(strides, pos), bytesize(:float32))
     f
   end
 
   @spec at(array, tuple) :: element
-  def at(%Array{data: data, strides: strides, type: :double}, pos) when is_tuple(pos) do
-    <<f::float>> = binary_part(data, offset(strides, pos), bytesize(:double))
+  def at(%Array{data: data, strides: strides, type: :float64}, pos) when is_tuple(pos) do
+    <<f::float>> = binary_part(data, offset(strides, pos), bytesize(:float64))
     f
   end
 
@@ -58,6 +66,19 @@ defmodule Matrex.Array do
     <<f::size(8)>> = binary_part(data, offset(strides, pos), bytesize(:byte))
     f
   end
+
+  @spec fill(element, tuple, type) :: array
+  def fill(value, shape, type \\ :float32) do
+    %Array{
+      data: fill_data(value, elements_count(shape), type),
+      shape: shape,
+      strides: strides(shape, type),
+      type: type
+    }
+  end
+
+  defp fill_data(_, 0, _), do: <<>>
+  defp fill_data(value, count, :byte), do: <<value, fill_data(value, count - 1, :byte)::binary>>
 
   @spec inspect(array) :: array
   def inspect(%Array{data: data, type: type} = array) do
@@ -71,14 +92,14 @@ defmodule Matrex.Array do
   defp binary_to_text(<<>>, _type), do: ""
   defp binary_to_text(<<e, rest::binary>>, :byte), do: "#{e} " <> binary_to_text(rest, :byte)
 
-  defp binary_to_text(<<e::float-little-32, rest::binary>>, :float),
-    do: "#{e} " <> binary_to_text(rest, :float)
+  defp binary_to_text(<<e::float-little-32, rest::binary>>, :float32),
+    do: "#{e} " <> binary_to_text(rest, :float32)
 
-  defp binary_to_text(<<e::float, rest::binary>>, :double),
-    do: "#{e} " <> binary_to_text(rest, :double)
+  defp binary_to_text(<<e::float, rest::binary>>, :float64),
+    do: "#{e} " <> binary_to_text(rest, :float64)
 
   @spec new([element], tuple) :: array
-  def new(list, shape, type \\ :float) do
+  def new(list, shape, type \\ :float32) do
     %Array{
       data: list_to_binary(list, type),
       shape: shape,
@@ -93,7 +114,7 @@ defmodule Matrex.Array do
     do: <<e::float-little-32, list_to_binary(tail, type)::binary>>
 
   @spec random(tuple, type) :: array
-  def random(shape, type \\ :float) do
+  def random(shape, type \\ :float32) do
     %Array{
       data: random_binary(elements_count(shape), type),
       shape: shape,
@@ -107,8 +128,8 @@ defmodule Matrex.Array do
     do: %Array{data: data, shape: shape, strides: strides(shape, type), type: type}
 
   @spec reshape(Range.t(), tuple, type) :: array
-  def reshape(a..b, shape, type \\ :float) do
-    if b - a + 1 != elements_count(shape),
+  def reshape(a..b, shape, type \\ :float32) do
+    if abs(b - a) + 1 != elements_count(shape),
       do: raise(ArgumentError, message: "range and shape do not match.")
 
     %Array{
@@ -122,7 +143,7 @@ defmodule Matrex.Array do
   def shape(%Array{shape: shape}), do: shape
 
   @spec zeros(tuple, type) :: array
-  def zeros(shape, type \\ :float)
+  def zeros(shape, type \\ :float32)
   def zeros(shape, type) when is_integer(shape), do: zeros({shape}, type)
 
   def zeros(shape, type) when is_tuple(shape) and type in @element_types do
@@ -137,14 +158,14 @@ defmodule Matrex.Array do
   end
 
   @spec random_binary(pos_integer, type) :: binary
-  defp random_binary(count, :float),
+  defp random_binary(count, :float32),
     do:
       Enum.reduce(1..count, <<>>, fn _, bin ->
         <<:rand.uniform()::float-little-32, bin::binary>>
       end)
 
   @spec random_binary(pos_integer, type) :: binary
-  defp random_binary(count, :double),
+  defp random_binary(count, :float64),
     do:
       Enum.reduce(1..count, <<>>, fn _, bin ->
         <<:rand.uniform()::float, bin::binary>>
@@ -156,13 +177,13 @@ defmodule Matrex.Array do
         <<:rand.uniform(256) - 1, bin::binary>>
       end)
 
-  defp range_to_binary(a..b, :float),
+  defp range_to_binary(a..b, :float32),
     do: Enum.reduce(b..a, <<>>, fn x, bin -> <<x::float-little-32, bin::binary>> end)
 
-  defp range_to_binary(a..b, :double),
+  defp range_to_binary(a..b, :float64),
     do: Enum.reduce(b..a, <<>>, fn x, bin -> <<x::float, bin::binary>> end)
 
-  defp range_to_binary(a..b, :integer),
+  defp range_to_binary(a..b, :int32),
     do: Enum.reduce(b..a, <<>>, fn x, bin -> <<x::integer-little-32, bin::binary>> end)
 
   defp range_to_binary(a..b, :byte),
@@ -189,15 +210,19 @@ defmodule Matrex.Array do
     |> Enum.reduce(&(&1 * &2))
   end
 
-  defp bytesize(:float), do: 4
-  defp bytesize(:integer), do: 4
-  defp bytesize(:double), do: 8
+  defp bytesize(:float32), do: 4
+  defp bytesize(:float64), do: 8
+  defp bytesize(:int16), do: 2
+  defp bytesize(:int32), do: 4
+  defp bytesize(:int64), do: 8
   defp bytesize(:byte), do: 1
   defp bytesize(:bool), do: nil
 
-  defp bitsize(:float), do: 32
-  defp bitsize(:integer), do: 32
-  defp bitsize(:double), do: 64
+  defp bitsize(:float32), do: 32
+  defp bitsize(:float64), do: 64
+  defp bitsize(:int16), do: 16
+  defp bitsize(:int32), do: 32
+  defp bitsize(:int64), do: 64
   defp bitsize(:byte), do: 8
   defp bitsize(:bool), do: 1
 end
