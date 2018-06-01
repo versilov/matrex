@@ -4,6 +4,17 @@ defmodule ArrayTest do
   import Matrex.Array
   alias Matrex.Array
 
+  test "#add sums two arrays of the same shape" do
+    a = new([1, 2, 3, 4, 5, 6], {3, 2})
+    b = new([2, 3, 4, 5, 6, 7], {3, 2})
+
+    expected = new([3, 5, 7, 9, 11, 13], {3, 2})
+
+    c = add(a, b)
+
+    assert c == expected
+  end
+
   test "#inspect shows array in console" do
     a = reshape(1..9, {3, 3}, :byte)
 
@@ -15,6 +26,11 @@ defmodule ArrayTest do
       end)
 
     assert output == expected
+  end
+
+  test "#new creates new array from list" do
+    a = new([1, 2, 3, 4, 5, 6], {2, 3})
+    assert at(a, 2, 3) == 6
   end
 
   test "#random creates array of random values" do

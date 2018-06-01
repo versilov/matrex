@@ -14,6 +14,30 @@ defmodule Matrex.Array do
   @type array :: %Array{data: binary, type: atom, shape: tuple, strides: tuple}
   @type t :: array
 
+  @spec add(array, array) :: array
+  def add(%Array{data: data1, shape: shape, type: type}, %Array{
+        data: data2,
+        shape: shape,
+        type: type
+      }) do
+    %Array{
+      data: add_data(data1, data2, type),
+      shape: shape,
+      strides: strides(shape, type),
+      type: type
+    }
+  end
+
+  defp add_data(<<>>, <<>>, _), do: <<>>
+
+  defp add_data(
+         <<e1::float-little-32, rest1::binary>>,
+         <<e2::float-little-32, rest2::binary>>,
+         :float
+       ) do
+    <<e1 + e2::float-little-32, add_data(rest1, rest2, :float)::binary>>
+  end
+
   @spec at(array, index, index) :: element
   def at(%Array{} = array, row, col), do: at(array, {row, col})
 
@@ -52,6 +76,21 @@ defmodule Matrex.Array do
 
   defp binary_to_text(<<e::float, rest::binary>>, :double),
     do: "#{e} " <> binary_to_text(rest, :double)
+
+  @spec new([element], tuple) :: array
+  def new(list, shape, type \\ :float) do
+    %Array{
+      data: list_to_binary(list, type),
+      shape: shape,
+      strides: strides(shape, type),
+      type: type
+    }
+  end
+
+  defp list_to_binary([], _), do: <<>>
+
+  defp list_to_binary([e | tail], type),
+    do: <<e::float-little-32, list_to_binary(tail, type)::binary>>
 
   @spec random(tuple, type) :: array
   def random(shape, type \\ :float) do
