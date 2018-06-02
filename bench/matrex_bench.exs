@@ -150,7 +150,7 @@ defmodule MatrexBench do
   @y Matrex.apply(Matrex.load("test/data/y.mtx"), fn val -> if(val == 5, do: 1.0, else: 0.0) end)
   @theta Matrex.zeros(401, 1)
 
-  bench "Linear regression cost function on 5_000 MNIST digits" do
+  bench "Logistic regression cost function on 5_000 MNIST digits" do
     Matrex.Algorithms.lr_cost_fun(@theta, {@x, @y, 0.01, 5}, 0)
   end
 
