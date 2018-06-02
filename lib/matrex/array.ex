@@ -3,6 +3,7 @@ defmodule Matrex.Array do
   NumPy style multidimensional array
   """
   alias Matrex.Array
+  alias Matrex.Array.NIFs
 
   @enforce_keys [:data, :type, :shape, :strides]
   defstruct data: nil, type: :float32, strides: {}, shape: {}
@@ -22,7 +23,7 @@ defmodule Matrex.Array do
         type: type
       }) do
     %Array{
-      data: add_data(data1, data2, type),
+      data: NIFs.add_arrays(data1, data2, type),
       shape: shape,
       strides: strides,
       type: type
@@ -111,10 +112,23 @@ defmodule Matrex.Array do
 
   defp list_to_binary([], _), do: <<>>
 
-  defp list_to_binary([e | tail], :float32 = type),
-    do: <<e::float-little-32, list_to_binary(tail, type)::binary>>
+  [
+    float64: {:float, 64},
+    float32: {:float, 32},
+    byte: {:integer, 8},
+    int16: {:integer, 16},
+    int32: {:integer, 32},
+    int64: {:integer, 64}
+  ]
+  |> Enum.each(fn {type, {spec, bits}} ->
+    defp list_to_binary([e | tail], unquote(type)),
+      do: <<e::unquote(spec)()-little-unquote(bits), list_to_binary(tail, unquote(type))::binary>>
+  end)
 
-  defp list_to_binary([e | tail], :byte = type), do: <<e, list_to_binary(tail, type)::binary>>
+  # defp list_to_binary([e | tail], :float32 = type),
+  #   do: <<e::float-little-32, list_to_binary(tail, type)::binary>>
+  #
+  # defp list_to_binary([e | tail], :byte = type), do: <<e, list_to_binary(tail, type)::binary>>
 
   @spec random(tuple, type) :: array
   def random(shape, type \\ :float32) do

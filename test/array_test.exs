@@ -4,16 +4,22 @@ defmodule ArrayTest do
   import Matrex.Array
   alias Matrex.Array
 
-  test "#add sums two arrays of the same shape" do
-    a = new([1, 2, 3, 4, 5, 6], {3, 2})
-    b = new([2, 3, 4, 5, 6, 7], {3, 2})
+  [:byte, :int16, :int32, :int64, :float32, :float64]
+  |> Enum.each(fn type ->
+    # quote do
+    test "#add sums two arrays of #{type} of the same shape" do
+      a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
+      b = new([2, 3, 4, 5, 6, 7], {3, 2}, unquote(type))
 
-    expected = new([3, 5, 7, 9, 11, 13], {3, 2})
+      expected = new([3, 5, 7, 9, 11, 13], {3, 2}, unquote(type))
 
-    c = add(a, b)
+      c = add(a, b)
 
-    assert c == expected
-  end
+      assert c == expected
+    end
+
+    # end
+  end)
 
   test "#add sums two arrays of bytes" do
     a = reshape(1..12, {3, 4}, :byte)
@@ -74,7 +80,6 @@ defmodule ArrayTest do
   test "#transpose transposes 2-d array" do
     a = reshape(1..12, {3, 4}, :byte)
     t = transpose(a)
-    expected = new([1, 5, 9, 4, 2, 6, 10, 8, 3, 7, 11, 12], {3, 4}, :byte)
     assert at(t, 1, 2) == at(a, 2, 1)
     assert at(t, 1, 3) == at(a, 3, 1)
     assert at(t, 2, 2) == at(a, 2, 2)
