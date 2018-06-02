@@ -9,21 +9,22 @@ defmodule Matrex.Array do
   @element_types [:float32, :float64, :int16, :int32, :int64, :byte, :bool]
 
   @type element :: number | :nan | :inf | :neg_inf
-  @type type :: :float32 | :float64 | :int61 | :int32 | :int64 | :byte | :bool
+  @type type :: :float32 | :float64 | :int16 | :int32 | :int64 | :byte | :bool
   @type index :: pos_integer
   @type array :: %Array{data: binary, type: atom, shape: tuple, strides: tuple}
   @type t :: array
 
   @spec add(array, array) :: array
-  def add(%Array{data: data1, shape: shape, type: type}, %Array{
+  def add(%Array{data: data1, shape: shape, strides: strides, type: type}, %Array{
         data: data2,
         shape: shape,
+        strides: strides,
         type: type
       }) do
     %Array{
       data: add_data(data1, data2, type),
       shape: shape,
-      strides: strides(shape, type),
+      strides: strides,
       type: type
     }
   end
@@ -110,8 +111,10 @@ defmodule Matrex.Array do
 
   defp list_to_binary([], _), do: <<>>
 
-  defp list_to_binary([e | tail], type),
+  defp list_to_binary([e | tail], :float32 = type),
     do: <<e::float-little-32, list_to_binary(tail, type)::binary>>
+
+  defp list_to_binary([e | tail], :byte = type), do: <<e, list_to_binary(tail, type)::binary>>
 
   @spec random(tuple, type) :: array
   def random(shape, type \\ :float32) do
@@ -140,7 +143,12 @@ defmodule Matrex.Array do
     }
   end
 
+  @spec shape(array) :: tuple
   def shape(%Array{shape: shape}), do: shape
+
+  @spec transpose(array) :: array
+  def transpose(%Array{shape: {sh1, sh2}, strides: {s1, s2}} = array),
+    do: %Array{array | shape: {sh2, sh1}, strides: {s2, s1}}
 
   @spec zeros(tuple, type) :: array
   def zeros(shape, type \\ :float32)

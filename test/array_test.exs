@@ -71,6 +71,15 @@ defmodule ArrayTest do
     assert strides({10, 5, 5}, :float32) == {25 * 4, 5 * 4, 4}
   end
 
+  test "#transpose transposes 2-d array" do
+    a = reshape(1..12, {3, 4}, :byte)
+    t = transpose(a)
+    expected = new([1, 5, 9, 4, 2, 6, 10, 8, 3, 7, 11, 12], {3, 4}, :byte)
+    assert at(t, 1, 2) == at(a, 2, 1)
+    assert at(t, 1, 3) == at(a, 3, 1)
+    assert at(t, 2, 2) == at(a, 2, 2)
+  end
+
   test "#zeros creates 3-dim array of floats" do
     a = zeros({10, 28, 28}, :float32)
     assert at(a, {5, 10, 15}) == 0.0
