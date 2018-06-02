@@ -27,7 +27,7 @@ You can run benchmarks from the `/bench` folder with `python numpy_bench.py` and
 #### NumPy
 ```
 benchmark         iterations	average time
-logistic_cost() 	100          	1.23 ms/op
+logistic_cost()   100          	1.23 ms/op
 np.divide(A, B)   30            15.43 ms/op
 np.add(A, B)      100           14.62 ms/op
 sigmoid(A)        50            93.28 ms/op
