@@ -6,6 +6,10 @@
 
 typedef unsigned char byte;
 
+void
+_add_arrays(const void* first, const void* second, void* result, uint64_t byte_size, char* data_type);
+
+
 static ERL_NIF_TERM
 add_arrays(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
@@ -27,27 +31,32 @@ add_arrays(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   result_data = enif_make_new_binary(env, first.size, &result);
 
-  if (strcmp(data_type, "float32") == 0) {
-    for (uint64_t i = 0; i < first.size/sizeof(float); i++)
-      ((float*)result_data)[i] = ((float*)first_data)[i] + ((float*)second_data)[i];
-  } else if (strcmp(data_type, "byte") == 0) {
-    for (uint64_t i = 0; i < first.size/sizeof(byte); i++)
-      ((byte*)result_data)[i] = ((byte*)first_data)[i] + ((byte*)second_data)[i];
-  } else if (strcmp(data_type, "float64") == 0) {
-    for (uint64_t i = 0; i < first.size/sizeof(double); i++)
-      ((double*)result_data)[i] = ((double*)first_data)[i] + ((double*)second_data)[i];
-  } else if (strcmp(data_type, "int16") == 0) {
-    for (uint64_t i = 0; i < first.size/sizeof(int16_t); i++)
-      ((int16_t*)result_data)[i] = ((int16_t*)first_data)[i] + ((int16_t*)second_data)[i];
-  } else if (strcmp(data_type, "int32") == 0) {
-    for (uint64_t i = 0; i < first.size/sizeof(int32_t); i++)
-      ((int32_t*)result_data)[i] = ((int32_t*)first_data)[i] + ((int32_t*)second_data)[i];
-  } else if (strcmp(data_type, "int64") == 0) {
-    for (uint64_t i = 0; i < first.size/sizeof(int64_t); i++)
-      ((int64_t*)result_data)[i] = ((int64_t*)first_data)[i] + ((int64_t*)second_data)[i];
-  }
+  _add_arrays(first_data, second_data, result_data, first.size, data_type);
 
   return result;
+}
+
+void
+_add_arrays(const void* first, const void* second, void* result, uint64_t byte_size, char* data_type) {
+  if (strcmp(data_type, "float32") == 0) {
+    for (uint64_t i = 0; i < byte_size/sizeof(float); i++)
+      ((float*)result)[i] = ((float*)first)[i] + ((float*)second)[i];
+  } else if (strcmp(data_type, "byte") == 0) {
+    for (uint64_t i = 0; i < byte_size/sizeof(byte); i++)
+      ((byte*)result)[i] = ((byte*)first)[i] + ((byte*)second)[i];
+  } else if (strcmp(data_type, "float64") == 0) {
+    for (uint64_t i = 0; i < byte_size/sizeof(double); i++)
+      ((double*)result)[i] = ((double*)first)[i] + ((double*)second)[i];
+  } else if (strcmp(data_type, "int16") == 0) {
+    for (uint64_t i = 0; i < byte_size/sizeof(int16_t); i++)
+      ((int16_t*)result)[i] = ((int16_t*)first)[i] + ((int16_t*)second)[i];
+  } else if (strcmp(data_type, "int32") == 0) {
+    for (uint64_t i = 0; i < byte_size/sizeof(int32_t); i++)
+      ((int32_t*)result)[i] = ((int32_t*)first)[i] + ((int32_t*)second)[i];
+  } else if (strcmp(data_type, "int64") == 0) {
+    for (uint64_t i = 0; i < byte_size/sizeof(int64_t); i++)
+      ((int64_t*)result)[i] = ((int64_t*)first)[i] + ((int64_t*)second)[i];
+  }
 }
 
 

@@ -48,6 +48,11 @@ defmodule ArrayTest do
     assert at(a, 2, 3) == 6
   end
 
+  test "#new creates bool array from list" do
+    a = new([true, true, false, true, true, false, false, true], {2, 4}, :bool)
+    assert at(a, 2, 2) == false
+  end
+
   test "#random creates array of random values" do
     a = random({10, 25, 25})
     assert at(a, {5, 5, 5}) != at(a, {5, 5, 6})
