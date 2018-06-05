@@ -2,7 +2,6 @@ defmodule Matrex.Array do
   @moduledoc """
   NumPy style multidimensional array
   """
-  import Matrex.Array.Macro
   alias Matrex.Array
   alias Matrex.Array.NIFs
 
@@ -136,6 +135,35 @@ defmodule Matrex.Array do
     end
   end
 
+  # Bool (布尔)
+
+  def at(%Array{data: data, strides: strides, type: :bool}, pos) when is_tuple(pos) do
+    off = offset(strides, pos)
+    <<_::size(off), x::size(1), _rest::bitstring>> = data
+    x
+  end
+
+  def heatmap(%Array{data: data, shape: {rows, cols}, type: :bool} = array) do
+    for n <- 1..div(rows, 2) do
+      rows_string(array, n)
+    end
+    |> Enum.join("\n")
+    |> IO.puts()
+
+    array
+  end
+
+  defp rows_string(%Array{shape: {rows, cols}} = array, n) do
+    Enum.reduce(1..cols, <<>>, fn c, acc ->
+      acc <> pixel(at(array, n * 2 - 1, c), at(array, n * 2, c))
+    end)
+  end
+
+  defp pixel(true, true), do: "█"
+  defp pixel(false, false), do: " "
+  defp pixel(true, false), do: "▀"
+  defp pixel(false, true), do: "▄"
+
   defp list_to_binary([false | tail], :bool),
     do: <<0::size(1), list_to_binary(tail, :bool)::bitstring>>
 
@@ -148,12 +176,6 @@ defmodule Matrex.Array do
   defp binary_to_text(<<e::size(1), rest::bitstring>>, :bool),
     do: "#{e} " <> binary_to_text(rest, :bool)
 
-  def at(%Array{data: data, strides: strides, type: :bool}, pos) when is_tuple(pos) do
-    off = offset(strides, pos)
-    <<_::size(off), x::size(1), _rest::bitstring>> = data
-    x == 1
-  end
-
   defp random_binary(count, :bool) when count < 64, do: <<random_cell(:int64)::size(count)>>
 
   defp random_binary(count, :bool) do
@@ -163,24 +185,6 @@ defmodule Matrex.Array do
       <<random_cell(:int64)::integer-64, bin::bitstring>>
     end)
   end
-
-  # [
-  #   float64: {:float, 64},
-  #   float32: {:float, 32},
-  #   byte: {:integer, 8},
-  #   int16: {:integer, 16},
-  #   int32: {:integer, 32},
-  #   int64: {:integer, 64}
-  # ]
-  # |> Enum.each(fn {type, {spec, bits}} ->
-  #   defp list_to_binary([e | tail], unquote(type)),
-  #     do: <<e::unquote(spec)()-little-unquote(bits), list_to_binary(tail, unquote(type))::binary>>
-  # end)
-
-  # defp list_to_binary([e | tail], :float32 = type),
-  #   do: <<e::float-little-32, list_to_binary(tail, type)::binary>>
-
-  # defp list_to_binary([e | tail], :byte = type), do: <<e, list_to_binary(tail, type)::binary>>
 
   @spec random(tuple, type) :: array
   def random(shape, type \\ :float32) when is_tuple(shape) do
