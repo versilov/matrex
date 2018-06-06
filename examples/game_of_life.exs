@@ -1,6 +1,12 @@
 defmodule GameOfLife do
   @moduledoc """
   Conway's game of life implementation with Matrex boolean array
+
+  ## Example
+      matrex$ iex -S mix
+      iex> c "examples/game_of_life.exs"
+      [GameOfLife]
+      iex> GameOfLife.run(100, 100, 100)
   """
   alias Matrex.Array
 
@@ -15,7 +21,7 @@ defmodule GameOfLife do
 
     IO.puts("#{hide_cursor()}")
 
-    Enum.reduce(1..iterations, field, fn i, fld ->
+    Enum.reduce(1..iterations, field, fn _i, fld ->
       IO.puts(IO.ANSI.home())
       Array.heatmap(fld)
 
