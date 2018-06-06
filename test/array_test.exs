@@ -30,6 +30,28 @@ defmodule ArrayTest do
     assert add(a, b) == expected
   end
 
+  test "#apply applies function to bool array" do
+    ab = new([1, 0, 1, 0, 0, 1], {3, 2}, :bool)
+    expected = new([0, 1, 0, 1, 1, 0], {3, 2}, :bool)
+
+    # Invert bool array with apply/2
+    assert Array.apply(ab, fn
+             1 -> 0
+             0 -> 1
+           end) == expected
+  end
+
+  test "#apply applies function with coords to bool array" do
+    ab = new([1, 0, 1, 0, 0, 1, 0, 1], {2, 2, 2}, :bool)
+    expected = new([0, 0, 0, 0, 0, 1, 0, 1], {2, 2, 2}, :bool)
+
+    # Invert bool array's only first row with apply/2
+    assert Array.apply(ab, fn
+             _, {1, _c, _z} -> 0
+             x, _ -> x
+           end) == expected
+  end
+
   test "#inspect shows array in console" do
     a = reshape(1..9, {3, 3}, :byte)
 

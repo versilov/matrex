@@ -137,6 +137,36 @@ defmodule Matrex.Array do
 
   # Bool (布尔)
 
+  def apply(%Array{data: data, type: type} = array, fun) when is_function(fun, 1),
+    do: %{array | data: apply_fun(data, fun, type)}
+
+  def apply(%Array{data: data, type: type, shape: shape} = array, fun) when is_function(fun, 2),
+    do: %{array | data: apply_fun(data, fun, shape, Tuple.duplicate(1, tuple_size(shape)), type)}
+
+  defp apply_fun(<<x::size(1), rest::bitstring>>, fun, :bool) when is_function(fun, 1),
+    do: <<fun.(x)::size(1), apply_fun(rest, fun, :bool)::bitstring>>
+
+  defp apply_fun(<<>>, _, _), do: <<>>
+
+  defp apply_fun(<<x::size(1), rest::bitstring>>, fun, shape, pos, :bool) do
+    new_pos = next_pos(pos, shape)
+    <<fun.(x, pos)::size(1), apply_fun(rest, fun, shape, new_pos, :bool)::bitstring>>
+  end
+
+  defp apply_fun(<<>>, _fun, _shape, _pos, _type), do: <<>>
+
+  defp next_pos(pos, shape) do
+    Enum.reduce_while((tuple_size(shape) - 1)..0, pos, fn i, p ->
+      new_coord = elem(p, i) + 1
+
+      if new_coord <= elem(shape, i) do
+        {:halt, put_elem(p, i, new_coord)}
+      else
+        {:cont, put_elem(p, i, 1)}
+      end
+    end)
+  end
+
   def at(%Array{data: data, strides: strides, type: :bool}, pos) when is_tuple(pos) do
     off = offset(strides, pos)
     <<_::size(off), x::size(1), _rest::bitstring>> = data
@@ -159,10 +189,10 @@ defmodule Matrex.Array do
     end)
   end
 
-  defp pixel(true, true), do: "█"
-  defp pixel(false, false), do: " "
-  defp pixel(true, false), do: "▀"
-  defp pixel(false, true), do: "▄"
+  defp pixel(1, 1), do: "█"
+  defp pixel(0, 0), do: " "
+  defp pixel(1, 0), do: "▀"
+  defp pixel(0, 1), do: "▄"
 
   defp list_to_binary([false | tail], :bool),
     do: <<0::size(1), list_to_binary(tail, :bool)::bitstring>>
