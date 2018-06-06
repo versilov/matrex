@@ -6,62 +6,68 @@
 
 typedef unsigned char byte;
 
-void
-_add_arrays(const void* first, const void* second, void* result, uint64_t byte_size, char* data_type);
 
+#define CAT(a, b, c) a ## b ## c
 
-static ERL_NIF_TERM
-add_arrays(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ErlNifBinary  first, second;
-  ERL_NIF_TERM  result;
-  void        *first_data, *second_data, *result_data;
-  char data_type[16];
+#define TYPED_NIF(title, type_name) \
+        static ERL_NIF_TERM CAT(title, _, type_name)
 
-  (void)(argc);
+#define ENIF_MAKE_VAL(VAL) _Generic(VAL, \
+        int64_t: enif_make_int64(env, VAL), \
+        uint64_t: enif_make_uint64(env, VAL), \
+        double: enif_make_double(env, VAL))
 
-  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
-  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
-  if (enif_get_atom(env, argv[2], data_type, 16, ERL_NIF_LATIN1) == 0)
-    return enif_raise_exception(env,
-      enif_make_string(env, "Third argument must be an atom.", ERL_NIF_LATIN1));
+#define TOP_TYPE int64_t
 
+#define TYPE uint8_t
+#define TYPE_NAME byte
+#include "typed_nifs.h"
 
-  first_data  = first.data;
-  second_data = second.data;
+#undef TYPE
+#undef TYPE_NAME
+#define TYPE int16_t
+#define TYPE_NAME int16
+#include "typed_nifs.h"
 
-  result_data = enif_make_new_binary(env, first.size, &result);
+#undef TYPE
+#undef TYPE_NAME
+#define TYPE int32_t
+#define TYPE_NAME int32
+#include "typed_nifs.h"
 
-  _add_arrays(first_data, second_data, result_data, first.size, data_type);
+#undef TYPE
+#undef TYPE_NAME
+#define TYPE int64_t
+#define TYPE_NAME int64
+#include "typed_nifs.h"
 
-  return result;
-}
+#undef TOP_TYPE
+#define TOP_TYPE double
 
-void
-_add_arrays(const void* first, const void* second, void* result, uint64_t byte_size, char* data_type) {
-  if (strcmp(data_type, "float32") == 0) {
-    for (uint64_t i = 0; i < byte_size/sizeof(float); i++)
-      ((float*)result)[i] = ((float*)first)[i] + ((float*)second)[i];
-  } else if (strcmp(data_type, "byte") == 0) {
-    for (uint64_t i = 0; i < byte_size/sizeof(byte); i++)
-      ((byte*)result)[i] = ((byte*)first)[i] + ((byte*)second)[i];
-  } else if (strcmp(data_type, "float64") == 0) {
-    for (uint64_t i = 0; i < byte_size/sizeof(double); i++)
-      ((double*)result)[i] = ((double*)first)[i] + ((double*)second)[i];
-  } else if (strcmp(data_type, "int16") == 0) {
-    for (uint64_t i = 0; i < byte_size/sizeof(int16_t); i++)
-      ((int16_t*)result)[i] = ((int16_t*)first)[i] + ((int16_t*)second)[i];
-  } else if (strcmp(data_type, "int32") == 0) {
-    for (uint64_t i = 0; i < byte_size/sizeof(int32_t); i++)
-      ((int32_t*)result)[i] = ((int32_t*)first)[i] + ((int32_t*)second)[i];
-  } else if (strcmp(data_type, "int64") == 0) {
-    for (uint64_t i = 0; i < byte_size/sizeof(int64_t); i++)
-      ((int64_t*)result)[i] = ((int64_t*)first)[i] + ((int64_t*)second)[i];
-  }
-}
+#undef TYPE
+#undef TYPE_NAME
+#define TYPE float
+#define TYPE_NAME float32
+#include "typed_nifs.h"
 
+#undef TYPE
+#undef TYPE_NAME
+#define TYPE double
+#define TYPE_NAME float64
+#include "typed_nifs.h"
+
+#define TYPED_NIFS_DECL(NAME, ARGC, FLAGS) \
+  {#NAME "_byte", ARGC, NAME##_byte, FLAGS}, \
+  {#NAME "_int16", ARGC, NAME##_int16, FLAGS}, \
+  {#NAME "_int32", ARGC, NAME##_int32, FLAGS}, \
+  {#NAME "_int64", ARGC, NAME##_int64, FLAGS}, \
+  {#NAME "_float32", ARGC, NAME##_float32, FLAGS}, \
+  {#NAME "_float64", ARGC, NAME##_float64, FLAGS}
 
 static ErlNifFunc nif_functions[] = {
-  {"add_arrays",                  3, add_arrays,                  0}
+  TYPED_NIFS_DECL(add_arrays, 2, 0),
+  TYPED_NIFS_DECL(multiply_arrays, 2, 0),
+  TYPED_NIFS_DECL(array_sum, 1, 0)
 };
 
 

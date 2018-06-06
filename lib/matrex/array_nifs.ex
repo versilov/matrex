@@ -18,6 +18,24 @@ defmodule Matrex.Array.NIFs do
     :ok = :erlang.load_nif(:filename.join(priv_dir, "array_nifs"), 0)
   end
 
-  def add_arrays(data1, data2, type) when is_binary(data1) and is_binary(data2) and is_atom(type),
-    do: :erlang.nif_error(:nif_library_not_loaded)
+  types = [
+    "float64",
+    "float32",
+    "byte",
+    "int16",
+    "int32",
+    "int64"
+  ]
+
+  Enum.each(types, fn type ->
+    def unquote(:"add_arrays_#{type}")(data1, data2) when is_binary(data1) and is_binary(data2),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
+    def unquote(:"multiply_arrays_#{type}")(data1, data2)
+        when is_binary(data1) and is_binary(data2),
+        do: :erlang.nif_error(:nif_library_not_loaded)
+
+    def unquote(:"array_sum_#{type}")(data) when is_binary(data),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+  end)
 end

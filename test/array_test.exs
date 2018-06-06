@@ -6,7 +6,6 @@ defmodule ArrayTest do
 
   [:byte, :int16, :int32, :int64, :float32, :float64]
   |> Enum.each(fn type ->
-    # quote do
     test "#add sums two arrays of #{type} of the same shape" do
       a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
       b = new([2, 3, 4, 5, 6, 7], {3, 2}, unquote(type))
@@ -18,17 +17,25 @@ defmodule ArrayTest do
       assert c == expected
     end
 
-    # end
+    test "#multiply multiplies two arrays of #{type} of the same shape elementwise" do
+      a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
+      b = new([2, 3, 4, 5, 6, 7], {3, 2}, unquote(type))
+
+      expected = new([2, 6, 12, 20, 30, 42], {3, 2}, unquote(type))
+
+      c = multiply(a, b)
+
+      assert c == expected
+    end
+
+    test "#sum sums elements of array of #{type}" do
+      a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
+
+      expected = 21
+
+      assert sum(a) == expected
+    end
   end)
-
-  test "#add sums two arrays of bytes" do
-    a = reshape(1..12, {3, 4}, :byte)
-    b = reshape(12..1, {3, 4}, :byte)
-
-    expected = fill(13, {3, 4}, :byte)
-
-    assert add(a, b) == expected
-  end
 
   test "#apply applies function to bool array" do
     ab = new([1, 0, 1, 0, 0, 1], {3, 2}, :bool)

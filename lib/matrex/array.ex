@@ -15,20 +15,20 @@ defmodule Matrex.Array do
   @type array :: %Array{data: binary, type: atom, shape: tuple, strides: tuple}
   @type t :: array
 
-  @spec add(array, array) :: array
-  def add(%Array{data: data1, shape: shape, strides: strides, type: type}, %Array{
-        data: data2,
-        shape: shape,
-        strides: strides,
-        type: type
-      }) do
-    %Array{
-      data: NIFs.add_arrays(data1, data2, type),
-      shape: shape,
-      strides: strides,
-      type: type
-    }
-  end
+  # @spec add(array, array) :: array
+  # def add(%Array{data: data1, shape: shape, strides: strides, type: type}, %Array{
+  #       data: data2,
+  #       shape: shape,
+  #       strides: strides,
+  #       type: type
+  #     }) do
+  #   %Array{
+  #     data: NIFs.add_arrays(data1, data2, type),
+  #     shape: shape,
+  #     strides: strides,
+  #     type: type
+  #   }
+  # end
 
   defp add_data(<<>>, <<>>, _), do: <<>>
 
@@ -110,6 +110,37 @@ defmodule Matrex.Array do
   for {guard, type_and_size} <- types do
     @guard guard
     @type_and_size type_and_size
+
+    def add(%Array{data: data1, shape: shape, strides: strides, type: @guard}, %Array{
+          data: data2,
+          shape: shape,
+          strides: strides,
+          type: @guard
+        }) do
+      %Array{
+        data: apply(NIFs, :"add_arrays_#{to_string(@guard)}", [data1, data2]),
+        shape: shape,
+        strides: strides,
+        type: @guard
+      }
+    end
+
+    def multiply(%Array{data: data1, shape: shape, strides: strides, type: @guard}, %Array{
+          data: data2,
+          shape: shape,
+          strides: strides,
+          type: @guard
+        }) do
+      %Array{
+        data: apply(NIFs, :"multiply_arrays_#{to_string(@guard)}", [data1, data2]),
+        shape: shape,
+        strides: strides,
+        type: @guard
+      }
+    end
+
+    def sum(%Array{data: data, type: @guard}),
+      do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
 
     defp list_to_binary([e | tail], @guard) do
       <<e::type_and_size(), list_to_binary(tail, @guard)::binary>>
