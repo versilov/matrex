@@ -17,6 +17,15 @@ defmodule ArrayTest do
       assert c == expected
     end
 
+    test "#add sums array of #{type} and a scalar" do
+      a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
+      scalar = 3.0
+
+      expected = new([4, 5, 6, 7, 8, 9], {3, 2}, unquote(type))
+
+      assert add(a, scalar) == expected
+    end
+
     test "#multiply multiplies two arrays of #{type} of the same shape elementwise" do
       a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
       b = new([2, 3, 4, 5, 6, 7], {3, 2}, unquote(type))

@@ -28,6 +28,9 @@ defmodule Matrex.Array.NIFs do
   ]
 
   Enum.each(types, fn type ->
+    def unquote(:"add_scalar_#{type}")(data, scalar) when is_binary(data) and is_number(scalar),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
     def unquote(:"add_arrays_#{type}")(data1, data2) when is_binary(data1) and is_binary(data2),
       do: :erlang.nif_error(:nif_library_not_loaded)
 

@@ -15,39 +15,6 @@ defmodule Matrex.Array do
   @type array :: %Array{data: binary, type: atom, shape: tuple, strides: tuple}
   @type t :: array
 
-  # @spec add(array, array) :: array
-  # def add(%Array{data: data1, shape: shape, strides: strides, type: type}, %Array{
-  #       data: data2,
-  #       shape: shape,
-  #       strides: strides,
-  #       type: type
-  #     }) do
-  #   %Array{
-  #     data: NIFs.add_arrays(data1, data2, type),
-  #     shape: shape,
-  #     strides: strides,
-  #     type: type
-  #   }
-  # end
-
-  defp add_data(<<>>, <<>>, _), do: <<>>
-
-  defp add_data(
-         <<e1::float-little-32, rest1::binary>>,
-         <<e2::float-little-32, rest2::binary>>,
-         :float32
-       ) do
-    <<e1 + e2::float-little-32, add_data(rest1, rest2, :float32)::binary>>
-  end
-
-  defp add_data(
-         <<e1, rest1::binary>>,
-         <<e2, rest2::binary>>,
-         :byte = type
-       ) do
-    <<e1 + e2, add_data(rest1, rest2, type)::binary>>
-  end
-
   @spec at(array, index, index) :: element
   def at(%Array{} = array, row, col), do: at(array, {row, col})
 
@@ -93,8 +60,10 @@ defmodule Matrex.Array do
   defmacrop type_and_size() do
     {type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
 
-    quote do
-      size(unquote(size)) - unquote(type)() - little
+    if size == 8 do
+      quote do: size(unquote(size))
+    else
+      quote do: size(unquote(size)) - unquote(type)() - little
     end
   end
 
@@ -124,6 +93,9 @@ defmodule Matrex.Array do
         type: @guard
       }
     end
+
+    def add(%Array{data: data, type: @guard} = array, scalar) when is_number(scalar),
+      do: %{array | data: apply(NIFs, :"add_scalar_#{to_string(@guard)}", [data, scalar])}
 
     def multiply(%Array{data: data1, shape: shape, strides: strides, type: @guard}, %Array{
           data: data2,

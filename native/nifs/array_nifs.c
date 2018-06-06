@@ -17,6 +17,30 @@ typedef unsigned char byte;
         uint64_t: enif_make_uint64(env, VAL), \
         double: enif_make_double(env, VAL))
 
+#define ENIF_GET_VAL(VAL, ARG) _Generic(VAL, \
+        int64_t: get_scalar_int(env, ARG, &VAL), \
+        double: get_scalar_float(env, ARG, &VAL))
+
+static void
+get_scalar_float(ErlNifEnv *env, ERL_NIF_TERM arg, double* scalar) {
+  if (enif_get_double(env, arg, scalar) == 0) {
+    long long_scalar;
+    enif_get_int64(env, arg, &long_scalar);
+
+    *scalar = (double) long_scalar;
+  }
+}
+
+static void
+get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
+  if (enif_get_int64(env, arg, scalar) == 0) {
+    double double_scalar;
+    enif_get_double(env, arg, &double_scalar);
+
+    *scalar = (long) double_scalar;
+  }
+}
+
 #define TOP_TYPE int64_t
 
 #define TYPE uint8_t
@@ -66,6 +90,7 @@ typedef unsigned char byte;
 
 static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(add_arrays, 2, 0),
+  TYPED_NIFS_DECL(add_scalar, 2, 0),
   TYPED_NIFS_DECL(multiply_arrays, 2, 0),
   TYPED_NIFS_DECL(array_sum, 1, 0)
 };

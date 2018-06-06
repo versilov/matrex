@@ -19,6 +19,27 @@ TYPED_NIF(add_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
   return result;
 }
 
+TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  array;
+  ERL_NIF_TERM  result;
+  TYPE        *array_data, *result_data;
+  TOP_TYPE scalar;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &array)) return enif_make_badarg(env);
+  ENIF_GET_VAL(scalar, argv[1]);
+
+  array_data  = (TYPE*)array.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
+
+  for (uint64_t i = 0; i < array.size/sizeof(TYPE); i++)
+    result_data[i] = array_data[i] + scalar;
+
+  return result;
+}
+
 TYPED_NIF(multiply_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
