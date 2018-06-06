@@ -45,8 +45,9 @@ defmodule GameOfLife do
   end
 
   # Return zero, when we are out of range
-  defp cell_at(_, r, c) when r < 1 or c < 1, do: 0
-  defp cell_at(%Array{shape: {rows, cols}}, r, c) when r > rows or c > cols, do: 0
+  defp cell_at(%Array{shape: {rows, cols}}, r, c) when r < 1 or c < 1 or r > rows or c > cols,
+    do: 0
+
   defp cell_at(fld, r, c), do: Array.at(fld, {r, c})
 
   defp hide_cursor(), do: "\e[?25l"
