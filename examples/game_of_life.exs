@@ -17,7 +17,7 @@ defmodule GameOfLife do
 
     Enum.reduce(1..iterations, field, fn i, fld ->
       IO.puts(IO.ANSI.home())
-      # Array.heatmap(fld)
+      Array.heatmap(fld)
 
       Array.apply(fld, fn x, {r, c} ->
         alive = Enum.sum(neighbours(fld, {r, c}))
