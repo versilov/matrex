@@ -129,7 +129,7 @@ TYPED_NIF(ones_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
 TYPED_NIF(random_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   TYPE *result_data;
-  long size;
+  unsigned long size;
 
   (void)(argc);
 
@@ -163,6 +163,9 @@ TYPED_NIF(array_sum, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM
 // NIFs defined only for floating point types (float32 & float64)
 #ifdef FLOAT_NIFS
 
+#define MATH_FUNC_TYPE(TN) CAT(math_func_, TN, _ptr_t)
+#define MATH_FUNC_FROM_NAME(TN) CAT(math_func_, TN, _from_name)
+
 TYPED_NIF(array_apply_math, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  array;
   char          function_name[16];
@@ -173,15 +176,18 @@ TYPED_NIF(array_apply_math, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_N
 
   if (!enif_inspect_binary(env, argv[0], &array )) return enif_make_badarg(env);
   if (enif_get_atom(env, argv[1], function_name, 16, ERL_NIF_LATIN1) == 0)
-    return enif_raise_exception(env, enif_make_string(env, "Second argument must be an atom.", ERL_NIF_LATIN1));
+    return enif_raise_exception(
+      env, 
+      enif_make_string(env, "Second argument must be an atom.", ERL_NIF_LATIN1));
 
+  MATH_FUNC_TYPE(TYPE_NAME) func = MATH_FUNC_FROM_NAME(TYPE_NAME)(function_name);
 
   array_data  = (TYPE*)array.data;
 
   result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
 
   for (uint64_t i = 0; i < array.size/sizeof(TYPE); i++)
-    result_data[i] = 1.0/(1.0 + exp(array_data[i]));
+    result_data[i] = func(array_data[i]);
 
   return result;
 }

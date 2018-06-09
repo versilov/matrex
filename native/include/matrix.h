@@ -47,11 +47,11 @@ matrix_add_scalar(const Matrix first, const float scalar, Matrix result);
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result);
 
-typedef float (*math_funcf_ptr_t)(float);
-typedef double (*math_funcd_ptr_t)(double);
+typedef float (*math_func_float32_ptr_t)(float);
+typedef double (*math_func_float64_ptr_t)(double);
 
-math_funcf_ptr_t math_funcf_from_name(const char* name);
-math_funcd_ptr_t math_funcd_from_name(const char* name);
+math_func_float32_ptr_t math_func_float32_from_name(const char* name);
+math_func_float64_ptr_t math_func_float64_from_name(const char* name);
 
 int32_t
 matrix_argmax(const Matrix matrix);

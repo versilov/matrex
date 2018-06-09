@@ -75,17 +75,17 @@ float sigmoidf(float x) {
   return 1.0f/(1.0f + expf(-x));
 }
 
-double sigmoidd(double x) {
+double sigmoid(double x) {
   return 1.0/(1.0 + exp(-x));
 }
 
-math_funcf_ptr_t math_funcf_from_name(const char* name) {
+math_func_float32_ptr_t math_func_float32_from_name(const char* name) {
+  if (strcmp(name, "sigmoid") == 0)
+    return &sigmoidf;
   if (strcmp(name, "exp") == 0)
     return &expf;
   if (strcmp(name, "exp2") == 0)
     return &exp2f;
-  if (strcmp(name, "sigmoid") == 0)
-    return &sigmoidf;
   if (strcmp(name, "expm1") == 0)
     return &expm1f;
   if (strcmp(name, "ceil") == 0)
@@ -141,10 +141,72 @@ math_funcf_ptr_t math_funcf_from_name(const char* name) {
   return NULL;
 }
 
+math_func_float64_ptr_t math_func_float64_from_name(const char* name) {
+  if (strcmp(name, "sigmoid") == 0)
+    return &sigmoid;
+  if (strcmp(name, "exp") == 0)
+    return &exp;
+  if (strcmp(name, "exp2") == 0)
+    return &exp2;
+  if (strcmp(name, "expm1") == 0)
+    return &expm1;
+  if (strcmp(name, "ceil") == 0)
+    return &ceil;
+  if (strcmp(name, "floor") == 0)
+    return &floor;
+  if (strcmp(name, "truncate") == 0 || strcmp(name, "trunc") == 0)
+    return &trunc;
+  if (strcmp(name, "round") == 0)
+    return &round;
+  if (strcmp(name, "abs") == 0)
+    return &fabs;
+  if (strcmp(name, "erf") == 0)
+    return &erf;
+  if (strcmp(name, "erfc") == 0)
+    return &erfc;
+  if (strcmp(name, "tgamma") == 0)
+    return &tgamma;
+  if (strcmp(name, "lgamma") == 0)
+    return &lgamma;
+  if (strcmp(name, "log") == 0)
+    return &log;
+  if (strcmp(name, "log2") == 0)
+    return &log2;
+  if (strcmp(name, "sqrt") == 0)
+    return &sqrt;
+  if (strcmp(name, "cbrt") == 0)
+    return &cbrt;
+  if (strcmp(name, "sin") == 0)
+    return &sin;
+  if (strcmp(name, "cos") == 0)
+    return &cos;
+  if (strcmp(name, "tan") == 0)
+    return &tan;
+  if (strcmp(name, "asin") == 0)
+    return &asin;
+  if (strcmp(name, "acos") == 0)
+    return &acos;
+  if (strcmp(name, "atan") == 0)
+    return &atan;
+  if (strcmp(name, "sinh") == 0)
+    return &sinh;
+  if (strcmp(name, "cosh") == 0)
+    return &cosh;
+  if (strcmp(name, "tanh") == 0)
+    return &tanh;
+  if (strcmp(name, "asinh") == 0)
+    return &asinh;
+  if (strcmp(name, "acosh") == 0)
+    return &acosh;
+  if (strcmp(name, "atanh") == 0)
+    return &atanh;
+  return NULL;
+}
+
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
   const uint64_t data_size = MX_LENGTH(matrix);
-  const math_funcf_ptr_t func = math_funcf_from_name(function_name);
+  const math_func_float32_ptr_t func = math_func_float32_from_name(function_name);
 
   if (func == NULL) return 0;
 

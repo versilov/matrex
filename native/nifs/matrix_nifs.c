@@ -123,8 +123,8 @@ void* math(void* args) {
   const uint64_t* i= (const uint64_t*)args;
   const uint64_t from = i[2];
   const uint64_t to = i[3];
-  math_funcf_ptr_t* f = (math_funcf_ptr_t*)args;
-  math_funcf_ptr_t math_func = f[4];
+  math_func_float32_ptr_t* f = (math_func_float32_ptr_t*)args;
+  math_func_float32_ptr_t math_func = f[4];
 
   for (uint64_t index = 2 + from; index < (2 + to); index += 1) {
     result[index] = math_func(matrix[index]);
@@ -162,7 +162,7 @@ apply_parallel_math(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   chunk_size = data_size / WORKERS_NUM + 1;
 
-  math_funcf_ptr_t func = math_funcf_from_name(function_name);
+  math_func_float32_ptr_t func = math_func_float32_from_name(function_name);
 
   for (int i = 0; i < WORKERS_NUM; i++ ) {
     uint64_t from = i*chunk_size;

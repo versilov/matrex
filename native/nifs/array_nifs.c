@@ -4,6 +4,7 @@
 #include <cblas.h>
 
 #include "erl_nif.h"
+#include "../include/matrix.h"
 
 typedef unsigned char byte;
 
