@@ -1721,14 +1721,15 @@ defmodule Matrex do
     |> new()
   end
 
+  @doc false
   @spec parse_float(binary) :: element | :nan | :inf | :neg_inf
-  defp parse_float("NaN"), do: :nan
-  defp parse_float("Inf"), do: :inf
-  defp parse_float("+Inf"), do: :inf
-  defp parse_float("-Inf"), do: :neg_inf
-  defp parse_float("NegInf"), do: :neg_inf
+  def parse_float("NaN"), do: :nan
+  def parse_float("Inf"), do: :inf
+  def parse_float("+Inf"), do: :inf
+  def parse_float("-Inf"), do: :neg_inf
+  def parse_float("NegInf"), do: :neg_inf
 
-  defp parse_float(string) do
+  def parse_float(string) do
     case Float.parse(string) do
       {value, _rem} -> value
       :error -> raise ArgumentError, message: "Unparseable matrix element value: #{string}"

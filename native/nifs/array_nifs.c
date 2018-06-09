@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <time.h>
+#include <cblas.h>
 
 #include "erl_nif.h"
 
@@ -70,12 +71,15 @@ get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
 
 #undef TYPE
 #undef TYPE_NAME
+#define BLAS_GEMM cblas_sgemm
 #define TYPE float
 #define TYPE_NAME float32
 #include "typed_nifs.h"
 
 #undef TYPE
 #undef TYPE_NAME
+#undef BLAS_GEMM
+#define BLAS_GEMM cblas_dgemm
 #define TYPE double
 #define TYPE_NAME float64
 #include "typed_nifs.h"
@@ -88,9 +92,14 @@ get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
   {#NAME "_float32", ARGC, NAME##_float32, FLAGS}, \
   {#NAME "_float64", ARGC, NAME##_float64, FLAGS}
 
+#define FLOAT_TYPED_NIFS_DECL(NAME, ARGC, FLAGS) \
+  {#NAME "_float32", ARGC, NAME##_float32, FLAGS}, \
+  {#NAME "_float64", ARGC, NAME##_float64, FLAGS}
+
 static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(add_arrays, 2, 0),
   TYPED_NIFS_DECL(add_scalar, 2, 0),
+  FLOAT_TYPED_NIFS_DECL(dot_arrays, 6, 0),
   TYPED_NIFS_DECL(multiply_arrays, 2, 0),
   TYPED_NIFS_DECL(array_sum, 1, 0)
 };

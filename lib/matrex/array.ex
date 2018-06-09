@@ -21,6 +21,15 @@ defmodule Matrex.Array do
   @spec at(array, index) :: element
   def at(%Array{} = array, index) when not is_tuple(index), do: at(array, {index})
 
+  @behaviour Access
+  @impl Access
+  def fetch(array, key)
+
+  def fetch(%Array{shape: {rows, _cols}}, :rows), do: {:ok, rows}
+  def fetch(%Array{shape: {_rows, cols}}, :cols), do: {:ok, cols}
+  def fetch(%Array{shape: {_rows, cols}}, :columns), do: {:ok, cols}
+  def fetch(%Array{shape: shape}, :shape), do: {:ok, shape}
+
   @spec fill(element, tuple, type) :: array
   def fill(value, shape, type \\ :float32) do
     %Array{
@@ -45,8 +54,27 @@ defmodule Matrex.Array do
 
   defp binary_to_text(<<>>, _type), do: ""
 
-  @spec new([element], tuple) :: array
-  def new(list, shape, type \\ :float32) do
+  @spec from_string(binary, atom) :: array
+  def from_string(text, type \\ :float32) when is_binary(text) and is_atom(type) do
+    lol =
+      text
+      |> String.split(["\n", ";"], trim: true)
+      |> Enum.map(fn line ->
+        line
+        |> String.split(["\s", ","], trim: true)
+        |> Enum.map(fn f -> Matrex.parse_float(f) end)
+      end)
+
+    rows = length(lol)
+    cols = length(hd(lol))
+
+    lol
+    |> List.flatten()
+    |> new({rows, cols}, type)
+  end
+
+  @spec new([element], tuple, atom) :: array
+  def new(list, shape, type \\ :float32) when is_list(list) and is_tuple(shape) do
     %Array{
       data: list_to_binary(list, type),
       shape: shape,
@@ -66,6 +94,11 @@ defmodule Matrex.Array do
       quote do: size(unquote(size)) - unquote(type)() - little
     end
   end
+
+  def dot(array1, array2, alpha \\ 1.0)
+
+  def dot(%Array{type: type1}, %Array{type: type2}, _alpha) when type1 != type2,
+    do: raise(ArgumentError, "arrays types mismatch: #{type1} vs #{type2}")
 
   types = [
     float64: {:float, 64},
@@ -96,6 +129,25 @@ defmodule Matrex.Array do
 
     def add(%Array{data: data, type: @guard} = array, scalar) when is_number(scalar),
       do: %{array | data: apply(NIFs, :"add_scalar_#{to_string(@guard)}", [data, scalar])}
+
+    def dot(
+          %Array{data: data1, shape: {rows, dim}, strides: {stride1, _}, type: @guard},
+          %Array{
+            data: data2,
+            shape: {dim, cols},
+            strides: {_, stride2},
+            type: @guard
+          },
+          alpha
+        ) do
+      %Array{
+        data:
+          apply(NIFs, :"dot_arrays_#{to_string(@guard)}", [data1, data2, rows, dim, cols, alpha]),
+        shape: {rows, cols},
+        strides: {stride1, stride2},
+        type: @guard
+      }
+    end
 
     def multiply(%Array{data: data1, shape: shape, strides: strides, type: @guard}, %Array{
           data: data2,
@@ -136,6 +188,16 @@ defmodule Matrex.Array do
       <<f::type_and_size()>> = binary_part(data, offset(strides, pos), bytesize(@guard))
       f
     end
+  end
+
+  float_types = [
+    float64: {:float, 64},
+    float32: {:float, 32}
+  ]
+
+  for {guard, type_and_size} <- types do
+    @guard guard
+    @type_and_size type_and_size
   end
 
   # Bool (布尔)

@@ -40,6 +40,54 @@ TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
   return result;
 }
 
+#ifdef BLAS_GEMM
+
+TYPED_NIF(dot_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *result_data;
+  long rows, dim, cols;
+  double alpha;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  get_scalar_float(env, argv[5], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, first.size, &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,
+    CblasNoTrans,
+    CblasNoTrans,
+    rows,
+    cols,
+    dim,
+    alpha,
+    first_data,
+    dim,
+    second_data,
+    cols,
+    0.0,
+    result_data,
+    cols
+  );
+
+  return result;
+}
+#else
+
+// Implement naive integer matrix dot
+
+#endif
+
 TYPED_NIF(multiply_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
