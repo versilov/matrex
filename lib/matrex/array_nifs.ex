@@ -38,6 +38,12 @@ defmodule Matrex.Array.NIFs do
         when is_binary(data1) and is_binary(data2),
         do: :erlang.nif_error(:nif_library_not_loaded)
 
+    def unquote(:"ones_array_#{type}")(size) when is_integer(size),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
+    def unquote(:"random_array_#{type}")(size) when is_integer(size),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
     def unquote(:"array_sum_#{type}")(data) when is_binary(data),
       do: :erlang.nif_error(:nif_library_not_loaded)
   end)
@@ -48,12 +54,12 @@ defmodule Matrex.Array.NIFs do
   ]
 
   Enum.each(types, fn type ->
+    def unquote(:"array_apply_math_#{type}")(data, func) when is_binary(data) and is_atom(func),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
     def unquote(:"dot_arrays_#{type}")(data1, data2, rows, dim, cols, alpha)
         when is_binary(data1) and is_binary(data2) and is_integer(rows) and is_integer(dim) and
                is_integer(cols) and is_number(alpha),
         do: :erlang.nif_error(:nif_library_not_loaded)
-
-    def unquote(:"random_array_#{type}")(size) when is_integer(size),
-      do: :erlang.nif_error(:nif_library_not_loaded)
   end)
 end

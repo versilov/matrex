@@ -68,6 +68,7 @@ get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
 
 #undef TOP_TYPE
 #define TOP_TYPE double
+#define FLOAT_NIFS 1
 
 #undef TYPE
 #undef TYPE_NAME
@@ -84,6 +85,8 @@ get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
 #define TYPE_NAME float64
 #include "typed_nifs.h"
 
+#undef FLOAT
+
 #define TYPED_NIFS_DECL(NAME, ARGC, FLAGS) \
   {#NAME "_byte", ARGC, NAME##_byte, FLAGS}, \
   {#NAME "_int16", ARGC, NAME##_int16, FLAGS}, \
@@ -99,8 +102,10 @@ get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
 static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(add_arrays, 2, 0),
   TYPED_NIFS_DECL(add_scalar, 2, 0),
+  FLOAT_TYPED_NIFS_DECL(array_apply_math, 2, 0),
   FLOAT_TYPED_NIFS_DECL(dot_arrays, 6, 0),
   TYPED_NIFS_DECL(multiply_arrays, 2, 0),
+  TYPED_NIFS_DECL(ones_array, 1, 0),
   FLOAT_TYPED_NIFS_DECL(random_array, 1, 0),
   TYPED_NIFS_DECL(array_sum, 1, 0)
 };

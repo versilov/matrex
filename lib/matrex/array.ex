@@ -100,6 +100,8 @@ defmodule Matrex.Array do
   def dot(%Array{type: type1}, %Array{type: type2}, _alpha) when type1 != type2,
     do: raise(ArgumentError, "arrays types mismatch: #{type1} vs #{type2}")
 
+  def ones(shape, type \\ :float32)
+
   types = [
     float64: {:float, 64},
     float32: {:float, 32},
@@ -163,6 +165,15 @@ defmodule Matrex.Array do
       }
     end
 
+    @spec ones(tuple, type) :: array
+    def ones(shape, @guard) when is_tuple(shape),
+      do: %Array{
+        data: apply(NIFs, :"ones_array_#{to_string(@guard)}", [elements_count(shape)]),
+        shape: shape,
+        strides: strides(shape, @guard),
+        type: @guard
+      }
+
     def sum(%Array{data: data, type: @guard}),
       do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
 
@@ -200,6 +211,46 @@ defmodule Matrex.Array do
   for {guard, type_and_size} <- types do
     @guard guard
     @type_and_size type_and_size
+
+    @math_functions [
+      :exp,
+      :exp2,
+      :sigmoid,
+      :expm1,
+      :log,
+      :log2,
+      :sqrt,
+      :cbrt,
+      :ceil,
+      :floor,
+      :truncate,
+      :round,
+      :abs,
+      :sin,
+      :cos,
+      :tan,
+      :asin,
+      :acos,
+      :atan,
+      :sinh,
+      :cosh,
+      :tanh,
+      :asinh,
+      :acosh,
+      :atanh,
+      :erf,
+      :erfc,
+      :tgamma,
+      :lgamma
+    ]
+
+    @spec apply(array, atom) :: array
+    def apply(%Array{data: data, type: @guard} = array, math_func)
+        when is_atom(math_func) and math_func in @math_functions,
+        do: %{
+          array
+          | data: apply(NIFs, :"array_apply_math_#{to_string(@guard)}", [data, math_func])
+        }
 
     @spec random(tuple, type) :: array
     def random(shape, @guard),

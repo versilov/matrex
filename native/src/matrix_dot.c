@@ -62,7 +62,7 @@ void
 matrix_dot_and_apply(
   const float alpha, const Matrix first, const Matrix second, const char *function_name, Matrix result
 ) {
-  const math_func_ptr_t func = math_func_from_name(function_name);
+  const math_funcf_ptr_t func = math_funcf_from_name(function_name);
 
   const uint64_t data_size = MX_ROWS(first) * MX_COLS(second) + 2;
 

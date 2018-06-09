@@ -75,7 +75,11 @@ float sigmoidf(float x) {
   return 1.0f/(1.0f + expf(-x));
 }
 
-math_func_ptr_t math_func_from_name(const char* name) {
+double sigmoidd(double x) {
+  return 1.0/(1.0 + exp(-x));
+}
+
+math_funcf_ptr_t math_funcf_from_name(const char* name) {
   if (strcmp(name, "exp") == 0)
     return &expf;
   if (strcmp(name, "exp2") == 0)
@@ -140,7 +144,7 @@ math_func_ptr_t math_func_from_name(const char* name) {
 int
 matrix_apply(const Matrix matrix, char* function_name, Matrix result) {
   const uint64_t data_size = MX_LENGTH(matrix);
-  const math_func_ptr_t func = math_func_from_name(function_name);
+  const math_funcf_ptr_t func = math_funcf_from_name(function_name);
 
   if (func == NULL) return 0;
 
