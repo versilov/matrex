@@ -190,6 +190,8 @@ defmodule Matrex.Array do
     end
   end
 
+  def random(shape, type \\ :float32)
+
   float_types = [
     float64: {:float, 64},
     float32: {:float, 32}
@@ -198,6 +200,15 @@ defmodule Matrex.Array do
   for {guard, type_and_size} <- types do
     @guard guard
     @type_and_size type_and_size
+
+    @spec random(tuple, type) :: array
+    def random(shape, @guard),
+      do: %Array{
+        data: apply(NIFs, :"random_array_#{to_string(@guard)}", [elements_count(shape)]),
+        shape: shape,
+        strides: strides(shape, @guard),
+        type: @guard
+      }
   end
 
   # Bool (布尔)
@@ -281,15 +292,15 @@ defmodule Matrex.Array do
     end)
   end
 
-  @spec random(tuple, type) :: array
-  def random(shape, type \\ :float32) when is_tuple(shape) do
-    %Array{
-      data: random_binary(elements_count(shape), type),
-      shape: shape,
-      strides: strides(shape, type),
-      type: type
-    }
-  end
+  # @spec random(tuple, type) :: array
+  # def random(shape, type \\ :float32) when is_tuple(shape) do
+  #   %Array{
+  #     data: random_binary(elements_count(shape), type),
+  #     shape: shape,
+  #     strides: strides(shape, type),
+  #     type: type
+  #   }
+  # end
 
   defp random_cell(:float32), do: :rand.uniform()
   defp random_cell(:float64), do: :rand.uniform()

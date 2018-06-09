@@ -101,6 +101,7 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(add_scalar, 2, 0),
   FLOAT_TYPED_NIFS_DECL(dot_arrays, 6, 0),
   TYPED_NIFS_DECL(multiply_arrays, 2, 0),
+  FLOAT_TYPED_NIFS_DECL(random_array, 1, 0),
   TYPED_NIFS_DECL(array_sum, 1, 0)
 };
 

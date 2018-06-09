@@ -109,6 +109,23 @@ TYPED_NIF(multiply_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NI
   return result;
 }
 
+TYPED_NIF(random_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM result;
+  TYPE *result_data;
+  long size;
+
+  (void)(argc);
+
+  enif_get_int64(env, argv[0], &size);
+
+  result_data = (TYPE*)enif_make_new_binary(env, size * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < size; i++)
+    result_data[i] = (TYPE)random()/(TYPE)RAND_MAX;
+
+  return result;
+}
+
 TYPED_NIF(array_sum, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  array;
   TYPE        *array_data;

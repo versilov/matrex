@@ -52,5 +52,8 @@ defmodule Matrex.Array.NIFs do
         when is_binary(data1) and is_binary(data2) and is_integer(rows) and is_integer(dim) and
                is_integer(cols) and is_number(alpha),
         do: :erlang.nif_error(:nif_library_not_loaded)
+
+    def unquote(:"random_array_#{type}")(size) when is_integer(size),
+      do: :erlang.nif_error(:nif_library_not_loaded)
   end)
 end
