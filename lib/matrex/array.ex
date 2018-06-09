@@ -7,7 +7,7 @@ defmodule Matrex.Array do
 
   @enforce_keys [:data, :type, :shape, :strides]
   defstruct data: nil, type: :float32, strides: {}, shape: {}
-  @element_types [:float32, :float64, :int16, :int32, :int64, :byte, :bool]
+  @types [:float32, :float64, :int16, :int32, :int64, :byte, :bool]
 
   @type element :: number | :nan | :inf | :neg_inf
   @type type :: :float32 | :float64 | :int16 | :int32 | :int64 | :byte | :bool
@@ -132,6 +132,12 @@ defmodule Matrex.Array do
     def add(%Array{data: data, type: @guard} = array, scalar) when is_number(scalar),
       do: %{array | data: apply(NIFs, :"add_scalar_#{to_string(@guard)}", [data, scalar])}
 
+    @spec at(array, tuple) :: element
+    def at(%Array{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
+      <<f::type_and_size()>> = binary_part(data, offset(strides, pos), bytesize(@guard))
+      f
+    end
+
     def dot(
           %Array{data: data1, shape: {rows, dim}, strides: {stride1, _}, type: @guard},
           %Array{
@@ -177,6 +183,16 @@ defmodule Matrex.Array do
     def sum(%Array{data: data, type: @guard}),
       do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
 
+    def to_type(%Array{type: @guard} = array, @type), do: array
+
+    def to_type(%Array{data: data, shape: shape, type: @guard} = array, type) when type in @types,
+      do: %{
+        array
+        | data: apply(NIFs, :"array_#{to_string(@guard)}_to_#{to_string(type)}", [data]),
+          strides: strides(shape, type),
+          type: type
+      }
+
     defp list_to_binary([e | tail], @guard) do
       <<e::type_and_size(), list_to_binary(tail, @guard)::binary>>
     end
@@ -193,12 +209,6 @@ defmodule Matrex.Array do
 
     defp range_to_binary(a..b, @guard),
       do: Enum.reduce(b..a, <<>>, fn x, bin -> <<x::type_and_size(), bin::binary>> end)
-
-    @spec at(array, tuple) :: element
-    def at(%Array{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
-      <<f::type_and_size()>> = binary_part(data, offset(strides, pos), bytesize(@guard))
-      f
-    end
   end
 
   def random(shape, type \\ :float32)
@@ -208,7 +218,7 @@ defmodule Matrex.Array do
     float32: {:float, 32}
   ]
 
-  for {guard, type_and_size} <- types do
+  for {guard, type_and_size} <- float_types do
     @guard guard
     @type_and_size type_and_size
 
@@ -388,7 +398,7 @@ defmodule Matrex.Array do
   def zeros(shape, type \\ :float32)
   def zeros(shape, type) when is_integer(shape), do: zeros({shape}, type)
 
-  def zeros(shape, type) when is_tuple(shape) and type in @element_types do
+  def zeros(shape, type) when is_tuple(shape) and type in @types do
     bitsize = elements_count(shape) * bitsize(type)
 
     %Array{

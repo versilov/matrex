@@ -46,6 +46,11 @@ defmodule Matrex.Array.NIFs do
 
     def unquote(:"array_sum_#{type}")(data) when is_binary(data),
       do: :erlang.nif_error(:nif_library_not_loaded)
+
+    Enum.each(types, fn to_type ->
+      def unquote(:"array_#{type}_to_#{to_type}")(data) when is_binary(data),
+        do: :erlang.nif_error(:nif_library_not_loaded)
+    end)
   end)
 
   float_types = [
@@ -53,7 +58,7 @@ defmodule Matrex.Array.NIFs do
     "float32"
   ]
 
-  Enum.each(types, fn type ->
+  Enum.each(float_types, fn type ->
     def unquote(:"array_apply_math_#{type}")(data, func) when is_binary(data) and is_atom(func),
       do: :erlang.nif_error(:nif_library_not_loaded)
 

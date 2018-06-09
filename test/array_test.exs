@@ -120,6 +120,14 @@ defmodule ArrayTest do
     assert strides({10, 5, 5}, :float32) == {25 * 4, 5 * 4, 4}
   end
 
+  test "#to_type/2 creates array converted to another type" do
+    a = new([1.5, 1.3, 2.7, 3.33], {2, 2}, :float64)
+    b = to_type(a, :int16)
+
+    assert at(b, {1, 2}) == 1
+    assert at(b, {2, 2}) == 3
+  end
+
   test "#transpose transposes 2-d array" do
     a = reshape(1..12, {3, 4}, :byte)
     t = transpose(a)

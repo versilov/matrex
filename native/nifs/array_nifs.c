@@ -108,7 +108,13 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(multiply_arrays, 2, 0),
   TYPED_NIFS_DECL(ones_array, 1, 0),
   FLOAT_TYPED_NIFS_DECL(random_array, 1, 0),
-  TYPED_NIFS_DECL(array_sum, 1, 0)
+  TYPED_NIFS_DECL(array_sum, 1, 0),
+  TYPED_NIFS_DECL(array_byte_to, 1, 0),
+  TYPED_NIFS_DECL(array_int16_to, 1, 0),
+  TYPED_NIFS_DECL(array_int32_to, 1, 0),
+  TYPED_NIFS_DECL(array_int64_to, 1, 0),
+  TYPED_NIFS_DECL(array_float32_to, 1, 0),
+  TYPED_NIFS_DECL(array_float64_to, 1, 0)
 };
 
 
