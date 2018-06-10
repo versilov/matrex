@@ -332,7 +332,7 @@ defmodule Matrex.Array do
     x
   end
 
-  def heatmap(%Array{data: data, shape: {rows, cols}, type: :bool} = array) do
+  def heatmap(%Array{shape: {rows, _cols}, type: :bool} = array) do
     for n <- 1..div(rows, 2) do
       rows_string(array, n)
     end
@@ -342,7 +342,7 @@ defmodule Matrex.Array do
     array
   end
 
-  defp rows_string(%Array{shape: {rows, cols}} = array, n) do
+  defp rows_string(%Array{shape: {_rows, cols}} = array, n) do
     Enum.reduce(1..cols, <<>>, fn c, acc ->
       acc <> pixel(at(array, n * 2 - 1, c), at(array, n * 2, c))
     end)
@@ -388,7 +388,7 @@ defmodule Matrex.Array do
   defp random_cell(:float32), do: :rand.uniform()
   defp random_cell(:float64), do: :rand.uniform()
   defp random_cell(:byte), do: :rand.uniform(256) - 1
-  defp random_cell(:int32), do: :rand.uniform(65_536) - 1
+  defp random_cell(:int16), do: :rand.uniform(65_536) - 1
   defp random_cell(:int32), do: :rand.uniform(2_147_483_647 * 2) - 1
   defp random_cell(:int64), do: :rand.uniform(18_446_744_073_709_551_615) - 1
 
