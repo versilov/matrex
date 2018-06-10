@@ -102,6 +102,8 @@ defmodule Matrex.Array do
 
   def ones(shape, type \\ :float32)
 
+  def set(array, row, col, value), do: set(array, {row, col}, value)
+
   types = [
     float64: {:float, 64},
     float32: {:float, 32},
@@ -179,6 +181,22 @@ defmodule Matrex.Array do
         strides: strides(shape, @guard),
         type: @guard
       }
+
+    @spec set(array, tuple, integer | float) :: array
+    def set(%Array{data: data, strides: strides, shape: shape, type: @guard} = array, pos, value) do
+      offset = offset(strides, pos)
+
+      %{
+        array
+        | data:
+            <<binary_part(data, 0, offset)::binary, value::type_and_size(),
+              binary_part(
+                data,
+                offset + bytesize(@guard),
+                bytesize(shape, @guard) - offset - bytesize(@guard)
+              )::binary>>
+      }
+    end
 
     def sum(%Array{data: data, type: @guard}),
       do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
@@ -431,6 +449,9 @@ defmodule Matrex.Array do
     |> Tuple.to_list()
     |> Enum.reduce(&(&1 * &2))
   end
+
+  defp bytesize(shape, type) when is_tuple(shape) and type in @types,
+    do: elements_count(shape) * bytesize(type)
 
   defp bytesize(:float32), do: 4
   defp bytesize(:float64), do: 8
