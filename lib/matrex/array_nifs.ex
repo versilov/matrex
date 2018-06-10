@@ -44,6 +44,9 @@ defmodule Matrex.Array.NIFs do
     def unquote(:"random_array_#{type}")(size) when is_integer(size),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+    def unquote(:"square_array_#{type}")(data) when is_binary(data),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
     def unquote(:"array_sum_#{type}")(data) when is_binary(data),
       do: :erlang.nif_error(:nif_library_not_loaded)
 

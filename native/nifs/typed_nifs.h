@@ -112,11 +112,11 @@ TYPED_NIF(multiply_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NI
 TYPED_NIF(ones_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   TYPE *result_data;
-  long size;
+  unsigned long size;
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &size);
+  enif_get_uint64(env, argv[0], &size);
 
   result_data = (TYPE*)enif_make_new_binary(env, size * sizeof(TYPE), &result);
 
@@ -133,7 +133,7 @@ TYPED_NIF(random_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_T
 
   (void)(argc);
 
-  enif_get_int64(env, argv[0], &size);
+  enif_get_uint64(env, argv[0], &size);
 
   result_data = (TYPE*)enif_make_new_binary(env, size * sizeof(TYPE), &result);
 
@@ -142,6 +142,26 @@ TYPED_NIF(random_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_T
 
   return result;
 }
+
+TYPED_NIF(square_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  array;
+  ERL_NIF_TERM  result;
+  TYPE        *array_data, *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &array)) return enif_make_badarg(env);
+
+  array_data  = (TYPE*)array.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
+
+  for (uint64_t i = 0; i < array.size / sizeof(TYPE); i++)
+    result_data[i] = array_data[i] * array_data[i];
+
+  return result;
+}
+
 
 TYPED_NIF(array_sum, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  array;

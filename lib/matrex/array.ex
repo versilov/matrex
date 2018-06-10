@@ -198,6 +198,10 @@ defmodule Matrex.Array do
       }
     end
 
+    @spec square(array) :: array
+    def square(%Array{data: data, type: @guard} = array),
+      do: %{array | data: apply(NIFs, :"square_array_#{to_string(@guard)}", [data])}
+
     def sum(%Array{data: data, type: @guard}),
       do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
 

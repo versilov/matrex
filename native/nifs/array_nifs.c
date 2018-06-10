@@ -13,8 +13,7 @@ typedef uint64_t uint64;
 
 #define CAT(a, b, c) a ## b ## c
 
-#define TYPED_NIF(title, type_name) \
-        static ERL_NIF_TERM CAT(title, _, type_name)
+#define TYPED_NIF(title, type_name) static ERL_NIF_TERM CAT(title, _, type_name)
 
 #define ENIF_MAKE_VAL(VAL, TYPE) CAT(enif_make, _, TYPE)(env, VAL)
 
@@ -32,7 +31,7 @@ get_scalar_double(ErlNifEnv *env, ERL_NIF_TERM arg, double* scalar) {
 
 static void
 get_scalar_int64(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
-  if (enif_get_int64(env, arg, scalar) == 0) {
+  if (enif_get_int64(env, arg, (long*)scalar) == 0) {
     double double_scalar;
     enif_get_double(env, arg, &double_scalar);
 
@@ -104,7 +103,8 @@ static ErlNifFunc nif_functions[] = {
   FLOAT_TYPED_NIFS_DECL(dot_arrays, 6, 0),
   TYPED_NIFS_DECL(multiply_arrays, 2, 0),
   TYPED_NIFS_DECL(ones_array, 1, 0),
-  FLOAT_TYPED_NIFS_DECL(random_array, 1, 0),
+  TYPED_NIFS_DECL(random_array, 1, 0),
+  TYPED_NIFS_DECL(square_array, 1, 0),
   TYPED_NIFS_DECL(array_sum, 1, 0),
   TYPED_NIFS_DECL(array_byte_to, 1, 0),
   TYPED_NIFS_DECL(array_int16_to, 1, 0),
