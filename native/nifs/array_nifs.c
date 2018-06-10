@@ -7,6 +7,8 @@
 #include "../include/matrix.h"
 
 typedef unsigned char byte;
+typedef int64_t int64;
+typedef uint64_t uint64;
 
 
 #define CAT(a, b, c) a ## b ## c
@@ -14,17 +16,12 @@ typedef unsigned char byte;
 #define TYPED_NIF(title, type_name) \
         static ERL_NIF_TERM CAT(title, _, type_name)
 
-#define ENIF_MAKE_VAL(VAL) _Generic(VAL, \
-        int64_t: enif_make_int64(env, VAL), \
-        uint64_t: enif_make_uint64(env, VAL), \
-        double: enif_make_double(env, VAL))
+#define ENIF_MAKE_VAL(VAL, TYPE) CAT(enif_make, _, TYPE)(env, VAL)
 
-#define ENIF_GET_VAL(VAL, ARG) _Generic(VAL, \
-        int64_t: get_scalar_int(env, ARG, &VAL), \
-        double: get_scalar_float(env, ARG, &VAL))
+#define ENIF_GET_VAL(VAL, ARG, TYPE) CAT(get_scalar, _, TYPE)(env, ARG, &VAL)
 
 static void
-get_scalar_float(ErlNifEnv *env, ERL_NIF_TERM arg, double* scalar) {
+get_scalar_double(ErlNifEnv *env, ERL_NIF_TERM arg, double* scalar) {
   if (enif_get_double(env, arg, scalar) == 0) {
     long long_scalar;
     enif_get_int64(env, arg, &long_scalar);
@@ -34,7 +31,7 @@ get_scalar_float(ErlNifEnv *env, ERL_NIF_TERM arg, double* scalar) {
 }
 
 static void
-get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
+get_scalar_int64(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
   if (enif_get_int64(env, arg, scalar) == 0) {
     double double_scalar;
     enif_get_double(env, arg, &double_scalar);
@@ -43,7 +40,7 @@ get_scalar_int(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
   }
 }
 
-#define TOP_TYPE int64_t
+#define TOP_TYPE int64
 
 #define TYPE uint8_t
 #define TYPE_NAME byte

@@ -2,28 +2,13 @@ language: elixir
 elixir: '1.4'
 otp_release: '19.0'
 
+before_install:
+  - sudo apt-get install build-essential erlang-dev libatlas-base-dev
+
+env: MIX_ENV=test
+
 script: mix coveralls.travis
-
-before_install: sudo apt-get install build-essential erlang-dev libatlas-base-dev
-
 
 after_script:
   - mix deps.get --only docs
   - MIX_ENV=docs mix inch.report
-
-matrix:
-  include:
-    # works on Precise and Trusty
-    - os: linux
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-4.9
-      env:
-         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-         - MIX_ENV=test
-
-before_install:
-  - eval "${MATRIX_EVAL}"

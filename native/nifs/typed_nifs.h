@@ -28,7 +28,7 @@ TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
   (void)(argc);
 
   if (!enif_inspect_binary(env, argv[0], &array)) return enif_make_badarg(env);
-  ENIF_GET_VAL(scalar, argv[1]);
+  ENIF_GET_VAL(scalar, argv[1], TOP_TYPE);
 
   array_data  = (TYPE*)array.data;
 
@@ -56,7 +56,7 @@ TYPED_NIF(dot_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
   enif_get_int64(env, argv[2], &rows);
   enif_get_int64(env, argv[3], &dim);
   enif_get_int64(env, argv[4], &cols);
-  get_scalar_float(env, argv[5], &alpha);
+  get_scalar_double(env, argv[5], &alpha);
 
   first_data  = (TYPE*)first.data;
   second_data = (TYPE*)second.data;
@@ -157,7 +157,7 @@ TYPED_NIF(array_sum, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM
   for (uint64_t i = 0; i < array.size / sizeof(TYPE); i++)
     sum += array_data[i];
 
-  return ENIF_MAKE_VAL(sum);
+  return ENIF_MAKE_VAL(sum, TOP_TYPE);
 }
 
 TYPED_NIF(array_byte_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
