@@ -4,6 +4,9 @@ otp_release: '19.0'
 
 script: mix coveralls.travis
 
+before_install: sudo apt-get install build-essential erlang-dev libatlas-base-dev
+
+
 after_script:
   - mix deps.get --only docs
   - MIX_ENV=docs mix inch.report
@@ -23,5 +26,4 @@ matrix:
          - MIX_ENV=test
 
 before_install:
-  - sudo apt-get install build-essential erlang-dev libatlas-base-dev
   - eval "${MATRIX_EVAL}"
