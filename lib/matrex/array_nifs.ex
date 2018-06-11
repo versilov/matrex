@@ -47,6 +47,10 @@ defmodule Matrex.Array.NIFs do
     def unquote(:"square_array_#{type}")(data) when is_binary(data),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+    def unquote(:"subtract_arrays_#{type}")(data1, data2)
+        when is_binary(data1) and is_binary(data2),
+        do: :erlang.nif_error(:nif_library_not_loaded)
+
     def unquote(:"array_sum_#{type}")(data) when is_binary(data),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
@@ -66,6 +70,11 @@ defmodule Matrex.Array.NIFs do
       do: :erlang.nif_error(:nif_library_not_loaded)
 
     def unquote(:"dot_arrays_#{type}")(data1, data2, rows, dim, cols, alpha)
+        when is_binary(data1) and is_binary(data2) and is_integer(rows) and is_integer(dim) and
+               is_integer(cols) and is_number(alpha),
+        do: :erlang.nif_error(:nif_library_not_loaded)
+
+    def unquote(:"dot_tn_arrays_#{type}")(data1, data2, rows, dim, cols, alpha)
         when is_binary(data1) and is_binary(data2) and is_integer(rows) and is_integer(dim) and
                is_integer(cols) and is_number(alpha),
         do: :erlang.nif_error(:nif_library_not_loaded)

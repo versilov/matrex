@@ -61,7 +61,7 @@ TYPED_NIF(dot_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
   first_data  = (TYPE*)first.data;
   second_data = (TYPE*)second.data;
 
-  result_data = (TYPE*)enif_make_new_binary(env, first.size, &result);
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
 
   BLAS_GEMM(
     CblasRowMajor,
@@ -78,6 +78,47 @@ TYPED_NIF(dot_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
     0.0,
     result_data,
     cols
+  );
+
+  return result;
+}
+
+TYPED_NIF(dot_tn_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *result_data;
+  long rows, dim, cols;
+  double alpha;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  get_scalar_double(env, argv[5], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,// Order — Specifies row-major (C) or column-major (Fortran) data ordering.
+    CblasTrans,   // TransA — Specifies whether to transpose matrix A.
+    CblasNoTrans, // TransB — Specifies whether to transpose matrix B.
+    rows,         // M — Number of rows in matrices A and C.
+    cols,         // N — Number of columns in matrices B and C.
+    dim,          // K — Number of columns in matrix A; number of rows in matrix B.
+    alpha,        // alpha — Scaling factor for the product of matrices A and B.
+    first_data,   // A — Matrix A.
+    rows,         // lda — The size of the first dimention of matrix A; if you are passing a matrix A[m][n], the value should be m.
+    second_data,  // B — Matrix B.
+    cols,         // ldb — The size of the first dimention of matrix B; if you are passing a matrix B[m][n], the value should be m.
+    0.0,          // beta — Scaling factor for matrix C.
+    result_data,  // C — Matrix C.
+    cols          // ldc — The size of the first dimention of matrix C; if you are passing a matrix C[m][n], the value should be m.
   );
 
   return result;
@@ -161,6 +202,28 @@ TYPED_NIF(square_array, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_T
 
   return result;
 }
+
+TYPED_NIF(subtract_arrays, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  first, second;
+  ERL_NIF_TERM  result;
+  TYPE        *first_data, *second_data, *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, first.size, &result);
+
+  for (uint64_t i = 0; i < first.size / sizeof(TYPE); i++)
+    result_data[i] = first_data[i] - second_data[i];
+
+  return result;
+}
+
 
 
 TYPED_NIF(array_sum, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {

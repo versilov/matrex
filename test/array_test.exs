@@ -12,9 +12,7 @@ defmodule ArrayTest do
 
       expected = new([3, 5, 7, 9, 11, 13], {3, 2}, unquote(type))
 
-      c = add(a, b)
-
-      assert c == expected
+      assert add(a, b) == expected
     end
 
     test "#add sums array of #{type} and a scalar" do
@@ -50,11 +48,25 @@ defmodule ArrayTest do
       assert at(a, 3, 2) == 8
     end
 
+    test "#scalar returns sole element of a matrix of #{type}" do
+      a = new([35], {1, 1, 1}, unquote(type))
+      assert Array.scalar(a) == 35
+    end
+
     test "#square squares an array of #{type}" do
       a = new([1, 2, 3, 4], {2, 2}, unquote(type))
       expected = new([1, 4, 9, 16], {2, 2}, unquote(type))
 
       assert square(a) == expected
+    end
+
+    test "#subtract sums two arrays of #{type} of the same shape" do
+      a = new([1, 2, 3, 4, 5, 6], {3, 2}, unquote(type))
+      b = new([2, 3, 4, 5, 6, 7], {3, 2}, unquote(type))
+
+      expected = new([1, 1, 1, 1, 1, 1], {3, 2}, unquote(type))
+
+      assert subtract(b, a) == expected
     end
 
     test "#sum sums elements of array of #{type}" do
@@ -76,6 +88,31 @@ defmodule ArrayTest do
     test "#zeros creates 3-dim array of #{type}" do
       a = zeros({10, 28, 28}, unquote(type))
       assert at(a, {5, 10, 15}) == 0.0
+    end
+  end)
+
+  [:float32, :float64]
+  |> Enum.each(fn type ->
+    #           | 1 2 |
+    #           | 3 4 |
+    #           | 5 6 |
+    # | 1 2 3 |  22 28
+    # | 4 5 6 |  49 64
+
+    test "#dot dots two matrices of #{type}" do
+      a = reshape(1..6, {2, 3}, unquote(type))
+      b = reshape(1..6, {3, 2}, unquote(type))
+
+      expected = new([22, 28, 49, 64], {2, 2}, unquote(type))
+      assert dot(a, b) == expected
+    end
+
+    test "#dot_tn dots two matrices of #{type} and transposes first one" do
+      a = reshape(1..6, {3, 2}, unquote(type))
+      b = reshape(1..6, {3, 2}, unquote(type))
+
+      expected = new([35, 44, 44, 56], {2, 2}, unquote(type))
+      assert dot_tn(a, b) == expected
     end
   end)
 

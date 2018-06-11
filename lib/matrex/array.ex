@@ -96,6 +96,7 @@ defmodule Matrex.Array do
   end
 
   def dot(array1, array2, alpha \\ 1.0)
+  def dot_tn(array1, array2, alpha \\ 1.0)
 
   def dot(%Array{type: type1}, %Array{type: type2}, _alpha) when type1 != type2,
     do: raise(ArgumentError, "arrays types mismatch: #{type1} vs #{type2}")
@@ -122,14 +123,13 @@ defmodule Matrex.Array do
           shape: shape,
           strides: strides,
           type: @guard
-        }) do
-      %Array{
-        data: apply(NIFs, :"add_arrays_#{to_string(@guard)}", [data1, data2]),
-        shape: shape,
-        strides: strides,
-        type: @guard
-      }
-    end
+        }),
+        do: %Array{
+          data: apply(NIFs, :"add_arrays_#{to_string(@guard)}", [data1, data2]),
+          shape: shape,
+          strides: strides,
+          type: @guard
+        }
 
     def add(%Array{data: data, type: @guard} = array, scalar) when is_number(scalar),
       do: %{array | data: apply(NIFs, :"add_scalar_#{to_string(@guard)}", [data, scalar])}
@@ -141,11 +141,10 @@ defmodule Matrex.Array do
     end
 
     def dot(
-          %Array{data: data1, shape: {rows, dim}, strides: {stride1, _}, type: @guard},
+          %Array{data: data1, shape: {rows, dim}, type: @guard},
           %Array{
             data: data2,
             shape: {dim, cols},
-            strides: {_, stride2},
             type: @guard
           },
           alpha
@@ -154,7 +153,32 @@ defmodule Matrex.Array do
         data:
           apply(NIFs, :"dot_arrays_#{to_string(@guard)}", [data1, data2, rows, dim, cols, alpha]),
         shape: {rows, cols},
-        strides: {stride1, stride2},
+        strides: strides({rows, cols}, @guard),
+        type: @guard
+      }
+    end
+
+    def dot_tn(
+          %Array{data: data1, shape: {dim, rows}, type: @guard},
+          %Array{
+            data: data2,
+            shape: {dim, cols},
+            type: @guard
+          },
+          alpha
+        ) do
+      %Array{
+        data:
+          apply(NIFs, :"dot_tn_arrays_#{to_string(@guard)}", [
+            data1,
+            data2,
+            rows,
+            dim,
+            cols,
+            alpha
+          ]),
+        shape: {rows, cols},
+        strides: strides({rows, cols}, @guard),
         type: @guard
       }
     end
@@ -182,6 +206,9 @@ defmodule Matrex.Array do
         type: @guard
       }
 
+    @spec scalar(array) :: element
+    def scalar(%Array{data: <<val::type_and_size()>>, type: @guard}), do: val
+
     @spec set(array, tuple, integer | float) :: array
     def set(%Array{data: data, strides: strides, shape: shape, type: @guard} = array, pos, value) do
       offset = offset(strides, pos)
@@ -201,6 +228,19 @@ defmodule Matrex.Array do
     @spec square(array) :: array
     def square(%Array{data: data, type: @guard} = array),
       do: %{array | data: apply(NIFs, :"square_array_#{to_string(@guard)}", [data])}
+
+    def subtract(%Array{data: data1, shape: shape, strides: strides, type: @guard}, %Array{
+          data: data2,
+          shape: shape,
+          strides: strides,
+          type: @guard
+        }),
+        do: %Array{
+          data: apply(NIFs, :"subtract_arrays_#{to_string(@guard)}", [data1, data2]),
+          shape: shape,
+          strides: strides,
+          type: @guard
+        }
 
     def sum(%Array{data: data, type: @guard}),
       do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
