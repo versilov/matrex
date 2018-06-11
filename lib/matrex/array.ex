@@ -416,23 +416,6 @@ defmodule Matrex.Array do
     end)
   end
 
-  # @spec random(tuple, type) :: array
-  # def random(shape, type \\ :float32) when is_tuple(shape) do
-  #   %Array{
-  #     data: random_binary(elements_count(shape), type),
-  #     shape: shape,
-  #     strides: strides(shape, type),
-  #     type: type
-  #   }
-  # end
-
-  defp random_cell(:float32), do: :rand.uniform()
-  defp random_cell(:float64), do: :rand.uniform()
-  defp random_cell(:byte), do: :rand.uniform(256) - 1
-  defp random_cell(:int16), do: :rand.uniform(65_536) - 1
-  defp random_cell(:int32), do: :rand.uniform(2_147_483_647 * 2) - 1
-  defp random_cell(:int64), do: :rand.uniform(18_446_744_073_709_551_615) - 1
-
   @spec reshape(array, tuple) :: array
   def reshape(%Array{data: data, type: type}, shape) when is_tuple(shape),
     do: %Array{data: data, shape: shape, strides: strides(shape, type), type: type}
