@@ -101,6 +101,7 @@ defmodule Matrex.Array do
   def dot(%Array{type: type1}, %Array{type: type2}, _alpha) when type1 != type2,
     do: raise(ArgumentError, "arrays types mismatch: #{type1} vs #{type2}")
 
+  def ones(%Array{shape: shape, type: type}), do: ones(shape, type)
   def ones(shape, type \\ :float32)
 
   def set(array, row, col, value), do: set(array, {row, col}, value)
@@ -451,6 +452,9 @@ defmodule Matrex.Array do
 
   @spec shape(array) :: tuple
   def shape(%Array{shape: shape}), do: shape
+
+  @spec type(array) :: type
+  def type(%Array{type: type}), do: type
 
   @spec transpose(array) :: array
   def transpose(%Array{shape: {sh1, sh2}, strides: {s1, s2}} = array),
