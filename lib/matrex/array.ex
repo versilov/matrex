@@ -126,14 +126,14 @@ defmodule Matrex.Array do
           type: @guard
         }),
         do: %Array{
-          data: apply(NIFs, :"add_arrays_#{to_string(@guard)}", [data1, data2]),
+          data: apply(NIFs, :"add_arrays_#{@guard}", [data1, data2]),
           shape: shape,
           strides: strides,
           type: @guard
         }
 
     def add(%Array{data: data, type: @guard} = array, scalar) when is_number(scalar),
-      do: %{array | data: apply(NIFs, :"add_scalar_#{to_string(@guard)}", [data, scalar])}
+      do: %{array | data: apply(NIFs, :"add_scalar_#{@guard}", [data, scalar])}
 
     @spec at(array, tuple) :: element
     def at(%Array{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
@@ -151,8 +151,7 @@ defmodule Matrex.Array do
           alpha
         ) do
       %Array{
-        data:
-          apply(NIFs, :"dot_arrays_#{to_string(@guard)}", [data1, data2, rows, dim, cols, alpha]),
+        data: apply(NIFs, :"dot_arrays_#{@guard}", [data1, data2, rows, dim, cols, alpha]),
         shape: {rows, cols},
         strides: strides({rows, cols}, @guard),
         type: @guard
@@ -170,7 +169,7 @@ defmodule Matrex.Array do
         ) do
       %Array{
         data:
-          apply(NIFs, :"dot_tn_arrays_#{to_string(@guard)}", [
+          apply(NIFs, :"dot_tn_arrays_#{@guard}", [
             data1,
             data2,
             rows,
@@ -191,7 +190,7 @@ defmodule Matrex.Array do
           type: @guard
         }) do
       %Array{
-        data: apply(NIFs, :"multiply_arrays_#{to_string(@guard)}", [data1, data2]),
+        data: apply(NIFs, :"multiply_arrays_#{@guard}", [data1, data2]),
         shape: shape,
         strides: strides,
         type: @guard
@@ -201,7 +200,7 @@ defmodule Matrex.Array do
     @spec ones(tuple, type) :: array
     def ones(shape, @guard) when is_tuple(shape),
       do: %Array{
-        data: apply(NIFs, :"ones_array_#{to_string(@guard)}", [elements_count(shape)]),
+        data: apply(NIFs, :"ones_array_#{@guard}", [elements_count(shape)]),
         shape: shape,
         strides: strides(shape, @guard),
         type: @guard
@@ -228,7 +227,7 @@ defmodule Matrex.Array do
 
     @spec square(array) :: array
     def square(%Array{data: data, type: @guard} = array),
-      do: %{array | data: apply(NIFs, :"square_array_#{to_string(@guard)}", [data])}
+      do: %{array | data: apply(NIFs, :"square_array_#{@guard}", [data])}
 
     def subtract(%Array{data: data1, shape: shape, strides: strides, type: @guard}, %Array{
           data: data2,
@@ -237,21 +236,20 @@ defmodule Matrex.Array do
           type: @guard
         }),
         do: %Array{
-          data: apply(NIFs, :"subtract_arrays_#{to_string(@guard)}", [data1, data2]),
+          data: apply(NIFs, :"subtract_arrays_#{@guard}", [data1, data2]),
           shape: shape,
           strides: strides,
           type: @guard
         }
 
-    def sum(%Array{data: data, type: @guard}),
-      do: apply(NIFs, :"array_sum_#{to_string(@guard)}", [data])
+    def sum(%Array{data: data, type: @guard}), do: apply(NIFs, :"array_sum_#{@guard}", [data])
 
     def to_type(%Array{type: @guard} = array, @type), do: array
 
     def to_type(%Array{data: data, shape: shape, type: @guard} = array, type) when type in @types,
       do: %{
         array
-        | data: apply(NIFs, :"array_#{to_string(@guard)}_to_#{to_string(type)}", [data]),
+        | data: apply(NIFs, :"array_#{@guard}_to_#{to_string(type)}", [data]),
           strides: strides(shape, type),
           type: type
       }
@@ -322,13 +320,13 @@ defmodule Matrex.Array do
         when is_atom(math_func) and math_func in @math_functions,
         do: %{
           array
-          | data: apply(NIFs, :"array_apply_math_#{to_string(@guard)}", [data, math_func])
+          | data: apply(NIFs, :"array_apply_math_#{@guard}", [data, math_func])
         }
 
     @spec random(tuple, type) :: array
     def random(shape, @guard),
       do: %Array{
-        data: apply(NIFs, :"random_array_#{to_string(@guard)}", [elements_count(shape)]),
+        data: apply(NIFs, :"random_array_#{@guard}", [elements_count(shape)]),
         shape: shape,
         strides: strides(shape, @guard),
         type: @guard
