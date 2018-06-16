@@ -235,10 +235,11 @@ defmodule Matrex do
   import Matrex.Guards
 
   @enforce_keys [:data]
-  defstruct [:data]
+  defstruct data: nil, type: :float32, strides: {}, shape: {}
   @type element :: number | :nan | :inf | :neg_inf
+  @type type :: :float32 | :float64 | :int16 | :int32 | :int64 | :byte | :bool
   @type index :: pos_integer
-  @type matrex :: %Matrex{data: binary}
+  @type matrex :: %Matrex{data: binary, type: type, shape: tuple, strides: tuple}
   @type t :: matrex
 
   # Size of matrix element (float) in bytes
