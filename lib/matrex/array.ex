@@ -95,6 +95,12 @@ defmodule Matrex.Array do
     end
   end
 
+  @doc """
+  Returns element of an array at the given position.
+  """
+  @spec at(array, tuple) :: element
+  def at(array, pos)
+
   def dot(array1, array2, alpha \\ 1.0)
   def dot_tn(array1, array2, alpha \\ 1.0)
 
@@ -135,7 +141,6 @@ defmodule Matrex.Array do
     def add(%Array{data: data, type: @guard} = array, scalar) when is_number(scalar),
       do: %{array | data: apply(NIFs, :"add_scalar_#{@guard}", [data, scalar])}
 
-    @spec at(array, tuple) :: element
     def at(%Array{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
       <<f::type_and_size()>> = binary_part(data, offset(strides, pos), bytesize(@guard))
       f
