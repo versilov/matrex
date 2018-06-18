@@ -1798,17 +1798,21 @@ defmodule Matrex do
   def new([first_list | _] = lol_or_binary) when is_list(first_list) do
     rows = length(lol_or_binary)
     columns = length(first_list)
+    shape = {rows, columns}
 
     initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     %Matrex{
       data:
-        Enum.reduce(lol_or_binary, initial, fn list, accumulator ->
+        Enum.reduce(lol_or_binary, <<>>, fn list, accumulator ->
           accumulator <>
             Enum.reduce(list, <<>>, fn element, partial ->
               <<partial::binary, float_to_binary(element)::binary>>
             end)
-        end)
+        end),
+      shape: shape,
+      strides: strides(shape, :float32),
+      type: :float32
     }
   end
 
