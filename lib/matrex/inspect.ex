@@ -7,11 +7,8 @@ defmodule Matrex.Inspect do
 
   def do_inspect(
         %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            _rest::binary
-          >>
+          shape: {rows, columns} = shape,
+          type: type
         } = matrex,
         screen_width,
         display_rows
@@ -22,7 +19,7 @@ defmodule Matrex.Inspect do
         row <- 1..rows,
         do:
           row_to_list_of_binaries(matrex, row)
-          |> Enum.map(&format_float(&1))
+          |> Enum.map(&format_elem(&1))
           |> Enum.join()
       )
 
@@ -33,19 +30,18 @@ defmodule Matrex.Inspect do
 
     contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
 
-    "#{header(rows, columns)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
+    "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
   @element_byte_size 4
   @element_chars_size 8
+  @integer_chars_size 6
 
   def do_inspect(
         %Matrex{
-          data: <<
-            rows::unsigned-integer-little-32,
-            columns::unsigned-integer-little-32,
-            body::binary
-          >>
+          data: body,
+          shape: {rows, columns} = shape,
+          type: type
         } = matrex,
         screen_width,
         display_rows
@@ -89,7 +85,7 @@ defmodule Matrex.Inspect do
 
     contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
 
-    "#{header(rows, columns)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
+    "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
   defp displayable_rows(rows, display_rows) when rows > display_rows,
@@ -120,7 +116,7 @@ defmodule Matrex.Inspect do
        when suffix_size + prefix_size >= columns do
     matrex
     |> row_to_list_of_binaries(row)
-    |> Enum.map(&format_float(&1))
+    |> Enum.map(&format_elem(&1))
     |> Enum.join()
   end
 
@@ -134,18 +130,20 @@ defmodule Matrex.Inspect do
 
   defp row_to_list_of_binaries(
          %Matrex{
-           data: <<
-             rows::unsigned-integer-little-32,
-             columns::unsigned-integer-little-32,
-             data::binary
-           >>
+           data: data,
+           shape: {rows, columns},
+           type: type
          },
          row
        )
        when row <= rows do
     0..(columns - 1)
     |> Enum.map(fn c ->
-      binary_part(data, ((row - 1) * columns + c) * @element_byte_size, @element_byte_size)
+      binary_part(
+        data,
+        ((row - 1) * columns + c) * Matrex.element_size(type),
+        Matrex.element_size(type)
+      )
     end)
   end
 
@@ -156,14 +154,14 @@ defmodule Matrex.Inspect do
 
   defp format_row_head_tail(<<val::binary-4, rest::binary>>, 1, prefix_size)
        when prefix_size > 0 do
-    <<format_float(val) <> IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow(),
+    <<format_elem(val) <> IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow(),
       format_row_head_tail(rest, 0, prefix_size)::binary>>
   end
 
   defp format_row_head_tail(<<val::binary-4, rest::binary>>, 0, prefix_size)
        when prefix_size > 0 do
     <<
-      format_float(val)::binary,
+      format_elem(val)::binary,
       # Separate for investigation
       format_row_head_tail(rest, 0, prefix_size - 1)::binary
     >>
@@ -171,8 +169,7 @@ defmodule Matrex.Inspect do
 
   defp format_row_head_tail(<<val::binary-4, rest::binary>>, suffix_size, prefix_size)
        when suffix_size > 0 do
-    <<format_float(val)::binary,
-      format_row_head_tail(rest, suffix_size - 1, prefix_size)::binary>>
+    <<format_elem(val)::binary, format_row_head_tail(rest, suffix_size - 1, prefix_size)::binary>>
   end
 
   @not_a_number <<0, 0, 192, 255>>
@@ -180,24 +177,37 @@ defmodule Matrex.Inspect do
   @negative_infinity <<0, 0, 128, 255>>
   @zero <<0, 0, 0, 0>>
 
-  defp format_float(@not_a_number),
+  defp format_elem(@not_a_number),
     do: "#{IO.ANSI.red()}#{String.pad_leading("NaN ", @element_chars_size)}#{IO.ANSI.yellow()}"
 
-  defp format_float(@positive_infinity),
+  defp format_elem(@positive_infinity),
     do: "#{IO.ANSI.cyan()}#{String.pad_leading("∞  ", @element_chars_size)}#{IO.ANSI.yellow()}"
 
-  defp format_float(@negative_infinity),
+  defp format_elem(@negative_infinity),
     do: "#{IO.ANSI.cyan()}#{String.pad_leading("-∞  ", @element_chars_size)}#{IO.ANSI.yellow()}"
 
-  defp format_float(@zero),
+  defp format_elem(@zero),
     do:
       "#{IO.ANSI.color(2, 2, 2)}#{String.pad_leading("0.0", @element_chars_size)}#{
         IO.ANSI.yellow()
       }"
 
-  defp format_float(<<f::float-little-32>>), do: format_float(f)
+  defp format_elem(<<f::float-little-32>>), do: format_elem(f)
+  defp format_elem(<<f::float-little-64>>), do: format_elem(f)
 
-  defp format_float(f) when is_float(f) do
+  defp format_elem(<<e::unsigned-integer-8>>),
+    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+
+  defp format_elem(<<e::integer-little-16>>),
+    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+
+  defp format_elem(<<e::integer-little-32>>),
+    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+
+  defp format_elem(<<e::integer-little-64>>),
+    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+
+  defp format_elem(f) when is_float(f) do
     f
     |> Float.round(5)
     |> Float.to_string()
@@ -266,13 +276,16 @@ defmodule Matrex.Inspect do
 
   defp joiner(_, _, _), do: IO.ANSI.reset() <> "  … " <> IO.ANSI.yellow()
 
-  defp header(%Matrex{} = m), do: header(m[:rows], m[:columns])
+  defp header(%Matrex{shape: shape, type: type}), do: header(shape, type)
 
-  defp header(rows, columns),
-    do:
-      "#{IO.ANSI.reset()}#Matrex[#{IO.ANSI.yellow()}#{rows}#{IO.ANSI.reset()}×#{IO.ANSI.yellow()}#{
-        columns
-      }#{IO.ANSI.reset()}]"
+  defp header(shape, type) do
+    shape_string =
+      shape
+      |> Tuple.to_list()
+      |> Enum.join("#{IO.ANSI.reset()}×#{IO.ANSI.yellow()}")
+
+    "#{IO.ANSI.reset()}#Matrex[#{IO.ANSI.yellow()}#{shape_string}#{IO.ANSI.reset()}]:#{type}"
+  end
 
   #
   # Heatmap
