@@ -242,6 +242,7 @@ defmodule Matrex do
   @type type :: :float32 | :float64 | :int16 | :int32 | :int64 | :byte | :bool
   @type index :: pos_integer
   @type position :: tuple
+  @type shape :: tuple
   @type matrex :: %Matrex{data: binary, type: type, shape: tuple, strides: tuple}
   @type t :: matrex
 
@@ -386,7 +387,7 @@ defmodule Matrex do
             column_to_list: 2,
             contains?: 2,
             divide: 2,
-            dot: 2,
+            dot: 3,
             dot_and_add: 3,
             dot_nt: 2,
             dot_tn: 2,
@@ -458,6 +459,12 @@ defmodule Matrex do
     else
       quote do: size(unquote(size)) - unquote(type)() - little
     end
+  end
+
+  defmacrop binary_size() do
+    {type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
+
+    quote do: binary - unquote(size)
   end
 
   @impl Access
@@ -820,6 +827,392 @@ defmodule Matrex do
   @spec column(matrex, index) :: matrex
   def column(matrex, index)
 
+  @doc """
+  Get column of matrix as list of floats. One-based, NIF.
+
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.column_to_list(m, 3)
+      [6.0, 7.0, 2.0]
+
+  """
+  @spec column_to_list(matrex, index) :: [element]
+  def column_to_lisit(matrex, index)
+
+  @doc """
+  Concatenate list of matrices along columns.
+
+  The number of rows must be equal.
+
+  ## Example
+
+      iex> Matrex.concat([Matrex.fill(2, 0), Matrex.fill(2, 1), Matrex.fill(2, 2)])                #Matrex[2×6]
+      ┌                                                 ┐
+      │     0.0     0.0     1.0     1.0     2.0     2.0 │
+      │     0.0     0.0     1.0     1.0     2.0     2.0 │
+      └                                                 ┘
+
+  """
+  @spec concat([matrex]) :: matrex
+  def concat([%Matrex{} | _] = list_of_ma), do: Enum.reduce(list_of_ma, &Matrex.concat(&2, &1))
+
+  @doc """
+  Concatenate two matrices along rows or columns. NIF.
+
+  The number of rows or columns must be equal.
+
+  ## Examples
+
+      iex> m1 = Matrex.new([[1, 2, 3], [4, 5, 6]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+      iex> m2 = Matrex.new([[7, 8, 9], [10, 11, 12]])
+      #Matrex[2×3]
+      ┌                         ┐
+      │     7.0     8.0     9.0 │
+      │    10.0    11.0    12.0 │
+      └                         ┘
+      iex> Matrex.concat(m1, m2)
+      #Matrex[2×6]
+      ┌                                                 ┐
+      │     1.0     2.0     3.0     7.0     8.0     9.0 │
+      │     4.0     5.0     6.0    10.0    11.0    12.0 │
+      └                                                 ┘
+      iex> Matrex.concat(m1, m2, :rows)
+      #Matrex[4×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      │     7.0     8.0     9.0 │
+      │    10.0    11.0    12.0 │
+      └                         ┘
+  """
+  @spec concat(matrex, matrex, :columns | :rows) :: matrex
+  def concat(matrex1, matrex2, type \\ :columns)
+
+  def concat(
+        %Matrex{data: data1, shape: {rows1, columns}, type: type, strides: strides} = matrex,
+        %Matrex{data: data2, shape: {rows2, columns}, type: type, strides: strides},
+        :rows
+      ),
+      do: %{matrex | data: data1 <> data2, shape: {rows1 + rows2, columns}}
+
+  def concat(%Matrex{shape: {rows1, columns1}}, %Matrex{shape: {rows2, columns2}}, type),
+    do:
+      raise(
+        ArgumentError,
+        "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{type}."
+      )
+
+  @doc """
+  Checks if given element exists in the matrix.
+
+  ## Example
+
+      iex> m = Matrex.new("1 NaN 3; Inf 10 23")
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0    NaN      3.0 │
+      │     ∞      10.0    23.0 │
+      └                         ┘
+      iex> Matrex.contains?(m, 1.0)
+      true
+      iex> Matrex.contains?(m, :nan)
+      true
+      iex> Matrex.contains?(m, 9)
+      false
+  """
+  @spec contains?(matrex, element) :: boolean
+  def contains?(%Matrex{} = matrex, value), do: find(matrex, value) != nil
+
+  @doc """
+  Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF through `find/2`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Examples
+
+      iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
+      ...> |> Matrex.divide(Matrex.new([[5, 10, 5], [4, 3, 4]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │     2.0     2.0     5.0 │
+      │     2.0     3.0     1.0 │
+      └                         ┘
+
+      iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
+      ...> |> Matrex.divide(2)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     5.0    10.0    12.5 │
+      │     4.0     4.5     2.0 │
+      └                         ┘
+
+      iex> Matrex.divide(100, Matrex.new([[10, 20, 25], [8, 16, 4]]))
+      #Matrex[2×3]
+      ┌                         ┐
+      │    10.0     5.0     4.0 │
+      │    12.5    6.25    25.0 │
+      └                         ┘
+
+  """
+  @spec divide(matrex, matrex) :: matrex
+  @spec divide(matrex, number) :: matrex
+  @spec divide(number, matrex) :: matrex
+  def divide(dividend, divisor)
+
+  @doc """
+  Matrix multiplication. NIF, via `cblas_sgemm()`.
+
+  Number of columns of the first matrix must be equal to the number of rows of the second matrix.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot(Matrex.new([[1, 2], [3, 4], [5, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
+  """
+  @spec dot(matrex, matrex, number) :: matrex
+  def dot(matrex1, matrex2, alpha \\ 1.0)
+
+  @doc """
+  Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot_and_add(Matrex.new([[1, 2], [3, 4], [5, 6]]), Matrex.new([[1, 2], [3, 4]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    23.0    30.0 │
+      │    52.0    68.0 │
+      └                 ┘
+
+  """
+  @spec dot_and_add(matrex, matrex, matrex) :: matrex
+  def dot_and_add(matrex1, matrex2, matrex3, alpha \\ 1.0)
+
+  @doc """
+  Computes dot product of two matrices, then applies math function to each element
+  of the resulting matrix.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot_and_apply(Matrex.new([[1, 2], [3, 4], [5, 6]]), :sqrt)
+      #Matrex[2×2]
+      ┌                 ┐
+      │ 4.69042  5.2915 │
+      │     7.0     8.0 │
+      └                 ┘
+  """
+  @spec dot_and_apply(matrex, matrex, atom) :: matrex
+  def dot_and_apply(matrex1, matrex2, function_atom, alpha \\ 1.0)
+
+  @doc """
+  Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot_nt(Matrex.new([[1, 3, 5], [2, 4, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
+  """
+  @spec dot_nt(matrex, matrex) :: matrex
+  def dot_nt(matrex1, matrex2, alpha \\ 1.0)
+
+  @doc """
+  Matrix dot multiplication where the first matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
+
+  The result is multiplied by scalar `alpha`.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 4], [2, 5], [3, 6]]) |>
+      ...> Matrex.dot_tn(Matrex.new([[1, 2], [3, 4], [5, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
+  """
+  @spec dot_tn(matrex, matrex, number) :: matrex
+  def dot_tn(matrex1, matrex2, alpha \\ 1.0)
+
+  @doc """
+  Create eye (identity) square matrix of given size.
+
+  ## Examples
+
+      iex> Matrex.eye(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     0.0     0.0 │
+      │     0.0     1.0     0.0 │
+      │     0.0     0.0     1.0 │
+      └                         ┘
+
+      iex> Matrex.eye(3, 2.95)
+      #Matrex[3×3]
+      ┌                         ┐
+      │    2.95     0.0     0.0 │
+      │     0.0    2.95     0.0 │
+      │     0.0     0.0    2.95 │
+      └                         ┘
+  """
+  @spec eye(index, element) :: matrex
+
+  def eye(size, value \\ 1.0, type \\ :float32)
+      when is_integer(size) and is_number(value) and type in @types,
+      do: %Matrex{
+        data: Kernel.apply(NIFs, :"eye_#{type}", [size, value]),
+        shape: {size, size},
+        strides: strides({size, size}, type),
+        type: type
+      }
+
+  @doc """
+  Create matrix filled with given value. NIF.
+
+  ## Example
+
+      iex> Matrex.fill(4,3, 55)
+      #Matrex[4×3]
+      ┌                         ┐
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      └                         ┘
+  """
+  @spec fill(shape | index, element, type) :: matrex
+  def fill(shape, value, type \\ :float32)
+
+  def fill(shape, value, type)
+      when (is_tuple(shape) and is_number(value)) or (is_atom(value) and is_atom(type)),
+      do: %Matrex{
+        data:
+          Kernel.apply(NIFs, :"fill_#{type}", [
+            elements_count(shape),
+            Kernel.apply(__MODULE__, :"#{type}_to_binary", [value])
+          ]),
+        shape: shape,
+        strides: strides(shape, type),
+        type: type
+      }
+
+  @doc """
+  Create square matrix filled with given value. Inlined.
+
+  ## Example
+
+      iex> Matrex.fill(3, 55)
+      #Matrex[3×3]
+      ┌                         ┐
+      │    33.0    33.0    33.0 │
+      │    33.0    33.0    33.0 │
+      │    33.0    33.0    33.0 │
+      └                         ┘
+  """
+  def fill(size, value, type) when is_integer(size), do: fill({size, size}, value, type)
+
+  @doc """
+  Find position of the first occurence of the given value in the matrix. NIF.
+
+  Returns {row, column} tuple or nil, if nothing was found. One-based.
+
+  ## Example
+
+
+  """
+  @spec find(matrex, element) :: position | nil
+  def find(%Matrex{data: data, type: type}, value)
+      when is_number(value) or value in [:nan, :inf, :neg_inf],
+      do:
+        Kernel.apply(NIFs, :"find_#{type}", [
+          data,
+          Kernel.apply(__MODULE__, :"#{type}_to_binary", [value])
+        ])
+
+  @doc """
+  Return first element of a matrix.
+
+  ## Example
+
+      iex> Matrex.new([[6,5,4],[3,2,1]]) |> Matrex.first()
+      6.0
+
+  """
+  @spec first(matrex) :: element
+  def first(matrex)
+
+  @doc """
+  Prints monochrome or color heatmap of the matrix to the console.
+
+  Supports 8, 256 and 16mln of colors terminals. Monochrome on 256 color palette is the default.
+
+  `type` can be `:mono8`, `:color8`, `:mono256`, `:color256`, `:mono24bit` and `:color24bit`.
+
+  Special float values, like infinity and not-a-number are marked with contrast colors on the map.
+
+  ## Options
+
+    * `:at` — positions heatmap at the specified `{row, col}` position inside terminal.
+    * `:title` — sets the title of the heatmap.
+
+  ## Examples
+
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist_sum.png" width="200px" />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />&nbsp;
+  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="180px" />&nbsp;
+
+  """
+  @spec heatmap(
+          matrex,
+          :mono8 | :color8 | :mono256 | :color256 | :mono24bit | :color24bit,
+          keyword
+        ) :: matrex
+  defdelegate heatmap(matrex, type \\ :mono256, opts \\ []), to: Matrex.Inspect
+
+  @doc """
+  An alias for `eye/1`.
+  """
+  @spec identity(index) :: matrex
+  defdelegate identity(size), to: __MODULE__, as: :eye
+
   types = [
     float64: {:float, 64},
     float32: {:float, 32},
@@ -939,6 +1332,127 @@ defmodule Matrex do
         type: @guard
       }
     end
+
+    def column_to_list(%Matrex{data: data, shape: {_rows, columns}, type: @guard}, column)
+        when is_integer(column) and column > 0 and column <= columns,
+        do: Kernel.apply(NIFs, :"column_to_list_#{@guard}", [data, columns, column - 1])
+
+    def concat(
+          %Matrex{
+            data: data1,
+            shape: {rows1, _},
+            type: @guard,
+            strides: strides
+          } = matrex,
+          %Matrex{
+            data: data2,
+            shape: {rows2, _},
+            type: @guard,
+            strides: strides
+          },
+          :columns
+        )
+        when rows1 == rows2,
+        do: %{matrex | data: Kernel.apply(NIFs, :"concat_columns_#{@guard}", [data1, data2])}
+
+    def divide(%Matrex{data: dividend, shape: shape, strides: strides} = matrex, %Matrex{
+          data: divisor,
+          shape: shape,
+          strides: strides
+        }),
+        do: %{matrex | data: Kernel.apply(NIFs, :"divide_#{@guard}", [dividend, divisor])}
+
+    def divide(%Matrex{data: data} = matrex, scalar) when is_number(scalar),
+      do: %{matrex | data: Kernel.apply(NIFs, :"divide_by_scalar_#{@guard}", [data, scalar])}
+
+    def divide(scalar, %Matrex{data: data} = matrex) when is_number(scalar),
+      do: %{matrex | data: Kernel.apply(NIFs, :"divide_scalar_#{@guard}", [scalar, data])}
+
+    def dot(
+          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
+          %Matrex{
+            data: data2,
+            shape: {common_dim, columns},
+            type: @guard
+          },
+          alpha
+        )
+        when is_number(alpha),
+        do: %Matrex{
+          data:
+            Kernel.apply(NIFs, :"dot_#{@guard}", [data1, data2, rows, common_dim, columns, alpha]),
+          shape: {rows, columns},
+          strides: strides({rows, columns}, @guard),
+          type: @guard
+        }
+
+    def dot_and_add(
+          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
+          %Matrex{data: data2, shape: {common_dim, columns}, type: @guard},
+          %Matrex{data: data3, shape: {rows, columns}, type: @guard},
+          alpha
+        )
+        when is_number(alpha),
+        do: %Matrex{
+          data:
+            Kernel.apply(NIFs, :"dot_and_add_#{@guard}", [
+              data1,
+              data2,
+              rows,
+              common_dim,
+              columns,
+              data3,
+              alpha
+            ]),
+          shape: {rows, columns},
+          strides: strides({rows, columns}, @guard),
+          type: @guard
+        }
+
+    def dot_nt(
+          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
+          %Matrex{data: data2, shape: {columns, common_dim}, type: @guard},
+          alpha
+        )
+        when is_number(alpha),
+        do: %Matrex{
+          data:
+            Kernel.apply(NIFs, :"dot_nt_#{@guard}", [
+              data1,
+              data2,
+              rows,
+              common_dim,
+              columns,
+              alpha
+            ]),
+          shape: {rows, columns},
+          strides: strides({rows, columns}, @guard),
+          type: @guard
+        }
+
+    def dot_tn(
+          %Matrex{data: data1, shape: {common_dim, rows}, type: @guard},
+          %Matrex{data: data2, shape: {common_dim, columns}, type: @guard},
+          alpha
+        )
+        when is_number(alpha),
+        do: %Matrex{
+          data:
+            Kernel.apply(NIFs, :"dot_tn_#{@guard}", [
+              data1,
+              data2,
+              rows,
+              common_dim,
+              columns,
+              alpha
+            ]),
+          shape: {rows, columns},
+          strides: strides({rows, columns}, @guard),
+          type: @guard
+        }
+
+    def first(%Matrex{data: <<element::binary_size(), _::binary>>, type: @guard}),
+      do: unquote(:"binary_to_#{@guard}")(element)
   end
 
   float_types = [
@@ -985,425 +1499,30 @@ defmodule Matrex do
     def apply(%Matrex{data: data, type: @guard} = matrex, function_atom)
         when function_atom in @math_functions,
         do: %{matrex | data: Kernel.apply(NIFs, :"apply_math_#{@guard}", [data, function_atom])}
-  end
 
-  @doc """
-  Get column of matrix as list of floats. One-based, NIF.
-
-
-  ## Example
-
-      iex> m = Matrex.magic(3)
-      #Matrex[3×3]
-      ┌                         ┐
-      │     8.0     1.0     6.0 │
-      │     3.0     5.0     7.0 │
-      │     4.0     9.0     2.0 │
-      └                         ┘
-      iex> Matrex.column_to_list(m, 3)
-      [6.0, 7.0, 2.0]
-
-  """
-  @spec column_to_list(matrex, index) :: [element]
-  def column_to_list(%Matrex{data: matrix}, column) when is_integer(column) and column > 0,
-    do: NIFs.column_to_list(matrix, column - 1)
-
-  @doc """
-  Concatenate list of matrices along columns.
-
-  The number of rows must be equal.
-
-  ## Example
-
-      iex> Matrex.concat([Matrex.fill(2, 0), Matrex.fill(2, 1), Matrex.fill(2, 2)])                #Matrex[2×6]
-      ┌                                                 ┐
-      │     0.0     0.0     1.0     1.0     2.0     2.0 │
-      │     0.0     0.0     1.0     1.0     2.0     2.0 │
-      └                                                 ┘
-
-  """
-  @spec concat([matrex]) :: matrex
-  def concat([%Matrex{} | _] = list_of_ma), do: Enum.reduce(list_of_ma, &Matrex.concat(&2, &1))
-
-  @doc """
-  Concatenate two matrices along rows or columns. NIF.
-
-  The number of rows or columns must be equal.
-
-  ## Examples
-
-      iex> m1 = Matrex.new([[1, 2, 3], [4, 5, 6]])
-      #Matrex[2×3]
-      ┌                         ┐
-      │     1.0     2.0     3.0 │
-      │     4.0     5.0     6.0 │
-      └                         ┘
-      iex> m2 = Matrex.new([[7, 8, 9], [10, 11, 12]])
-      #Matrex[2×3]
-      ┌                         ┐
-      │     7.0     8.0     9.0 │
-      │    10.0    11.0    12.0 │
-      └                         ┘
-      iex> Matrex.concat(m1, m2)
-      #Matrex[2×6]
-      ┌                                                 ┐
-      │     1.0     2.0     3.0     7.0     8.0     9.0 │
-      │     4.0     5.0     6.0    10.0    11.0    12.0 │
-      └                                                 ┘
-      iex> Matrex.concat(m1, m2, :rows)
-      #Matrex[4×3]
-      ┌                         ┐
-      │     1.0     2.0     3.0 │
-      │     4.0     5.0     6.0 │
-      │     7.0     8.0     9.0 │
-      │    10.0    11.0    12.0 │
-      └                         ┘
-  """
-  @spec concat(matrex, matrex, :columns | :rows) :: matrex
-  def concat(matrex1, matrex2, type \\ :columns)
-
-  def concat(
-        %Matrex{
+    def dot_and_apply(
+          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
+          %Matrex{data: data2, shape: {common_dim, columns}, type: @guard},
+          function_atom,
+          alpha
+        )
+        when function_atom in @math_functions and is_number(alpha),
+        do: %Matrex{
           data:
-            <<
-              rows1::unsigned-integer-little-32,
-              _rest1::binary
-            >> = first
-        },
-        %Matrex{
-          data:
-            <<
-              rows2::unsigned-integer-little-32,
-              _rest2::binary
-            >> = second
-        },
-        :columns
-      )
-      when rows1 == rows2,
-      do: %Matrex{data: Matrex.NIFs.concat_columns(first, second)}
-
-  def concat(matrex_data(rows1, columns, data1), matrex_data(rows2, columns, data2), :rows) do
-    matrex_data(rows1 + rows2, columns, data1 <> data2)
+            Kernel.apply(NIFs, :"dot_and_apply_#{@guard}", [
+              data1,
+              data2,
+              rows,
+              common_dim,
+              columns,
+              function_atom,
+              alpha
+            ]),
+          shape: {rows, columns},
+          strides: strides({rows, columns}, @guard),
+          type: @guard
+        }
   end
-
-  def concat(matrex_data(rows1, columns1, _data1), matrex_data(rows2, columns2, _data2), type) do
-    raise(
-      ArgumentError,
-      "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{type}."
-    )
-  end
-
-  @doc """
-  Checks if given element exists in the matrix.
-
-  ## Example
-
-      iex> m = Matrex.new("1 NaN 3; Inf 10 23")
-      #Matrex[2×3]
-      ┌                         ┐
-      │     1.0    NaN      3.0 │
-      │     ∞      10.0    23.0 │
-      └                         ┘
-      iex> Matrex.contains?(m, 1.0)
-      true
-      iex> Matrex.contains?(m, :nan)
-      true
-      iex> Matrex.contains?(m, 9)
-      false
-  """
-  @spec contains?(matrex, element) :: boolean
-  def contains?(%Matrex{} = matrex, value), do: find(matrex, value) != nil
-
-  @doc """
-  Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF through `find/2`.
-
-  Raises `ErlangError` if matrices' sizes do not match.
-
-  ## Examples
-
-      iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
-      ...> |> Matrex.divide(Matrex.new([[5, 10, 5], [4, 3, 4]]))
-      #Matrex[2×3]
-      ┌                         ┐
-      │     2.0     2.0     5.0 │
-      │     2.0     3.0     1.0 │
-      └                         ┘
-
-      iex> Matrex.new([[10, 20, 25], [8, 9, 4]])
-      ...> |> Matrex.divide(2)
-      #Matrex[2×3]
-      ┌                         ┐
-      │     5.0    10.0    12.5 │
-      │     4.0     4.5     2.0 │
-      └                         ┘
-
-      iex> Matrex.divide(100, Matrex.new([[10, 20, 25], [8, 16, 4]]))
-      #Matrex[2×3]
-      ┌                         ┐
-      │    10.0     5.0     4.0 │
-      │    12.5    6.25    25.0 │
-      └                         ┘
-
-  """
-  @spec divide(matrex, matrex) :: matrex
-  @spec divide(matrex, number) :: matrex
-  @spec divide(number, matrex) :: matrex
-  def divide(%Matrex{data: dividend} = _dividend, %Matrex{data: divisor} = _divisor),
-    do: %Matrex{data: NIFs.divide(dividend, divisor)}
-
-  def divide(%Matrex{data: matrix}, scalar) when is_number(scalar),
-    do: %Matrex{data: NIFs.divide_by_scalar(matrix, scalar)}
-
-  def divide(scalar, %Matrex{data: matrix}) when is_number(scalar),
-    do: %Matrex{data: NIFs.divide_scalar(scalar, matrix)}
-
-  @doc """
-  Matrix multiplication. NIF, via `cblas_sgemm()`.
-
-  Number of columns of the first matrix must be equal to the number of rows of the second matrix.
-
-  Raises `ErlangError` if matrices' sizes do not match.
-
-  ## Example
-
-      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.dot(Matrex.new([[1, 2], [3, 4], [5, 6]]))
-      #Matrex[2×2]
-      ┌                 ┐
-      │    22.0    28.0 │
-      │    49.0    64.0 │
-      └                 ┘
-
-  """
-  @spec dot(matrex, matrex) :: matrex
-  def dot(
-        matrex_data(_rows1, columns1, _data1, first),
-        matrex_data(rows2, _columns2, _data2, second)
-      )
-      when columns1 == rows2,
-      do: %Matrex{data: NIFs.dot(first, second)}
-
-  @doc """
-  Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
-
-  Raises `ErlangError` if matrices' sizes do not match.
-
-  ## Example
-
-      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.dot_and_add(Matrex.new([[1, 2], [3, 4], [5, 6]]), Matrex.new([[1, 2], [3, 4]]))
-      #Matrex[2×2]
-      ┌                 ┐
-      │    23.0    30.0 │
-      │    52.0    68.0 │
-      └                 ┘
-
-  """
-  @spec dot_and_add(matrex, matrex, matrex) :: matrex
-  def dot_and_add(
-        matrex_data(_rows1, columns1, _data1, first),
-        matrex_data(rows2, _columns2, _data2, second),
-        %Matrex{data: third}
-      )
-      when columns1 == rows2,
-      do: %Matrex{data: NIFs.dot_and_add(first, second, third)}
-
-  @doc """
-  Computes dot product of two matrices, then applies math function to each element
-  of the resulting matrix.
-
-  ## Example
-
-      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.dot_and_apply(Matrex.new([[1, 2], [3, 4], [5, 6]]), :sqrt)
-      #Matrex[2×2]
-      ┌                 ┐
-      │ 4.69042  5.2915 │
-      │     7.0     8.0 │
-      └                 ┘
-  """
-  @spec dot_and_apply(matrex, matrex, atom) :: matrex
-  def dot_and_apply(
-        matrex_data(_rows1, columns1, _data1, first),
-        matrex_data(rows2, _columns2, _data2, second),
-        function
-      )
-      when columns1 == rows2 and function in @math_functions,
-      do: %Matrex{data: NIFs.dot_and_apply(first, second, function)}
-
-  @doc """
-  Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
-
-  Raises `ErlangError` if matrices' sizes do not match.
-
-  ## Example
-
-      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
-      ...> Matrex.dot_nt(Matrex.new([[1, 3, 5], [2, 4, 6]]))
-      #Matrex[2×2]
-      ┌                 ┐
-      │    22.0    28.0 │
-      │    49.0    64.0 │
-      └                 ┘
-
-  """
-  @spec dot_nt(matrex, matrex) :: matrex
-  def dot_nt(
-        matrex_data(_rows1, columns1, _data1, first),
-        matrex_data(_rows2, columns2, _data2, second)
-      )
-      when columns1 == columns2,
-      do: %Matrex{data: NIFs.dot_nt(first, second)}
-
-  @doc """
-  Matrix dot multiplication where the first matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
-
-  The result is multiplied by scalar `alpha`.
-
-  Raises `ErlangError` if matrices' sizes do not match.
-
-  ## Example
-
-      iex> Matrex.new([[1, 4], [2, 5], [3, 6]]) |>
-      ...> Matrex.dot_tn(Matrex.new([[1, 2], [3, 4], [5, 6]]))
-      #Matrex[2×2]
-      ┌                 ┐
-      │    22.0    28.0 │
-      │    49.0    64.0 │
-      └                 ┘
-
-  """
-  @spec dot_tn(matrex, matrex, number) :: matrex
-  def dot_tn(
-        matrex_data(rows1, _columns1, _data1, first),
-        matrex_data(rows2, _columns2, _data2, second),
-        alpha \\ 1.0
-      )
-      when rows1 == rows2 and is_number(alpha),
-      do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
-
-  @doc """
-  Create eye (identity) square matrix of given size.
-
-  ## Examples
-
-      iex> Matrex.eye(3)
-      #Matrex[3×3]
-      ┌                         ┐
-      │     1.0     0.0     0.0 │
-      │     0.0     1.0     0.0 │
-      │     0.0     0.0     1.0 │
-      └                         ┘
-
-      iex> Matrex.eye(3, 2.95)
-      #Matrex[3×3]
-      ┌                         ┐
-      │    2.95     0.0     0.0 │
-      │     0.0    2.95     0.0 │
-      │     0.0     0.0    2.95 │
-      └                         ┘
-  """
-  @spec eye(index, element) :: matrex
-  def eye(size, value \\ 1.0) when is_integer(size) and is_number(value),
-    do: %Matrex{data: NIFs.eye(size, value)}
-
-  @doc """
-  Create matrix filled with given value. NIF.
-
-  ## Example
-
-      iex> Matrex.fill(4,3, 55)
-      #Matrex[4×3]
-      ┌                         ┐
-      │    55.0    55.0    55.0 │
-      │    55.0    55.0    55.0 │
-      │    55.0    55.0    55.0 │
-      │    55.0    55.0    55.0 │
-      └                         ┘
-  """
-  @spec fill(index, index, element) :: matrex
-  def fill(rows, cols, value)
-      when (is_integer(rows) and is_integer(cols) and is_number(value)) or is_atom(value),
-      do: %Matrex{data: NIFs.fill(rows, cols, float_to_binary(value))}
-
-  @doc """
-  Create square matrix filled with given value. Inlined.
-
-  ## Example
-
-      iex> Matrex.fill(3, 55)
-      #Matrex[3×3]
-      ┌                         ┐
-      │    33.0    33.0    33.0 │
-      │    33.0    33.0    33.0 │
-      │    33.0    33.0    33.0 │
-      └                         ┘
-  """
-  @spec fill(index, element) :: matrex
-  def fill(size, value), do: fill(size, size, value)
-
-  @doc """
-  Find position of the first occurence of the given value in the matrix. NIF.
-
-  Returns {row, column} tuple or nil, if nothing was found. One-based.
-
-  ## Example
-
-
-  """
-  @spec find(matrex, element) :: {index, index} | nil
-  def find(%Matrex{data: data}, value) when is_number(value) or value in [:nan, :inf, :neg_inf],
-    do: NIFs.find(data, float_to_binary(value))
-
-  @doc """
-  Return first element of a matrix.
-
-  ## Example
-
-      iex> Matrex.new([[6,5,4],[3,2,1]]) |> Matrex.first()
-      6.0
-
-  """
-  @spec first(matrex) :: element
-  def first(matrex_data(_rows, _columns, <<element::binary-@element_size, _::binary>>)),
-    do: binary_to_float(element)
-
-  @doc """
-  Prints monochrome or color heatmap of the matrix to the console.
-
-  Supports 8, 256 and 16mln of colors terminals. Monochrome on 256 color palette is the default.
-
-  `type` can be `:mono8`, `:color8`, `:mono256`, `:color256`, `:mono24bit` and `:color24bit`.
-
-  Special float values, like infinity and not-a-number are marked with contrast colors on the map.
-
-  ## Options
-
-    * `:at` — positions heatmap at the specified `{row, col}` position inside terminal.
-    * `:title` — sets the title of the heatmap.
-
-  ## Examples
-
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist_sum.png" width="200px" />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />&nbsp;
-  <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="180px" />&nbsp;
-
-  """
-  @spec heatmap(
-          matrex,
-          :mono8 | :color8 | :mono256 | :color256 | :mono24bit | :color24bit,
-          keyword
-        ) :: matrex
-  defdelegate heatmap(matrex, type \\ :mono256, opts \\ []), to: Matrex.Inspect
-
-  @doc """
-  An alias for `eye/1`.
-  """
-  @spec identity(index) :: matrex
-  defdelegate identity(size), to: __MODULE__, as: :eye
 
   @doc """
   Returns list of all rows of a matrix as single-row matrices.
