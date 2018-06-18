@@ -237,6 +237,7 @@ defmodule Matrex do
   @enforce_keys [:data]
   defstruct data: nil, type: :float32, strides: {}, shape: {}
   @types [:float32, :float64, :int16, :int32, :int64, :byte, :bool]
+  @floats [:float32, :float64]
 
   @type element :: number | :nan | :inf | :neg_inf
   @type type :: :float32 | :float64 | :int16 | :int32 | :int64 | :byte | :bool
@@ -249,6 +250,39 @@ defmodule Matrex do
   #############################
   # Util functions
   #############################
+
+  # Available C math functions for floats
+  @math_functions [
+    :exp,
+    :exp2,
+    :sigmoid,
+    :expm1,
+    :log,
+    :log2,
+    :sqrt,
+    :cbrt,
+    :ceil,
+    :floor,
+    :truncate,
+    :round,
+    :abs,
+    :sin,
+    :cos,
+    :tan,
+    :asin,
+    :acos,
+    :atan,
+    :sinh,
+    :cosh,
+    :tanh,
+    :asinh,
+    :acosh,
+    :atanh,
+    :erf,
+    :erfc,
+    :tgamma,
+    :lgamma
+  ]
 
   # Size of matrix element in bytes and bits
   @element_size 4
@@ -317,6 +351,21 @@ defmodule Matrex do
   defp float64_to_binary(unknown_val),
     do: raise(ArgumentError, message: "Unknown matrix element value: #{unknown_val}")
 
+  defp element_to_binary(elem, :byte), do: <<elem::unsigned-integer-8>>
+  defp element_to_binary(elem, :int16), do: <<elem::integer-little-16>>
+  defp element_to_binary(elem, :int32), do: <<elem::integer-little-32>>
+  defp element_to_binary(elem, :int64), do: <<elem::integer-little-64>>
+
+  defp element_to_binary(:nan, :float32), do: @not_a_number_float32
+  defp element_to_binary(:inf, :float32), do: @positive_infinity_float32
+  defp element_to_binary(:neg_inf, :float32), do: @negative_infinity_float32
+  defp element_to_binary(elem, :float32), do: <<elem::float-little-32>>
+
+  defp element_to_binary(:nan, :float64), do: @not_a_number_float64
+  defp element_to_binary(:inf, :float64), do: @positive_infinity_float64
+  defp element_to_binary(:neg_inf, :float64), do: @negative_infinity_float64
+  defp element_to_binary(elem, :float64), do: <<elem::float-little-64>>
+
   def binary_to_int16(<<int::integer-little-16>>), do: int
   def binary_to_int32(<<int::integer-little-32>>), do: int
   def binary_to_int64(<<int::integer-little-64>>), do: int
@@ -341,7 +390,7 @@ defmodule Matrex do
       end)
 
   # Calculate next position tuple for the given position and shape
-  defp next_pos({r, c}, {rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c(+1)})
+  defp next_pos({r, c}, {rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c + 1})
 
   defp next_pos(pos, shape) do
     Enum.reduce_while((tuple_size(shape) - 1)..0, pos, fn i, p ->
@@ -384,6 +433,7 @@ defmodule Matrex do
             binary_to_int64: 1,
             binary_to_byte: 1,
             binary_to_bool: 1,
+            call_nif: 3,
             column_to_list: 2,
             contains?: 2,
             divide: 2,
@@ -393,6 +443,7 @@ defmodule Matrex do
             dot_tn: 2,
             eye: 1,
             element_to_string: 1,
+            element_to_binary: 2,
             element_size: 1,
             fill: 3,
             fill: 2,
@@ -466,6 +517,12 @@ defmodule Matrex do
 
     quote do: binary - unquote(size)
   end
+
+  @spec call_nif(atom, type, list) :: any
+  defp call_nif(func, type, args), do: Kernel.apply(NIFs, :"#{func}_#{type}", args)
+
+  @spec call_typed(atom, type, list) :: any
+  defp call_typed(func, type, args), do: Kernel.apply(__MODULE__, :"#{func}_#{type}", args)
 
   @impl Access
   def fetch(matrex, key)
@@ -615,8 +672,35 @@ defmodule Matrex do
       └                         ┘
   """
 
-  @spec add(matrex, matrex, number, number) :: matrex
+  @spec add(matrex | number, matrex | number, number, number) :: matrex
   def add(a, b, alpha \\ 1.0, beta \\ 1.0)
+
+  def add(%Matrex{data: data, type: type} = matrex, scalar, alpha, _beta)
+      when is_number(scalar),
+      do: %{matrex | data: call_nif(:add_scalar, type, [data, scalar, alpha])}
+
+  def add(scalar, %Matrex{data: data, type: type} = matrex, alpha, _beta)
+      when is_number(scalar),
+      do: %{matrex | data: call_nif(:add_scalar, type, [data, scalar, alpha])}
+
+  def add(
+        %Matrex{
+          data: data1,
+          shape: shape,
+          strides: strides,
+          type: type
+        } = a,
+        %Matrex{
+          data: data2,
+          shape: shape,
+          strides: strides,
+          type: type
+        },
+        alpha,
+        beta
+      )
+      when is_number(alpha) and is_number(beta),
+      do: %{a | data: call_nif(:add, type, [data1, data2, alpha, beta])}
 
   @doc """
 
@@ -701,17 +785,20 @@ defmodule Matrex do
           | (element, index -> element)
           | (element, index, index -> element)
         ) :: matrex
-  def apply(matrex, function)
+
+  def apply(%Matrex{data: data, type: type} = matrex, function_atom)
+      when function_atom in @math_functions and type in @floats,
+      do: %{matrex | data: call_nif(:apply_math, type, [data, function_atom])}
 
   def apply(%Matrex{data: data, type: type} = matrex, function) when is_function(function, 1),
-    do: %{matrex | data: Kernel.apply(Matrex, :"apply_on_matrix_#{type}", [data, function, <<>>])}
+    do: %{matrex | data: call_typed(:apply_on_matrix, type, [data, function, <<>>])}
 
   def apply(%Matrex{data: data, shape: shape, type: type} = matrex, function)
       when is_function(function, 2),
       do: %{
         matrex
         | data:
-            Kernel.apply(Matrex, :"apply_on_matrix_#{type}", [
+            call_typed(:apply_on_matrix, type, [
               data,
               function,
               Tuple.duplicate(1, tuple_size(shape)),
@@ -746,7 +833,7 @@ defmodule Matrex do
       when is_function(function, 2) do
     %{
       matrex
-      | data: Kernel.apply(Matrex, :"apply_on_matrices_#{type}", [data1, data2, function, <<>>])
+      | data: call_typed(:apply_on_matrices, type, [data1, data2, function, <<>>])
     }
   end
 
@@ -769,7 +856,7 @@ defmodule Matrex do
 
   """
   @spec argmax(matrex) :: index
-  def argmax(matrex)
+  def argmax(%Matrex{data: data, type: type}), do: call_nif(:argmax, type, [data]) + 1
 
   @doc """
   Get element of a matrix at given one-based (row, column) position.
@@ -825,7 +912,25 @@ defmodule Matrex do
 
   """
   @spec column(matrex, index) :: matrex
-  def column(matrex, index)
+  def column(%Matrex{data: data, shape: {rows, columns}, type: type}, col)
+      when is_integer(col) and col > 0 and col <= columns do
+    data =
+      Enum.map(0..(rows - 1), fn row ->
+        binary_part(
+          data,
+          (row * columns + (col - 1)) * element_size(type),
+          element_size(type)
+        )
+      end)
+      |> IO.iodata_to_binary()
+
+    %Matrex{
+      data: data,
+      shape: {rows, 1},
+      strides: strides({rows, 1}, type),
+      type: type
+    }
+  end
 
   @doc """
   Get column of matrix as list of floats. One-based, NIF.
@@ -845,7 +950,9 @@ defmodule Matrex do
 
   """
   @spec column_to_list(matrex, index) :: [element]
-  def column_to_lisit(matrex, index)
+  def column_to_list(%Matrex{data: data, shape: {_rows, columns}, type: type}, column)
+      when is_integer(column) and column > 0 and column <= columns,
+      do: call_nif(:column_to_list, type, [data, columns, column - 1])
 
   @doc """
   Concatenate list of matrices along columns.
@@ -899,7 +1006,24 @@ defmodule Matrex do
       └                         ┘
   """
   @spec concat(matrex, matrex, :columns | :rows) :: matrex
-  def concat(matrex1, matrex2, type \\ :columns)
+  def concat(matrex1, matrex2, axis \\ :columns)
+
+  def concat(
+        %Matrex{
+          data: data1,
+          shape: {rows, _},
+          type: type,
+          strides: strides
+        } = matrex,
+        %Matrex{
+          data: data2,
+          shape: {rows, _},
+          type: type,
+          strides: strides
+        },
+        :columns
+      ),
+      do: %{matrex | data: call_nif(:concat_columns, type, [data1, data2])}
 
   def concat(
         %Matrex{data: data1, shape: {rows1, columns}, type: type, strides: strides} = matrex,
@@ -908,11 +1032,11 @@ defmodule Matrex do
       ),
       do: %{matrex | data: data1 <> data2, shape: {rows1 + rows2, columns}}
 
-  def concat(%Matrex{shape: {rows1, columns1}}, %Matrex{shape: {rows2, columns2}}, type),
+  def concat(%Matrex{shape: {rows1, columns1}}, %Matrex{shape: {rows2, columns2}}, axis),
     do:
       raise(
         ArgumentError,
-        "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{type}."
+        "Cannot concat: #{rows1}×#{columns1} does not fit with #{rows2}×#{columns2} along #{axis}."
       )
 
   @doc """
@@ -967,10 +1091,28 @@ defmodule Matrex do
       └                         ┘
 
   """
-  @spec divide(matrex, matrex) :: matrex
   @spec divide(matrex, number) :: matrex
   @spec divide(number, matrex) :: matrex
-  def divide(dividend, divisor)
+
+  def divide(%Matrex{data: data, type: type} = matrex, scalar) when is_number(scalar),
+    do: %{matrex | data: call_nif(:divide_by_scalar, type, [data, scalar])}
+
+  def divide(scalar, %Matrex{data: data, type: type} = matrex) when is_number(scalar),
+    do: %{matrex | data: call_nif(:divide_scalar, type, [scalar, data])}
+
+  @spec divide(matrex, matrex, number) :: matrex
+  def divide(
+        %Matrex{data: dividend, shape: shape, strides: strides, type: type} = matrex,
+        %Matrex{
+          data: divisor,
+          shape: shape,
+          strides: strides,
+          type: type
+        },
+        alpha
+      )
+      when is_number(alpha),
+      do: %{matrex | data: call_nif(:divide, type, [dividend, divisor, alpha])}
 
   @doc """
   Matrix multiplication. NIF, via `cblas_sgemm()`.
@@ -991,7 +1133,22 @@ defmodule Matrex do
 
   """
   @spec dot(matrex, matrex, number) :: matrex
-  def dot(matrex1, matrex2, alpha \\ 1.0)
+  def dot(
+        %Matrex{data: data1, shape: {rows, common_dim}, type: type},
+        %Matrex{
+          data: data2,
+          shape: {common_dim, columns},
+          type: type
+        },
+        alpha \\ 1.0
+      )
+      when is_number(alpha),
+      do: %Matrex{
+        data: call_nif(:dot, type, [data1, data2, rows, common_dim, columns, alpha]),
+        shape: {rows, columns},
+        strides: strides({rows, columns}, type),
+        type: type
+      }
 
   @doc """
   Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
@@ -1010,7 +1167,28 @@ defmodule Matrex do
 
   """
   @spec dot_and_add(matrex, matrex, matrex) :: matrex
-  def dot_and_add(matrex1, matrex2, matrex3, alpha \\ 1.0)
+  def dot_and_add(
+        %Matrex{data: data1, shape: {rows, common_dim}, type: type},
+        %Matrex{data: data2, shape: {common_dim, columns}, type: type},
+        %Matrex{data: data3, shape: {rows, columns}, type: type},
+        alpha \\ 1.0
+      )
+      when is_number(alpha),
+      do: %Matrex{
+        data:
+          call_nif(:dot_and_add, type, [
+            data1,
+            data2,
+            rows,
+            common_dim,
+            columns,
+            data3,
+            alpha
+          ]),
+        shape: {rows, columns},
+        strides: strides({rows, columns}, type),
+        type: type
+      }
 
   @doc """
   Computes dot product of two matrices, then applies math function to each element
@@ -1027,7 +1205,28 @@ defmodule Matrex do
       └                 ┘
   """
   @spec dot_and_apply(matrex, matrex, atom) :: matrex
-  def dot_and_apply(matrex1, matrex2, function_atom, alpha \\ 1.0)
+  def dot_and_apply(
+        %Matrex{data: data1, shape: {rows, common_dim}, type: type},
+        %Matrex{data: data2, shape: {common_dim, columns}, type: type},
+        function_atom,
+        alpha \\ 1.0
+      )
+      when function_atom in @math_functions and is_number(alpha) and type in @floats,
+      do: %Matrex{
+        data:
+          call_nif(:dot_and_apply, type, [
+            data1,
+            data2,
+            rows,
+            common_dim,
+            columns,
+            function_atom,
+            alpha
+          ]),
+        shape: {rows, columns},
+        strides: strides({rows, columns}, type),
+        type: type
+      }
 
   @doc """
   Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
@@ -1046,7 +1245,26 @@ defmodule Matrex do
 
   """
   @spec dot_nt(matrex, matrex) :: matrex
-  def dot_nt(matrex1, matrex2, alpha \\ 1.0)
+  def dot_nt(
+        %Matrex{data: data1, shape: {rows, common_dim}, type: type},
+        %Matrex{data: data2, shape: {columns, common_dim}, type: type},
+        alpha \\ 1.0
+      )
+      when is_number(alpha),
+      do: %Matrex{
+        data:
+          call_nif(:dot_nt, type, [
+            data1,
+            data2,
+            rows,
+            common_dim,
+            columns,
+            alpha
+          ]),
+        shape: {rows, columns},
+        strides: strides({rows, columns}, type),
+        type: type
+      }
 
   @doc """
   Matrix dot multiplication where the first matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
@@ -1067,7 +1285,26 @@ defmodule Matrex do
 
   """
   @spec dot_tn(matrex, matrex, number) :: matrex
-  def dot_tn(matrex1, matrex2, alpha \\ 1.0)
+  def dot_tn(
+        %Matrex{data: data1, shape: {common_dim, rows}, type: type},
+        %Matrex{data: data2, shape: {common_dim, columns}, type: type},
+        alpha \\ 1.0
+      )
+      when is_number(alpha),
+      do: %Matrex{
+        data:
+          call_nif(:dot_tn, type, [
+            data1,
+            data2,
+            rows,
+            common_dim,
+            columns,
+            alpha
+          ]),
+        shape: {rows, columns},
+        strides: strides({rows, columns}, type),
+        type: type
+      }
 
   @doc """
   Create eye (identity) square matrix of given size.
@@ -1095,7 +1332,7 @@ defmodule Matrex do
   def eye(size, value \\ 1.0, type \\ :float32)
       when is_integer(size) and is_number(value) and type in @types,
       do: %Matrex{
-        data: Kernel.apply(NIFs, :"eye_#{type}", [size, value]),
+        data: call_nif(:eye, type, [size, value]),
         shape: {size, size},
         strides: strides({size, size}, type),
         type: type
@@ -1122,7 +1359,7 @@ defmodule Matrex do
       when (is_tuple(shape) and is_number(value)) or (is_atom(value) and is_atom(type)),
       do: %Matrex{
         data:
-          Kernel.apply(NIFs, :"fill_#{type}", [
+          call_nif(:fill, type, [
             elements_count(shape),
             Kernel.apply(__MODULE__, :"#{type}_to_binary", [value])
           ]),
@@ -1159,7 +1396,7 @@ defmodule Matrex do
   def find(%Matrex{data: data, type: type}, value)
       when is_number(value) or value in [:nan, :inf, :neg_inf],
       do:
-        Kernel.apply(NIFs, :"find_#{type}", [
+        call_nif(:find, type, [
           data,
           Kernel.apply(__MODULE__, :"#{type}_to_binary", [value])
         ])
@@ -1213,317 +1450,6 @@ defmodule Matrex do
   @spec identity(index) :: matrex
   defdelegate identity(size), to: __MODULE__, as: :eye
 
-  types = [
-    float64: {:float, 64},
-    float32: {:float, 32},
-    byte: {:integer, 8},
-    int16: {:integer, 16},
-    int32: {:integer, 32},
-    int64: {:integer, 64}
-  ]
-
-  for {guard, type_and_size} <- types do
-    @guard guard
-    @type_and_size type_and_size
-
-    def add(%Matrex{data: data, type: @guard} = matrex, scalar, _alpha, _beta)
-        when is_number(scalar),
-        do: %{matrex | data: Kernel.apply(NIFs, :"add_scalar_#{@guard}", [data, scalar])}
-
-    def add(scalar, %Matrex{data: data, type: @guard} = matrex, _alpha, _beta)
-        when is_number(scalar),
-        do: %{matrex | data: Kernel.apply(NIFs, :"add_scalar_#{@guard}", [data, scalar])}
-
-    def add(
-          %Matrex{
-            data: data1,
-            shape: shape,
-            strides: strides,
-            type: @guard
-          } = a,
-          %Matrex{
-            data: data2,
-            shape: shape,
-            strides: strides,
-            type: @guard
-          },
-          alpha,
-          beta
-        )
-        when is_number(alpha) and is_number(beta),
-        do: %{a | data: Kernel.apply(NIFs, :"add_#{@guard}", [data1, data2, alpha, beta])}
-
-    defp unquote(:"apply_on_matrix_#{@guard}")(<<>>, _, accumulator), do: accumulator
-
-    defp unquote(:"apply_on_matrix_#{@guard}")(
-           <<value::type_and_size(), rest::binary>>,
-           function,
-           accumulator
-         ) do
-      new_value = function.(value)
-
-      unquote(:"apply_on_matrix_#{@guard}")(
-        rest,
-        function,
-        <<accumulator::binary, new_value::type_and_size()>>
-      )
-    end
-
-    defp unquote(:"apply_on_matrix_#{@guard}")(<<>>, _, _, _, accumulator), do: accumulator
-
-    defp unquote(:"apply_on_matrix_#{@guard}")(
-           <<value::type_and_size(), rest::binary>>,
-           function,
-           pos,
-           shape,
-           accumulator
-         ) do
-      new_value = function.(value, pos)
-
-      unquote(:"apply_on_matrix_#{@guard}")(
-        rest,
-        function,
-        next_pos(pos, shape),
-        shape,
-        <<accumulator::binary, new_value::type_and_size()>>
-      )
-    end
-
-    defp unquote(:"apply_on_matrices_#{@guard}")(<<>>, <<>>, _, accumulator), do: accumulator
-
-    defp unquote(:"apply_on_matrices_#{@guard}")(
-           <<first_value::type_and_size(), first_rest::binary>>,
-           <<second_value::type_and_size(), second_rest::binary>>,
-           function,
-           accumulator
-         )
-         when is_function(function, 2) do
-      new_value = function.(first_value, second_value)
-      new_accumulator = <<accumulator::binary, new_value::type_and_size()>>
-
-      unquote(:"apply_on_matrices_#{@guard}")(first_rest, second_rest, function, new_accumulator)
-    end
-
-    def argmax(%Matrex{data: data, type: @guard}),
-      do: Kernel.apply(NIFs, :"argmax_#{@guard}", [data]) + 1
-
-    def at(%Matrex{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
-      data
-      |> binary_part(offset(strides, pos), element_size(@guard))
-      |> unquote(:"binary_to_#{@guard}")()
-    end
-
-    def column(%Matrex{data: data, shape: {rows, columns}, type: @guard}, col)
-        when is_integer(col) and col > 0 and col <= columns do
-      data =
-        Enum.map(0..(rows - 1), fn row ->
-          binary_part(
-            data,
-            (row * columns + (col - 1)) * element_size(@guard),
-            element_size(@guard)
-          )
-        end)
-        |> IO.iodata_to_binary()
-
-      %Matrex{
-        data: data,
-        shape: {rows, 1},
-        strides: strides({rows, 1}, @guard),
-        type: @guard
-      }
-    end
-
-    def column_to_list(%Matrex{data: data, shape: {_rows, columns}, type: @guard}, column)
-        when is_integer(column) and column > 0 and column <= columns,
-        do: Kernel.apply(NIFs, :"column_to_list_#{@guard}", [data, columns, column - 1])
-
-    def concat(
-          %Matrex{
-            data: data1,
-            shape: {rows1, _},
-            type: @guard,
-            strides: strides
-          } = matrex,
-          %Matrex{
-            data: data2,
-            shape: {rows2, _},
-            type: @guard,
-            strides: strides
-          },
-          :columns
-        )
-        when rows1 == rows2,
-        do: %{matrex | data: Kernel.apply(NIFs, :"concat_columns_#{@guard}", [data1, data2])}
-
-    def divide(%Matrex{data: dividend, shape: shape, strides: strides} = matrex, %Matrex{
-          data: divisor,
-          shape: shape,
-          strides: strides
-        }),
-        do: %{matrex | data: Kernel.apply(NIFs, :"divide_#{@guard}", [dividend, divisor])}
-
-    def divide(%Matrex{data: data} = matrex, scalar) when is_number(scalar),
-      do: %{matrex | data: Kernel.apply(NIFs, :"divide_by_scalar_#{@guard}", [data, scalar])}
-
-    def divide(scalar, %Matrex{data: data} = matrex) when is_number(scalar),
-      do: %{matrex | data: Kernel.apply(NIFs, :"divide_scalar_#{@guard}", [scalar, data])}
-
-    def dot(
-          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
-          %Matrex{
-            data: data2,
-            shape: {common_dim, columns},
-            type: @guard
-          },
-          alpha
-        )
-        when is_number(alpha),
-        do: %Matrex{
-          data:
-            Kernel.apply(NIFs, :"dot_#{@guard}", [data1, data2, rows, common_dim, columns, alpha]),
-          shape: {rows, columns},
-          strides: strides({rows, columns}, @guard),
-          type: @guard
-        }
-
-    def dot_and_add(
-          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
-          %Matrex{data: data2, shape: {common_dim, columns}, type: @guard},
-          %Matrex{data: data3, shape: {rows, columns}, type: @guard},
-          alpha
-        )
-        when is_number(alpha),
-        do: %Matrex{
-          data:
-            Kernel.apply(NIFs, :"dot_and_add_#{@guard}", [
-              data1,
-              data2,
-              rows,
-              common_dim,
-              columns,
-              data3,
-              alpha
-            ]),
-          shape: {rows, columns},
-          strides: strides({rows, columns}, @guard),
-          type: @guard
-        }
-
-    def dot_nt(
-          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
-          %Matrex{data: data2, shape: {columns, common_dim}, type: @guard},
-          alpha
-        )
-        when is_number(alpha),
-        do: %Matrex{
-          data:
-            Kernel.apply(NIFs, :"dot_nt_#{@guard}", [
-              data1,
-              data2,
-              rows,
-              common_dim,
-              columns,
-              alpha
-            ]),
-          shape: {rows, columns},
-          strides: strides({rows, columns}, @guard),
-          type: @guard
-        }
-
-    def dot_tn(
-          %Matrex{data: data1, shape: {common_dim, rows}, type: @guard},
-          %Matrex{data: data2, shape: {common_dim, columns}, type: @guard},
-          alpha
-        )
-        when is_number(alpha),
-        do: %Matrex{
-          data:
-            Kernel.apply(NIFs, :"dot_tn_#{@guard}", [
-              data1,
-              data2,
-              rows,
-              common_dim,
-              columns,
-              alpha
-            ]),
-          shape: {rows, columns},
-          strides: strides({rows, columns}, @guard),
-          type: @guard
-        }
-
-    def first(%Matrex{data: <<element::binary_size(), _::binary>>, type: @guard}),
-      do: unquote(:"binary_to_#{@guard}")(element)
-  end
-
-  float_types = [
-    float64: {:float, 64},
-    float32: {:float, 32}
-  ]
-
-  for {guard, type_and_size} <- float_types do
-    @guard guard
-    @type_and_size type_and_size
-
-    @math_functions [
-      :exp,
-      :exp2,
-      :sigmoid,
-      :expm1,
-      :log,
-      :log2,
-      :sqrt,
-      :cbrt,
-      :ceil,
-      :floor,
-      :truncate,
-      :round,
-      :abs,
-      :sin,
-      :cos,
-      :tan,
-      :asin,
-      :acos,
-      :atan,
-      :sinh,
-      :cosh,
-      :tanh,
-      :asinh,
-      :acosh,
-      :atanh,
-      :erf,
-      :erfc,
-      :tgamma,
-      :lgamma
-    ]
-
-    def apply(%Matrex{data: data, type: @guard} = matrex, function_atom)
-        when function_atom in @math_functions,
-        do: %{matrex | data: Kernel.apply(NIFs, :"apply_math_#{@guard}", [data, function_atom])}
-
-    def dot_and_apply(
-          %Matrex{data: data1, shape: {rows, common_dim}, type: @guard},
-          %Matrex{data: data2, shape: {common_dim, columns}, type: @guard},
-          function_atom,
-          alpha
-        )
-        when function_atom in @math_functions and is_number(alpha),
-        do: %Matrex{
-          data:
-            Kernel.apply(NIFs, :"dot_and_apply_#{@guard}", [
-              data1,
-              data2,
-              rows,
-              common_dim,
-              columns,
-              function_atom,
-              alpha
-            ]),
-          shape: {rows, columns},
-          strides: strides({rows, columns}, @guard),
-          type: @guard
-        }
-  end
-
   @doc """
   Returns list of all rows of a matrix as single-row matrices.
 
@@ -1553,9 +1479,8 @@ defmodule Matrex do
 
   """
   @spec list_of_rows(matrex) :: [matrex]
-  def list_of_rows(matrex_data(rows, columns, matrix)) do
-    do_list_rows(matrix, rows, columns)
-  end
+  def list_of_rows(%Matrex{data: data, shape: {rows, columns}, type: type}),
+    do: do_list_rows(data, rows, columns, type)
 
   @doc """
   Returns range of rows of a matrix as list of 1-row matrices.
@@ -1588,27 +1513,32 @@ defmodule Matrex do
 
   """
   @spec list_of_rows(matrex, Range.t()) :: [matrex]
-  def list_of_rows(matrex_data(rows, columns, matrix), from..to)
+  def list_of_rows(%Matrex{data: data, shape: {rows, columns}, type: type}, from..to)
       when from <= to and to <= rows do
     part =
       binary_part(
-        matrix,
-        (from - 1) * columns * @element_size,
-        (to - from + 1) * columns * @element_size
+        data,
+        (from - 1) * columns * element_size(type),
+        (to - from + 1) * columns * element_size(type)
       )
 
-    do_list_rows(part, to - from + 1, columns)
+    do_list_rows(part, to - from + 1, columns, type)
   end
 
-  defp do_list_rows(<<>>, 0, _), do: []
+  defp do_list_rows(<<>>, 0, _, _), do: []
 
-  defp do_list_rows(<<rows::binary>>, row_num, columns) do
+  defp do_list_rows(<<rows::binary>>, row_num, columns, type) do
     [
-      matrex_data(1, columns, binary_part(rows, 0, columns * @element_size))
+      matrex_data(1, columns, binary_part(rows, 0, columns * element_size(type)))
       | do_list_rows(
-          binary_part(rows, columns * @element_size, (row_num - 1) * columns * @element_size),
+          binary_part(
+            rows,
+            columns * element_size(type),
+            (row_num - 1) * columns * element_size(type)
+          ),
           row_num - 1,
-          columns
+          columns,
+          type
         )
     ]
   end
@@ -1676,8 +1606,9 @@ defmodule Matrex do
       │    15.0    17.0    24.0     1.0     8.0 │
       └                                         ┘
   """
-  @spec magic(index) :: matrex
-  def magic(n) when is_integer(n), do: Matrex.MagicSquare.new(n) |> new()
+  @spec magic(index, type) :: matrex
+  def magic(n, type \\ :float32) when is_integer(n) and type in @types,
+    do: Matrex.MagicSquare.new(n) |> new(type)
 
   @doc false
   # Shortcut to get functions list outside in Matrex.Operators module.
@@ -1705,7 +1636,7 @@ defmodule Matrex do
 
   """
   @spec max(matrex) :: element
-  def max(%Matrex{data: matrix}), do: NIFs.max(matrix)
+  def max(%Matrex{data: data, type: type}), do: call_nif(:max, type, [data])
 
   @doc """
   Returns maximum finite element of a matrex. NIF.
@@ -1718,8 +1649,8 @@ defmodule Matrex do
       5.0
 
   """
-  @spec max_finite(matrex) :: float
-  def max_finite(%Matrex{data: matrix}), do: NIFs.max_finite(matrix)
+  @spec max_finite(matrex) :: number
+  def max_finite(%Matrex{data: data, type: type}), do: call_nif(:max_finite, type, [data])
 
   @doc """
 
@@ -1744,7 +1675,7 @@ defmodule Matrex do
 
   """
   @spec min(matrex) :: element
-  def min(%Matrex{data: matrix}), do: NIFs.min(matrix)
+  def min(%Matrex{data: data, type: type}), do: call_nif(:min, type, [data])
 
   @doc """
   Returns minimum finite element of a matrex. NIF.
@@ -1757,8 +1688,127 @@ defmodule Matrex do
       1.0
 
   """
-  @spec min_finite(matrex) :: float
-  def min_finite(%Matrex{data: matrix}), do: NIFs.min_finite(matrix)
+  @spec min_finite(matrex) :: number
+  def min_finite(%Matrex{data: data, type: type}), do: call_nif(:min_finite, type, [data])
+
+  types = [
+    float64: {:float, 64},
+    float32: {:float, 32},
+    byte: {:integer, 8},
+    int16: {:integer, 16},
+    int32: {:integer, 32},
+    int64: {:integer, 64}
+  ]
+
+  for {guard, type_and_size} <- types do
+    @guard guard
+    @type_and_size type_and_size
+
+    @doc false
+    def unquote(:"apply_on_matrix_#{@guard}")(<<>>, _, accumulator), do: accumulator
+
+    def unquote(:"apply_on_matrix_#{@guard}")(
+          <<value::type_and_size(), rest::binary>>,
+          function,
+          accumulator
+        ) do
+      new_value = function.(value)
+
+      unquote(:"apply_on_matrix_#{@guard}")(
+        rest,
+        function,
+        <<accumulator::binary, new_value::type_and_size()>>
+      )
+    end
+
+    @doc false
+    def unquote(:"apply_on_matrix_#{@guard}")(<<>>, _, _, _, accumulator), do: accumulator
+
+    def unquote(:"apply_on_matrix_#{@guard}")(
+          <<value::type_and_size(), rest::binary>>,
+          function,
+          pos,
+          shape,
+          accumulator
+        ) do
+      new_value = function.(value, pos)
+
+      unquote(:"apply_on_matrix_#{@guard}")(
+        rest,
+        function,
+        next_pos(pos, shape),
+        shape,
+        <<accumulator::binary, new_value::type_and_size()>>
+      )
+    end
+
+    @doc false
+    def unquote(:"apply_on_matrices_#{@guard}")(<<>>, <<>>, _, accumulator), do: accumulator
+
+    def unquote(:"apply_on_matrices_#{@guard}")(
+          <<first_value::type_and_size(), first_rest::binary>>,
+          <<second_value::type_and_size(), second_rest::binary>>,
+          function,
+          accumulator
+        )
+        when is_function(function, 2) do
+      new_value = function.(first_value, second_value)
+      new_accumulator = <<accumulator::binary, new_value::type_and_size()>>
+
+      unquote(:"apply_on_matrices_#{@guard}")(first_rest, second_rest, function, new_accumulator)
+    end
+
+    def at(%Matrex{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
+      data
+      |> binary_part(offset(strides, pos), element_size(@guard))
+      |> unquote(:"binary_to_#{@guard}")()
+    end
+
+    def first(%Matrex{data: <<element::binary_size(), _::binary>>, type: @guard}),
+      do: unquote(:"binary_to_#{@guard}")(element)
+
+    @doc false
+    def unquote(:"new_matrix_from_function_#{@guard}")(0, _, accumulator), do: accumulator
+
+    def unquote(:"new_matrix_from_function_#{@guard}")(size, function, accumulator),
+      do:
+        unquote(:"new_matrix_from_function_#{@guard}")(
+          size - 1,
+          function,
+          <<accumulator::binary, function.()::type_and_size()>>
+        )
+
+    @doc false
+    def unquote(:"new_matrix_from_function_#{@guard}")(0, _, _, _, accumulator), do: accumulator
+
+    def unquote(:"new_matrix_from_function_#{@guard}")(
+          size,
+          pos,
+          shape,
+          function,
+          accumulator
+        ) do
+      new_accumulator = <<accumulator::binary, function.(pos)::type_and_size()>>
+
+      unquote(:"new_matrix_from_function_#{@guard}")(
+        size - 1,
+        next_pos(pos, shape),
+        shape,
+        function,
+        new_accumulator
+      )
+    end
+  end
+
+  float_types = [
+    float64: {:float, 64},
+    float32: {:float, 32}
+  ]
+
+  for {guard, type_and_size} <- float_types do
+    @guard guard
+    @type_and_size type_and_size
+  end
 
   @doc """
   Elementwise multiplication of two matrices or matrix and a scalar. NIF.
@@ -1786,14 +1836,19 @@ defmodule Matrex do
   @spec multiply(matrex, matrex) :: matrex
   @spec multiply(matrex, number) :: matrex
   @spec multiply(number, matrex) :: matrex
-  def multiply(%Matrex{data: first}, %Matrex{data: second}),
-    do: %Matrex{data: NIFs.multiply(first, second)}
+  def multiply(%Matrex{data: first, shape: shape, strides: strides, type: type} = matrex, %Matrex{
+        data: second,
+        shape: shape,
+        strides: strides,
+        type: type
+      }),
+      do: %{matrex | data: call_nif(:multiply, type, [first, second])}
 
-  def multiply(%Matrex{data: matrix}, scalar) when is_number(scalar),
-    do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
+  def multiply(%Matrex{data: data, type: type}, scalar) when is_number(scalar),
+    do: %Matrex{data: call_nif(:multiply_with_scalar, type, [data, scalar])}
 
-  def multiply(scalar, %Matrex{data: matrix}) when is_number(scalar),
-    do: %Matrex{data: NIFs.multiply_with_scalar(matrix, scalar)}
+  def multiply(scalar, %Matrex{data: data, type: type}) when is_number(scalar),
+    do: %Matrex{data: call_nif(:multiply_with_scalar, type, [data, scalar])}
 
   @doc """
   Negates each element of the matrix. NIF.
@@ -1809,7 +1864,8 @@ defmodule Matrex do
 
   """
   @spec neg(matrex) :: matrex
-  def neg(%Matrex{data: matrix}), do: %Matrex{data: NIFs.neg(matrix)}
+  def neg(%Matrex{data: matrix, type: type} = matrex),
+    do: %{matrex | data: call_nif(:neg, type, [matrix])}
 
   @doc """
   Creates new matrix with values provided by the given function.
@@ -1835,20 +1891,36 @@ defmodule Matrex do
       └                         ┘
 
   """
-  @spec new(index, index, (() -> element)) :: matrex
-  @spec new(index, index, (index, index -> element)) :: matrex
-  def new(rows, columns, function) when is_function(function, 0) do
-    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
+  @spec new(shape, (() -> element), type) :: matrex
+  @spec new(shape, (tuple -> element), type) :: matrex
+  def new(shape, function) when is_tuple(shape) and is_function(function),
+    do: new(shape, function, :float32)
 
-    new_matrix_from_function(rows * columns, function, initial)
-  end
+  def new(shape, function, type)
+      when is_tuple(shape) and is_function(function, 0) and type in @types,
+      do: %Matrex{
+        data:
+          call_typed(:new_matrix_from_function, type, [elements_count(shape), function, <<>>]),
+        shape: shape,
+        strides: strides(shape, type),
+        type: type
+      }
 
-  def new(rows, columns, function) when is_function(function, 2) do
-    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
-    size = rows * columns
-
-    new_matrix_from_function(size, rows, columns, function, initial)
-  end
+  def new(shape, function, type)
+      when is_tuple(shape) and is_function(function, 1) and type in @types,
+      do: %Matrex{
+        data:
+          call_typed(:new_matrix_from_function, type, [
+            elements_count(shape),
+            Tuple.duplicate(1, tuple_size(shape)),
+            shape,
+            function,
+            <<>>
+          ]),
+        shape: shape,
+        strides: strides(shape, type),
+        type: type
+      }
 
   @doc """
   Creates new matrix from list of lists or text representation (compatible with MathLab/Octave).
@@ -1900,7 +1972,8 @@ defmodule Matrex do
       └                                 ┘
 
   """
-  @spec new([[element]] | [[matrex]] | binary) :: matrex
+
+  @spec new([[matrex]]) :: matrex
   def new(
         [
           [
@@ -1914,28 +1987,29 @@ defmodule Matrex do
     |> Enum.reduce(&Matrex.concat(&2, &1, :rows))
   end
 
-  def new([first_list | _] = lol_or_binary) when is_list(first_list) do
+  def new(source), do: new(source, :float32)
+
+  @spec new([[element]] | binary, type) :: matrex
+  def new([first_list | _] = lol_or_binary, type) when is_list(first_list) and type in @types do
     rows = length(lol_or_binary)
     columns = length(first_list)
     shape = {rows, columns}
-
-    initial = <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>
 
     %Matrex{
       data:
         Enum.reduce(lol_or_binary, <<>>, fn list, accumulator ->
           accumulator <>
             Enum.reduce(list, <<>>, fn element, partial ->
-              <<partial::binary, float_to_binary(element)::binary>>
+              <<partial::binary, element_to_binary(element, type)::binary>>
             end)
         end),
       shape: shape,
-      strides: strides(shape, :float32),
-      type: :float32
+      strides: strides(shape, type),
+      type: type
     }
   end
 
-  def new(text) when is_binary(text) do
+  def new(text, type) when is_binary(text) and type in @types do
     text
     |> String.split(["\n", ";"], trim: true)
     |> Enum.map(fn line ->
@@ -1959,31 +2033,6 @@ defmodule Matrex do
       {value, _rem} -> value
       :error -> raise ArgumentError, message: "Unparseable matrix element value: #{string}"
     end
-  end
-
-  defp new_matrix_from_function(0, _, accumulator), do: %Matrex{data: accumulator}
-
-  defp new_matrix_from_function(size, function, accumulator),
-    do:
-      new_matrix_from_function(
-        size - 1,
-        function,
-        <<accumulator::binary, function.()::float-little-32>>
-      )
-
-  defp new_matrix_from_function(0, _, _, _, accumulator), do: %Matrex{data: accumulator}
-
-  defp new_matrix_from_function(size, rows, columns, function, accumulator) do
-    {row, col} =
-      if rem(size, columns) == 0 do
-        {rows - div(size, columns), 0}
-      else
-        {rows - 1 - div(size, columns), columns - rem(size, columns)}
-      end
-
-    new_accumulator = <<accumulator::binary, function.(row + 1, col + 1)::float-little-32>>
-
-    new_matrix_from_function(size - 1, rows, columns, function, new_accumulator)
   end
 
   @doc """
