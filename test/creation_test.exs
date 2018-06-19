@@ -172,46 +172,25 @@ defmodule CreationTest do
 
     expected = %Matrex{
       data: <<
-        2::unsigned-integer-little-32,
-        3::unsigned-integer-little-32,
         1::float-little-32,
         2::float-little-32,
         3::float-little-32,
         4::float-little-32,
         5::float-little-32,
         6::float-little-32
-      >>
-    }
-
-    assert Matrex.new(list) == expected
-  end
-
-  test "#new creates a new matrix initialized by a list, without rows and cols specification" do
-    list = [[1, 2, 3, 3], [4, 5, 6, 6]]
-
-    expected = %Matrex{
-      data: <<
-        2::unsigned-integer-little-32,
-        4::unsigned-integer-little-32,
-        1::float-little-32,
-        2::float-little-32,
-        3::float-little-32,
-        3::float-little-32,
-        4::float-little-32,
-        5::float-little-32,
-        6::float-little-32,
-        6::float-little-32
-      >>
+      >>,
+      shape: {2, 3},
+      strides: {12, 4}
     }
 
     assert Matrex.new(list) == expected
   end
 
   test "#new creates a new matrix from a list of lists of matrices" do
-    m1 = Matrex.reshape(1..6, 2, 3)
-    m2 = Matrex.reshape(7..12, 2, 3)
-    m3 = Matrex.reshape(13..16, 2, 2)
-    m4 = Matrex.reshape(17..20, 2, 2)
+    m1 = Matrex.reshape(1..6, {2, 3})
+    m2 = Matrex.reshape(7..12, {2, 3})
+    m3 = Matrex.reshape(13..16, {2, 2})
+    m4 = Matrex.reshape(17..20, {2, 2})
 
     expected =
       Matrex.new([[1, 2, 3, 13, 14], [4, 5, 6, 15, 16], [7, 8, 9, 17, 18], [10, 11, 12, 19, 20]])

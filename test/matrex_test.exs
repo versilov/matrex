@@ -313,7 +313,7 @@ defmodule MatrexTest do
   end
 
   test "#find finds special float values" do
-    matrex = Matrex.reshape([:neg_inf, 2, :nan, 4, :inf, 6], 2, 3)
+    matrex = Matrex.reshape([:neg_inf, 2, :nan, 4, :inf, 6], {2, 3})
     assert Matrex.find(matrex, :inf) == {2, 2}
     assert Matrex.find(matrex, :neg_inf) == {1, 1}
     assert Matrex.find(matrex, :nan) == {1, 3}
@@ -326,12 +326,12 @@ defmodule MatrexTest do
   end
 
   test "#list_of_rows returns row matrices list" do
-    m = reshape(1..12, 6, 2)
+    m = reshape(1..12, {6, 2})
     assert list_of_rows(m, 3..5) == [new([[5, 6]]), new([[7, 8]]), new([[9, 10]])]
   end
 
   test "#list_of_rows returns all rows when no range is given" do
-    m = reshape(1..6, 3, 2)
+    m = reshape(1..6, {3, 2})
     assert list_of_rows(m) == [new([[1, 2]]), new([[3, 4]]), new([[5, 6]])]
   end
 
@@ -444,8 +444,8 @@ defmodule MatrexTest do
   end
 
   test "#reshape consumes any value, convertable to list" do
-    assert Matrex.reshape(1..6, 2, 3) == Matrex.new("1 2 3; 4 5 6")
-    assert Matrex.reshape('abcd', 2, 2) == Matrex.new("97 98; 99 100")
+    assert Matrex.reshape(1..6, {2, 3}) == Matrex.new("1 2 3; 4 5 6")
+    assert Matrex.reshape('abcd', {2, 2}) == Matrex.new("97 98; 99 100")
   end
 
   test "#reshape turns flat list into a matrix" do
@@ -473,39 +473,39 @@ defmodule MatrexTest do
       3 3 3 4 4 4;
       """)
 
-    assert Matrex.reshape(list_of_matrices, 2, 2) == expected
+    assert Matrex.reshape(list_of_matrices, {2, 2}) == expected
   end
 
   test "#reshape respects special float values" do
     list = Enum.to_list(1..4) ++ [:nan, :neg_inf]
     expected = Matrex.new("1 2; 3 4; NaN NegInf")
 
-    assert Matrex.reshape(list, 3, 2) == expected
+    assert Matrex.reshape(list, {3, 2}) == expected
   end
 
   test "#reshape raises, when list length and shape do not match" do
     list = Enum.to_list(1..8)
 
     assert_raise ArgumentError, fn ->
-      Matrex.reshape(list, 3, 2)
+      Matrex.reshape(list, {3, 2})
     end
 
     assert_raise ArgumentError, fn ->
-      Matrex.reshape(list, 2, 5)
+      Matrex.reshape(list, {2, 5})
     end
   end
 
   test "#reshape converts Matrex to Matrex" do
-    m = Matrex.reshape(1..12, 3, 4)
+    m = Matrex.reshape(1..12, {3, 4})
     expected = Matrex.new("1 2 3 4 5 6; 7 8 9 10 11 12")
-    assert Matrex.reshape(m, 2, 6) == expected
+    assert Matrex.reshape(m, {2, 6}) == expected
   end
 
   test "#reshape raises ArgumentError when matrices sizes do not match" do
-    m = Matrex.reshape(1..12, 3, 4)
+    m = Matrex.reshape(1..12, {3, 4})
 
     assert_raise ArgumentError, fn ->
-      Matrex.reshape(m, 3, 5)
+      Matrex.reshape(m, {3, 5})
     end
   end
 
@@ -683,11 +683,11 @@ defmodule MatrexTest do
   test "#update updates element of a matrix with a function" do
     m = reshape(1..6, 3, 2)
     e = new("1 2; 3 16; 5 6")
-    assert update(m, 2, 2, fn x -> x * x end) == e
+    assert update(m, {2, 2}, fn x -> x * x end) == e
   end
 
   test "#update raises when position is out of bounds" do
     m = reshape(1..6, 3, 2)
-    assert_raise ArgumentError, fn -> update(m, 2, 3, fn x -> x * x end) end
+    assert_raise ArgumentError, fn -> update(m, {2, 3}, fn x -> x * x end) end
   end
 end

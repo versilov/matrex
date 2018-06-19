@@ -330,6 +330,12 @@ defmodule Matrex do
   def binary_to_float64(@negative_infinity_float64), do: :neg_inf
   def binary_to_float64(<<val::float-little-64>>), do: val
 
+  def binary_to_int16(<<int::integer-little-16>>), do: int
+  def binary_to_int32(<<int::integer-little-32>>), do: int
+  def binary_to_int64(<<int::integer-little-64>>), do: int
+  def binary_to_byte(<<byte>>), do: byte
+  def binary_to_bool(<<b::size(1)>>), do: b
+
   @spec float32_to_binary(element) :: <<_::32>>
   def float32_to_binary(val) when is_number(val), do: <<val::float-little-32>>
   def float32_to_binary(:nan), do: @not_a_number_float32
@@ -351,6 +357,7 @@ defmodule Matrex do
   defp float64_to_binary(unknown_val),
     do: raise(ArgumentError, message: "Unknown matrix element value: #{unknown_val}")
 
+  @spec element_to_binary(element, type) :: binary
   defp element_to_binary(elem, :byte), do: <<elem::unsigned-integer-8>>
   defp element_to_binary(elem, :int16), do: <<elem::integer-little-16>>
   defp element_to_binary(elem, :int32), do: <<elem::integer-little-32>>
@@ -366,11 +373,21 @@ defmodule Matrex do
   defp element_to_binary(:neg_inf, :float64), do: @negative_infinity_float64
   defp element_to_binary(elem, :float64), do: <<elem::float-little-64>>
 
-  def binary_to_int16(<<int::integer-little-16>>), do: int
-  def binary_to_int32(<<int::integer-little-32>>), do: int
-  def binary_to_int64(<<int::integer-little-64>>), do: int
-  def binary_to_byte(<<byte>>), do: byte
-  def binary_to_bool(<<b::size(1)>>), do: b
+  @spec binary_to_element(binary, type) :: element
+  defp binary_to_element(<<elem::unsigned-integer-8>>, :byte), do: elem
+  defp binary_to_element(<<elem::integer-little-16>>, :int16), do: elem
+  defp binary_to_element(<<elem::integer-little-32>>, :int32), do: elem
+  defp binary_to_element(<<elem::integer-little-64>>, :int64), do: elem
+
+  defp binary_to_element(@not_a_number_float32, :float32), do: :nan
+  defp binary_to_element(@positive_infinity_float32, :float32), do: :inf
+  defp binary_to_element(@negative_infinity_float32, :float32), do: :neg_inf
+  defp binary_to_element(<<elem::float-little-32>>, :float32), do: elem
+
+  defp binary_to_element(@not_a_number_float64, :float64), do: :nan
+  defp binary_to_element(@positive_infinity_float64, :float64), do: :inf
+  defp binary_to_element(@negative_infinity_float64, :float64), do: :neg_inf
+  defp binary_to_element(<<elem::float-little-64>>, :float64), do: elem
 
   @doc false
   def strides({_}, type), do: {element_size(type)}
@@ -383,6 +400,7 @@ defmodule Matrex do
     |> elem(0)
   end
 
+  # Offset of the element with position `pos` in bytes. Zero based.
   defp offset(strides, pos) when tuple_size(strides) == tuple_size(pos),
     do:
       Enum.reduce(0..(tuple_size(pos) - 1), 0, fn i, off ->
@@ -402,6 +420,11 @@ defmodule Matrex do
         {:cont, put_elem(p, i, 1)}
       end
     end)
+  end
+
+  defp inside_shape(pos, shape) do
+    Enum.zip(Tuple.to_list(pos), Tuple.to_list(shape))
+    |> Enum.all?(fn {p, s} -> p >= 1 && p <= s end)
   end
 
   @doc """
@@ -471,7 +494,7 @@ defmodule Matrex do
             to_row: 1,
             to_column: 1,
             transpose: 1,
-            update: 4,
+            update: 3,
             zeros: 2,
             zeros: 1}
 
@@ -515,7 +538,7 @@ defmodule Matrex do
   defmacrop binary_size() do
     {type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
 
-    quote do: binary - unquote(size)
+    quote do: binary - unquote(div(size, 8))
   end
 
   @spec call_nif(atom, type, list) :: any
@@ -1810,6 +1833,13 @@ defmodule Matrex do
     @type_and_size type_and_size
   end
 
+  @spec list_to_binary([element], type) :: binary
+  defp list_to_binary(list, type) when is_list(list) and type in @types,
+    do:
+      Enum.reduce(list, <<>>, fn element, partial ->
+        <<partial::binary, element_to_binary(element, type)::binary>>
+      end)
+
   @doc """
   Elementwise multiplication of two matrices or matrix and a scalar. NIF.
 
@@ -2058,7 +2088,8 @@ defmodule Matrex do
       └                         ┘
   """
   @spec normalize(matrex) :: matrex
-  def normalize(%Matrex{data: data}), do: %Matrex{data: NIFs.normalize(data)}
+  def normalize(%Matrex{data: data, type: type} = matrex) when type in @floats,
+    do: %{matrex | data: call_nif(:normalize, type, [data])}
 
   @doc """
   Create matrix filled with ones.
@@ -2167,7 +2198,16 @@ defmodule Matrex do
   """
   @spec random(index, index) :: matrex
   def random(rows, columns) when is_integer(rows) and is_integer(columns),
-    do: %Matrex{data: NIFs.random(rows, columns)}
+    do: random({rows, columns}, :float32)
+
+  @spec random(shape, type) :: matrex
+  def random(shape, type) when is_tuple(shape) and type in @types,
+    do: %Matrex{
+      data: call_nif(:random, type, [elements_count(shape)]),
+      shape: shape,
+      strides: strides(shape, type),
+      type: type
+    }
 
   @doc """
   Create square matrix of random floats.
@@ -2185,7 +2225,8 @@ defmodule Matrex do
       └                         ┘
   """
   @spec random(index) :: matrex
-  def random(size) when is_integer(size), do: random(size, size)
+  def random(size) when is_integer(size), do: random({size, size}, :float32)
+  def random(shape) when is_tuple(shape), do: random(shape, :float32)
 
   @doc """
   Resize matrix by scaling its dimenson with `scale`. NIF.
@@ -2232,8 +2273,9 @@ defmodule Matrex do
 
   def resize(%Matrex{} = matrex, 1, _), do: matrex
 
-  def resize(%Matrex{data: data}, scale, :nearest) when is_number(scale) and scale > 0,
-    do: %Matrex{data: NIFs.resize(data, scale)}
+  def resize(%Matrex{data: data, shape: {rows, cols}, type: type} = matrex, scale, :nearest)
+      when is_number(scale) and scale > 0,
+      do: %{matrex | data: call_nif(:resize, type, [data, rows, cols, scale])}
 
   @doc """
   Reshapes list of values into a matrix of given size or changes the shape of existing matrix.
@@ -2280,96 +2322,79 @@ defmodule Matrex do
       └                 ┘
 
   """
-  def reshape([], _, _), do: raise(ArgumentError)
+  def reshape(source, shape, type \\ :float32)
 
-  @spec reshape([matrex], index, index) :: matrex
-  def reshape([%Matrex{} | _] = enum, _rows, columns) do
+  def reshape([], _, _), do: raise(ArgumentError, message: "Empty list cannot be reshaped.")
+
+  @spec reshape([matrex], shape) :: matrex
+  def reshape([%Matrex{} | _] = enum, {_rows, columns}, _type) do
     enum
     |> Enum.chunk(columns)
     |> new()
   end
 
-  @spec reshape([element], index, index) :: matrex
-  def reshape([_ | _] = list, rows, columns),
-    do: %Matrex{
-      data:
-        do_reshape(
-          <<rows::unsigned-integer-little-32, columns::unsigned-integer-little-32>>,
-          list,
-          rows,
-          columns
-        )
-    }
+  @spec reshape([element], shape, type) :: matrex
+  def reshape([_ | _] = list, shape, type) when is_tuple(shape) and type in @types do
+    data = list_to_binary(list, type)
 
-  @spec reshape(matrex, index, index) :: matrex
-  def reshape(
-        matrex_data(rows, columns, _matrix),
-        new_rows,
-        new_columns
-      )
-      when rows * columns != new_rows * new_columns,
+    if byte_size(data) / element_size(type) != elements_count(shape),
       do:
         raise(
           ArgumentError,
           message:
-            "Cannot reshape: #{rows}×#{columns} does not fit into #{new_rows}×#{new_columns}."
+            "Cannot reshape: #{byte_size(data)} bytes do not fit into #{inspect(shape)} of type #{
+              type
+            }."
+        ),
+      else: %Matrex{
+        data: data,
+        shape: shape,
+        strides: strides(shape, type),
+        type: type
+      }
+  end
+
+  def reshape(%Matrex{shape: shape} = matrex, shape, _type),
+    # No need to reshape.
+    do: matrex
+
+  def reshape(
+        %Matrex{shape: shape} = matrex,
+        new_shape,
+        _type
+      )
+      when is_tuple(new_shape),
+      do:
+        if(
+          elements_count(shape) != elements_count(new_shape),
+          do:
+            raise(
+              ArgumentError,
+              message:
+                "Cannot reshape: #{inspect(shape)} does not fit into #{inspect(new_shape)}."
+            ),
+          else: %{matrex | shape: new_shape}
         )
 
-  def reshape(
-        matrex_data(rows, columns, _matrix) = matrex,
-        rows,
-        columns
-      ),
-      # No need to reshape.
-      do: matrex
-
-  def reshape(
-        matrex_data(_rows, _columns, matrix),
-        new_rows,
-        new_columns
-      ),
-      do: matrex_data(new_rows, new_columns, matrix)
-
-  @spec reshape(Range.t(), index, index) :: matrex
-  def reshape(a..b, rows, cols) when b - a + 1 != rows * cols,
+  def reshape(a..b, shape, type) when is_tuple(shape) and type in @types,
     do:
-      raise(
-        ArgumentError,
-        message: "range #{a}..#{b} cannot be reshaped into #{rows}×#{cols} matrix."
+      if(
+        b - a + 1 != elements_count(shape),
+        do:
+          raise(
+            ArgumentError,
+            message: "range #{a}..#{b} cannot be reshaped into #{inspect(shape)} matrix."
+          ),
+        else: %Matrex{
+          data: call_nif(:from_range, type, [a, b]),
+          shape: shape,
+          strides: strides(shape, type),
+          type: type
+        }
       )
 
-  def reshape(a..b, rows, cols), do: %Matrex{data: NIFs.from_range(a, b, rows, cols)}
-
-  @spec reshape(Enumerable.t(), index, index) :: matrex
-  def reshape(input, rows, columns), do: input |> Enum.to_list() |> reshape(rows, columns)
-
-  defp do_reshape(data, [], 1, 0), do: data
-
-  defp do_reshape(_data, [], _, _),
-    do: raise(ArgumentError, message: "Not enough elements for this shape")
-
-  defp do_reshape(_data, [_ | _], 1, 0),
-    do: raise(ArgumentError, message: "Too much elements for this shape")
-
-  # Another row is ready, restart counters
-  defp do_reshape(
-         <<_rows::unsigned-integer-little-32, columns::unsigned-integer-little-32, _::binary>> =
-           data,
-         list,
-         row,
-         0
-       ),
-       do: do_reshape(data, list, row - 1, columns)
-
-  defp do_reshape(
-         <<_rows::unsigned-integer-little-32, _columns::unsigned-integer-little-32, _::binary>> =
-           data,
-         [elem | tail],
-         row,
-         column
-       ) do
-    do_reshape(<<data::binary, float_to_binary(elem)::binary-4>>, tail, row, column - 1)
-  end
+  def reshape(input, shape, type) when is_tuple(shape) and type in @types,
+    do: input |> Enum.to_list() |> reshape(shape, type)
 
   @doc """
   Return matrix row as list by one-based index.
@@ -2389,8 +2414,8 @@ defmodule Matrex do
       [3.0, 10.0, 12.0, 19.0, 21.0]
   """
   @spec row_to_list(matrex, index) :: [element]
-  def row_to_list(%Matrex{data: matrix}, row) when is_integer(row) and row > 0,
-    do: NIFs.row_to_list(matrix, row - 1)
+  def row_to_list(%Matrex{data: matrix, type: type}, row) when is_integer(row) and row > 0,
+    do: call_nif(:row_to_list, type, [matrix, row - 1])
 
   @doc """
   Get row of matrix as matrix (vector) in matrex form. One-based.
@@ -2420,14 +2445,19 @@ defmodule Matrex do
       └                                         ┘
   """
   @spec row(matrex, index) :: matrex
-  def row(matrex_data(rows, columns, data), row)
-      when is_integer(row) and row > 0 and row <= rows do
-    matrex_data(
-      1,
-      columns,
-      binary_part(data, (row - 1) * columns * @element_size, columns * @element_size)
-    )
-  end
+  def row(%Matrex{data: data, shape: {rows, columns}, type: type}, row)
+      when is_integer(row) and row > 0 and row <= rows,
+      do: %Matrex{
+        data:
+          binary_part(
+            data,
+            (row - 1) * columns * element_size(type),
+            columns * element_size(type)
+          ),
+        shape: {1, columns},
+        strides: strides({1, columns}, type),
+        type: type
+      }
 
   @doc """
   Saves matrex into file.
@@ -2444,18 +2474,18 @@ defmodule Matrex do
   @spec save(matrex, binary) :: :ok | :error
   def save(
         %Matrex{
-          data: matrix
+          data: data
         },
         file_name
       )
       when is_binary(file_name) do
     cond do
       :filename.extension(file_name) == ".mtx" ->
-        File.write!(file_name, matrix)
+        File.write!(file_name, data)
 
       :filename.extension(file_name) == ".csv" ->
         csv =
-          matrix
+          data
           |> NIFs.to_list_of_lists()
           |> Enum.reduce("", fn row_list, acc ->
             acc <>
@@ -2476,6 +2506,7 @@ defmodule Matrex do
   # Save zero values without fraction part to save space
   def element_to_string(0.0), do: "0"
   def element_to_string(val) when is_float(val), do: Float.to_string(val)
+  def element_to_string(val) when is_integer(val), do: Integer.to_string(val)
   def element_to_string(:nan), do: "NaN"
   def element_to_string(:inf), do: "Inf"
   def element_to_string(:neg_inf), do: "-Inf"
@@ -2499,9 +2530,20 @@ defmodule Matrex do
   """
   @spec scalar(matrex) :: element
   def scalar(%Matrex{
-        data: <<1::unsigned-integer-little-32, 1::unsigned-integer-little-32, elem::binary-4>>
+        data: <<elem::binary>>,
+        shape: shape,
+        type: type
       }),
-      do: binary_to_float(elem)
+      do:
+        if(
+          byte_size(elem) != element_size(type) or elements_count(shape) != 1,
+          do:
+            raise(
+              ArgumentError,
+              message: "Matrix contains more than one scalar."
+            ),
+          else: binary_to_element(elem, type)
+        )
 
   @doc """
   Set element of matrix at the specified position (one-based) to new value.
@@ -2530,11 +2572,16 @@ defmodule Matrex do
       │     1.0     -∞      1.0 │
       └                         ┘
   """
-  @spec set(matrex, index, index, element) :: matrex
-  def set(matrex_data(rows, cols, _rest, matrix), row, column, value)
-      when (is_number(value) or value in [:nan, :inf, :neg_inf]) and row > 0 and column > 0 and
-             row <= rows and column <= cols,
-      do: %Matrex{data: NIFs.set(matrix, row - 1, column - 1, float_to_binary(value))}
+  @spec set(matrex, position, element) :: matrex
+  def set(%Matrex{data: data, shape: shape, strides: strides, type: type} = matrex, pos, value)
+      when is_number(value) or (value in [:nan, :inf, :neg_inf] and is_tuple(pos)),
+      do: %{
+        matrex
+        | data: call_nif(:set, type, [data, offset(strides, pos), element_to_binary(value, type)])
+      }
+
+  def set(%Matrex{shape: {_rows, _cols}} = matrex, index, index, value),
+    do: set(matrex, {index, index}, value)
 
   @doc """
   Set column of a matrix to the values from the given 1-column matrix. NIF.
@@ -2559,12 +2606,16 @@ defmodule Matrex do
   """
   @spec set_column(matrex, index, matrex) :: matrex
   def set_column(
-        matrex_data(rows, columns, _rest1, matrix),
+        %Matrex{data: data, shape: {rows, columns}, type: type} = matrex,
         column,
-        matrex_data(rows, 1, _rest2, column_matrix)
+        %Matrex{
+          data: column_data,
+          shape: {rows, 1},
+          type: type
+        }
       )
       when column in 1..columns,
-      do: %Matrex{data: NIFs.set_column(matrix, column - 1, column_matrix)}
+      do: %{matrex | data: call_nif(:set_column, type, [data, column - 1, column_data])}
 
   @doc """
   Return size of matrix as `{rows, cols}`
@@ -2580,8 +2631,8 @@ defmodule Matrex do
       iex> Matrex.size(m)
       {2, 3}
   """
-  @spec size(matrex) :: {index, index}
-  def size(matrex_data(rows, cols, _)), do: {rows, cols}
+  @spec size(matrex) :: shape
+  def size(%Matrex{shape: shape}), do: shape
 
   @doc """
   Produces element-wise squared matrix. NIF through `multiply/4`.
@@ -2604,7 +2655,8 @@ defmodule Matrex do
 
   """
   @spec square(matrex) :: matrex
-  def square(%Matrex{data: matrix}), do: %Matrex{data: Matrex.NIFs.multiply(matrix, matrix)}
+  def square(%Matrex{data: data, type: type} = matrex),
+    do: %{matrex | data: call_nif(:multiply, type, [data, data])}
 
   @doc """
   Returns submatrix for a given matrix. NIF.
@@ -2628,10 +2680,20 @@ defmodule Matrex do
       └                ┘
   """
   @spec submatrix(matrex, Range.t(), Range.t()) :: matrex
-  def submatrix(matrex_data(rows, cols, _rest, data), row_from..row_to, col_from..col_to)
+  def submatrix(
+        %Matrex{data: data, shape: {rows, cols}, type: type},
+        row_from..row_to,
+        col_from..col_to
+      )
       when row_from in 1..rows and row_to in row_from..rows and col_from in 1..cols and
              col_to in col_from..cols,
-      do: %Matrex{data: NIFs.submatrix(data, row_from - 1, row_to - 1, col_from - 1, col_to - 1)}
+      do: %Matrex{
+        data:
+          call_nif(:submatrix, type, [data, row_from - 1, row_to - 1, col_from - 1, col_to - 1]),
+        shape: {row_to - row_from + 1, col_to - col_from + 1},
+        strides: strides({row_to - row_from + 1, col_to - col_from + 1}, type),
+        type: type
+      }
 
   def submatrix(%Matrex{} = matrex, rows, cols) do
     raise(
@@ -2665,14 +2727,19 @@ defmodule Matrex do
       └                         ┘
   """
   @spec subtract(matrex | number, matrex | number) :: matrex
-  def subtract(%Matrex{data: first}, %Matrex{data: second}),
-    do: %Matrex{data: NIFs.subtract(first, second)}
+  def subtract(%Matrex{data: first, shape: shape, strides: strides, type: type} = matrex, %Matrex{
+        data: second,
+        shape: shape,
+        strides: strides,
+        type: type
+      }),
+      do: %{matrex | data: call_nif(:subtract, type, [first, second])}
 
-  def subtract(scalar, %Matrex{data: matrix}) when is_number(scalar),
-    do: %Matrex{data: NIFs.subtract_from_scalar(scalar, matrix)}
+  def subtract(scalar, %Matrex{data: data, type: type}) when is_number(scalar),
+    do: %Matrex{data: call_nif(:subtract_from_scalar, type, [scalar, data])}
 
-  def subtract(%Matrex{data: matrix}, scalar) when is_number(scalar),
-    do: %Matrex{data: NIFs.add_scalar(matrix, -scalar)}
+  def subtract(%Matrex{data: data, type: type}, scalar) when is_number(scalar),
+    do: %Matrex{data: call_nif(:add_scalar, type, [data, -scalar])}
 
   @doc """
   Subtracts the second matrix or scalar from the first. Inlined.
@@ -2734,7 +2801,7 @@ defmodule Matrex do
       :inf
   """
   @spec sum(matrex) :: element
-  def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
+  def sum(%Matrex{data: data, type: type}), do: call_nif(:sum, type, [data])
 
   @doc """
   Converts to flat list. NIF.
@@ -2752,7 +2819,7 @@ defmodule Matrex do
       [8.0, 1.0, 6.0, 3.0, 5.0, 7.0, 4.0, 9.0, 2.0]
   """
   @spec to_list(matrex) :: list(element)
-  def to_list(%Matrex{data: matrix}), do: NIFs.to_list(matrix)
+  def to_list(%Matrex{data: data, type: type}), do: call_nif(:to_list, type, [data])
 
   @doc """
   Converts to list of lists. NIF.
@@ -2781,7 +2848,8 @@ defmodule Matrex do
 
   """
   @spec to_list_of_lists(matrex) :: list(list(element))
-  def to_list_of_lists(%Matrex{data: matrix}), do: NIFs.to_list_of_lists(matrix)
+  def to_list_of_lists(%Matrex{data: data, shape: {rows, cols}, type: type}),
+    do: call_nif(:to_list_of_lists, type, [data, rows, cols])
 
   @doc """
   Convert any matrix m×n to a column matrix (m*n)×1.
@@ -2803,8 +2871,8 @@ defmodule Matrex do
 
   """
   @spec to_column(matrex) :: matrex
-  def to_column(matrex_data(_rows, 1, _rest) = m), do: m
-  def to_column(matrex_data(rows, columns, _rest) = m), do: reshape(m, rows * columns, 1)
+  def to_column(%Matrex{shape: {_rows, 1}} = m), do: m
+  def to_column(%Matrex{shape: {rows, columns}} = m), do: reshape(m, rows * columns, 1)
 
   @doc """
   Convert any matrix m×n to a row matrix 1×(m*n).
@@ -2826,8 +2894,8 @@ defmodule Matrex do
 
   """
   @spec to_row(matrex) :: matrex
-  def to_row(matrex_data(1, _columns, _rest) = m), do: m
-  def to_row(matrex_data(rows, columns, _rest) = m), do: reshape(m, 1, rows * columns)
+  def to_row(%Matrex{shape: {1, _columns}} = m), do: m
+  def to_row(%Matrex{shape: {rows, columns}} = m), do: reshape(m, 1, rows * columns)
 
   @doc """
   Transposes a matrix. NIF.
@@ -2850,9 +2918,11 @@ defmodule Matrex do
   """
   @spec transpose(matrex) :: matrex
   # Vectors are transposed by simply reshaping
-  def transpose(matrex_data(1, columns, _rest) = m), do: reshape(m, columns, 1)
-  def transpose(matrex_data(rows, 1, _rest) = m), do: reshape(m, 1, rows)
-  def transpose(%Matrex{data: matrix}), do: %Matrex{data: NIFs.transpose(matrix)}
+  def transpose(%Matrex{shape: {1, columns}} = m), do: reshape(m, columns, 1)
+  def transpose(%Matrex{shape: {rows, 1}} = m), do: reshape(m, 1, rows)
+
+  def transpose(%Matrex{data: data, shape: {rows, cols}, type: type}),
+    do: %Matrex{data: call_nif(:transpose, type, [data, rows, cols])}
 
   @doc """
   Updates the element at the given position in matrix with function.
@@ -2878,25 +2948,24 @@ defmodule Matrex do
       └                 ┘
 
   """
-  @spec update(matrex, index, index, (element -> element)) :: matrex
-  def update(matrex_data(rows, columns, _data), row, col, _fun)
-      when not inside_matrex(row, col, rows, columns),
-      do:
-        raise(
-          ArgumentError,
-          message: "Position (#{row}, #{col}) is out of matrex [#{rows}×#{columns}]"
-        )
-
-  def update(matrex_data(_rows, columns, data, matrix), row, col, fun)
+  @spec update(matrex, position, (element -> element)) :: matrex
+  def update(%Matrex{data: data, shape: shape, strides: strides, type: type} = matrex, pos, fun)
       when is_function(fun, 1) do
-    new_value =
-      data
-      |> binary_part(((row - 1) * columns + (col - 1)) * @element_size, @element_size)
-      |> binary_to_float()
-      |> fun.()
-      |> float_to_binary()
+    if(not inside_shape(pos, shape)) do
+      raise(
+        ArgumentError,
+        message: "Position (#{inspect(pos)}) is out of matrex of shape #{inspect(shape)}"
+      )
+    else
+      new_value =
+        data
+        |> binary_part(offset(strides, pos), element_size(type))
+        |> binary_to_element(type)
+        |> fun.()
+        |> element_to_binary(type)
 
-    %Matrex{data: NIFs.set(matrix, row - 1, col - 1, new_value)}
+      %{matrex | data: call_nif(:set, type, [data, offset(strides, pos), new_value])}
+    end
   end
 
   @doc """
@@ -2915,9 +2984,16 @@ defmodule Matrex do
       │     0.0     0.0     0.0 │
       └                         ┘
   """
-  @spec zeros(index, index) :: matrex
-  def zeros(rows, cols) when is_integer(rows) and is_integer(cols),
-    do: %Matrex{data: NIFs.zeros(rows, cols)}
+  @spec zeros(shape, type) :: matrex
+  def zeros(shape, type \\ :float32)
+
+  def zeros(shape, type) when is_tuple(shape) and type in @types,
+    do: %Matrex{
+      data: NIFs.zeros(elements_count(shape) * element_size(type)),
+      shape: shape,
+      strides: strides(shape, type),
+      type: type
+    }
 
   @doc """
   Create square matrix of size `size` rows × `size` columns, filled with zeros. Inlined.
@@ -2932,7 +3008,6 @@ defmodule Matrex do
       │     0.0     0.0     0.0 │
       └                         ┘
   """
-  @spec zeros(index | {index, index}) :: matrex
-  def zeros({rows, cols}), do: zeros(rows, cols)
-  def zeros(size), do: zeros(size, size)
+  @spec zeros(index, type) :: matrex
+  def zeros(size, type) when is_integer(size), do: zeros({size, size}, type)
 end
