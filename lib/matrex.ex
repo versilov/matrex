@@ -717,6 +717,18 @@ defmodule Matrex do
       when is_number(alpha) and is_number(beta),
       do: %{a | data: call_nif(:add, type, [data1, data2, alpha, beta])}
 
+  def add(
+        %Matrex{shape: shape1},
+        %Matrex{shape: shape2},
+        _alpha,
+        _beta
+      ),
+      do:
+        raise(
+          ArgumentError,
+          message: "matrices' shapes mismatch: #{inspect(shape1)} and #{inspect(shape2)}."
+        )
+
   @doc """
 
   Applies given function to each element of the matrix and returns the matrex of results. NIF.
@@ -766,23 +778,13 @@ defmodule Matrex do
 
   ## Example
 
-      iex> Matrex.ones(5) |> Matrex.apply(fn val, index -> val + index end)
-      #Matrex[5×5]
-      ┌                                         ┐
-      │     2.0     3.0     4.0     5.0     6.0 │
-      │     7.0     8.0     9.0    10.0    11.0 │
-      │    12.0    13.0    14.0    15.0    16.0 │
-      │    17.0    18.0    19.0    20.0    21.0 │
-      │    22.0    23.0    24.0    25.0    26.0 │
-      └                                         ┘
 
-  If second argument is a function that takes three arguments,
-  then this function receives the element of the matrix one-based row index and one-based
-  column index of the element.
+  If second argument is a function that takes two arguments,
+  then this function receives the element of the matrix and position tuple of the element.
 
   ## Example
 
-      iex> Matrex.ones(5) |> Matrex.apply(fn val, row, col -> val + row + col end)
+      iex> Matrex.ones(5) |> Matrex.apply(fn val, {row, col} -> val + row + col end)
       #Matrex[5×5]
       ┌                                         ┐
       │     3.0     4.0     5.0     6.0     7.0 │
@@ -797,8 +799,7 @@ defmodule Matrex do
           matrex,
           atom
           | (element -> element)
-          | (element, index -> element)
-          | (element, index, index -> element)
+          | (element, tuple -> element)
         ) :: matrex
 
   def apply(%Matrex{data: data, type: type} = matrex, function_atom)
@@ -1131,6 +1132,17 @@ defmodule Matrex do
       )
       when is_number(alpha),
       do: %{matrex | data: call_nif(:divide, type, [dividend, divisor, alpha])}
+
+  def divide(
+        %Matrex{shape: shape1},
+        %Matrex{shape: shape2},
+        _alpha
+      ),
+      do:
+        raise(
+          ArgumentError,
+          message: "matrices' shapes mismatch: #{inspect(shape1)} and #{inspect(shape2)}."
+        )
 
   @doc """
   Matrix multiplication. NIF, via `cblas_sgemm()`.
@@ -1866,7 +1878,14 @@ defmodule Matrex do
         strides: strides,
         type: type
       }),
-      do: %{matrex | data: call_nif(:multiply, type, [first, second])}
+      do: %{matrex | data: call_nif(:multiply, type, [first, second, 1])}
+
+  def multiply(%Matrex{shape: shape1}, %Matrex{shape: shape2}),
+    do:
+      raise(
+        ArgumentError,
+        message: "matrices' shapes mismatch: #{inspect(shape1)} and #{inspect(shape2)}."
+      )
 
   def multiply(%Matrex{data: data, type: type} = matrex, scalar) when is_number(scalar),
     do: %{matrex | data: call_nif(:multiply_with_scalar, type, [data, scalar])}
@@ -2705,20 +2724,41 @@ defmodule Matrex do
       │    -3.0    -4.0    -5.0 │
       └                         ┘
   """
-  @spec subtract(matrex | number, matrex | number) :: matrex
-  def subtract(%Matrex{data: first, shape: shape, strides: strides, type: type} = matrex, %Matrex{
-        data: second,
-        shape: shape,
-        strides: strides,
-        type: type
-      }),
-      do: %{matrex | data: call_nif(:subtract, type, [first, second])}
+  @spec subtract(matrex | number, matrex | number, number, number) :: matrex
+  def subtract(first, second, alpha \\ 1.0, beta \\ 1.0)
 
-  def subtract(scalar, %Matrex{data: data, type: type} = matrex) when is_number(scalar),
-    do: %{matrex | data: call_nif(:subtract_from_scalar, type, [scalar, data])}
+  def subtract(
+        %Matrex{data: first, shape: shape, strides: strides, type: type} = matrex,
+        %Matrex{
+          data: second,
+          shape: shape,
+          strides: strides,
+          type: type
+        },
+        alpha,
+        beta
+      ),
+      do: %{matrex | data: call_nif(:subtract, type, [first, second, alpha, beta])}
 
-  def subtract(%Matrex{data: data, type: type} = matrex, scalar) when is_number(scalar),
-    do: %{matrex | data: call_nif(:add_scalar, type, [data, -scalar, 1.0])}
+  def subtract(
+        %Matrex{shape: shape1},
+        %Matrex{shape: shape2},
+        _alpha,
+        _beta
+      ),
+      do:
+        raise(
+          ArgumentError,
+          message: "matrices' shapes mismatch: #{inspect(shape1)} and #{inspect(shape2)}."
+        )
+
+  def subtract(scalar, %Matrex{data: data, type: type} = matrex, alpha, _beta)
+      when is_number(scalar),
+      do: %{matrex | data: call_nif(:subtract_from_scalar, type, [scalar, data, alpha])}
+
+  def subtract(%Matrex{data: data, type: type} = matrex, scalar, alpha, _beta)
+      when is_number(scalar),
+      do: %{matrex | data: call_nif(:add_scalar, type, [data, -scalar, alpha])}
 
   @doc """
   Subtracts the second matrix or scalar from the first. Inlined.
