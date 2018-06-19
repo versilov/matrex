@@ -364,7 +364,7 @@ defmodule MatrexTest do
   end
 
   test "#max_finite returns max finite element" do
-    m = reshape([:inf, 2, 3, :inf], 2, 2)
+    m = reshape([:inf, 2, 3, :inf], {2, 2})
     assert max_finite(m) == 3.0
   end
 
@@ -374,7 +374,7 @@ defmodule MatrexTest do
   end
 
   test "#min_finite returns min finite element" do
-    m = reshape([:neg_inf, -2, :nan, 5], 2, 2)
+    m = reshape([:neg_inf, -2, :nan, 5], {2, 2})
     assert min_finite(m) == -2.0
   end
 

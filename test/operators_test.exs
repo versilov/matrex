@@ -15,7 +15,7 @@ defmodule OperatorsTest do
     import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
 
     a = Matrex.random(5, 8)
-    b = Matrex.reshape(1..40, 5, 8)
+    b = Matrex.reshape(1..40, {5, 8})
     c = Matrex.magic(8)
 
     expected = Matrex.add(a, b, 1.5, 2.3) |> Matrex.divide(23) |> Matrex.dot(c)

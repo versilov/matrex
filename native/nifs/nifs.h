@@ -1,12 +1,15 @@
 TYPED_NIF(add, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
-  TYPE        *first_data, *second_data, *result_data;
+  TYPE *first_data, *second_data, *result_data;
+  TOP_TYPE alpha, beta;
 
   UNUSED_VAR(argc);
 
   if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
   if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  ENIF_GET_VAL(alpha, argv[2], TOP_TYPE);
+  ENIF_GET_VAL(beta, argv[3], TOP_TYPE);
 
   first_data  = (TYPE*)first.data;
   second_data = (TYPE*)second.data;
@@ -14,7 +17,7 @@ TYPED_NIF(add, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
   result_data = (TYPE*)enif_make_new_binary(env, first.size, &result);
 
   for (uint64_t i = 0; i < first.size / sizeof(TYPE); i++)
-    result_data[i] = first_data[i] + second_data[i];
+    result_data[i] = alpha*first_data[i] + beta*second_data[i];
 
   return result;
 }
@@ -23,19 +26,20 @@ TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
   ErlNifBinary  array;
   ERL_NIF_TERM  result;
   TYPE        *array_data, *result_data;
-  TOP_TYPE scalar;
+  TOP_TYPE scalar, alpha;
 
   UNUSED_VAR(argc);
 
   if (!enif_inspect_binary(env, argv[0], &array)) return enif_make_badarg(env);
   ENIF_GET_VAL(scalar, argv[1], TOP_TYPE);
+  ENIF_GET_VAL(alpha, argv[2], TOP_TYPE);
 
   array_data  = (TYPE*)array.data;
 
   result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
 
   for (uint64_t i = 0; i < array.size / sizeof(TYPE); i++)
-    result_data[i] = array_data[i] + scalar;
+    result_data[i] = alpha*array_data[i] + scalar;
 
   return result;
 }

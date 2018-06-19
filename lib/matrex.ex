@@ -409,7 +409,7 @@ defmodule Matrex do
   defp position_from_offset(offset, {row, col} = strides)
        when is_tuple(strides) and is_integer(offset) do
     Enum.reduce(0..(tuple_size(strides) - 1), {{}, offset}, fn i, {pos, off} ->
-      {Tuple.insert_at(pos, 0, div(off, elem(strides, i)) + 1), rem(off, elem(strides, i))}
+      {Tuple.append(pos, div(off, elem(strides, i)) + 1), rem(off, elem(strides, i))}
     end)
     |> elem(0)
   end
@@ -562,7 +562,7 @@ defmodule Matrex do
   def fetch(%Matrex{shape: {1, columns}, data: data, type: type} = matrex, a..b)
       when b > a and a > 0 and b <= columns do
     data = binary_part(data, (a - 1) * element_size(type), (b - a + 1) * element_size(type))
-    {:ok, %{matrex | shape: {1, b - a + 1}, data: data}}
+    {:ok, %{matrex | data: data, shape: {1, b - a + 1}, strides: strides({1, b - a + 1}, type)}}
   end
 
   def fetch(%Matrex{shape: {rows, columns}, data: data, type: type} = matrex, a..b)
