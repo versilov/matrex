@@ -1110,7 +1110,7 @@ defmodule Matrex do
           strides: strides,
           type: type
         },
-        alpha
+        alpha \\ 1.0
       )
       when is_number(alpha),
       do: %{matrex | data: call_nif(:divide, type, [dividend, divisor, alpha])}
@@ -2556,8 +2556,8 @@ defmodule Matrex do
         | data: call_nif(:set, type, [data, offset(strides, pos), element_to_binary(value, type)])
       }
 
-  def set(%Matrex{shape: {_rows, _cols}} = matrex, index, index, value),
-    do: set(matrex, {index, index}, value)
+  def set(%Matrex{shape: {_rows, _cols}} = matrex, row, column, value),
+    do: set(matrex, {row, column}, value)
 
   @doc """
   Set column of a matrix to the values from the given 1-column matrix. NIF.
@@ -2848,7 +2848,7 @@ defmodule Matrex do
   """
   @spec to_column(matrex) :: matrex
   def to_column(%Matrex{shape: {_rows, 1}} = m), do: m
-  def to_column(%Matrex{shape: {rows, columns}} = m), do: reshape(m, rows * columns, 1)
+  def to_column(%Matrex{shape: {rows, columns}} = m), do: reshape(m, {rows * columns, 1})
 
   @doc """
   Convert any matrix m×n to a row matrix 1×(m*n).
@@ -2871,7 +2871,7 @@ defmodule Matrex do
   """
   @spec to_row(matrex) :: matrex
   def to_row(%Matrex{shape: {1, _columns}} = m), do: m
-  def to_row(%Matrex{shape: {rows, columns}} = m), do: reshape(m, 1, rows * columns)
+  def to_row(%Matrex{shape: {rows, columns}} = m), do: reshape(m, {1, rows * columns})
 
   @doc """
   Transposes a matrix. NIF.

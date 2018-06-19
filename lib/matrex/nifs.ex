@@ -40,7 +40,7 @@ defmodule Matrex.NIFs do
     add_scalar: 2,
     add: 2,
     argmax: 1,
-    column_to_list: 2,
+    column_to_list: 3,
     concat_columns: 2,
     divide_by_scalar: 2,
     divide_scalar: 2,
@@ -82,7 +82,7 @@ defmodule Matrex.NIFs do
   for {name, arity} <- @nifs do
     for type <- @types do
       def unquote(:"#{name}_#{type}")(
-            unquote_splicing(Enum.map(1..arity, &Macro.var(:"arg#{&1}", nil)))
+            unquote_splicing(Enum.map(1..arity, &Macro.var(:"_arg#{&1}", nil)))
           ),
           do: :erlang.nif_error(:nif_library_not_loaded)
     end
@@ -91,7 +91,7 @@ defmodule Matrex.NIFs do
   for {name, arity} <- @float_nifs do
     for type <- @float_types do
       def unquote(:"#{name}_#{type}")(
-            unquote_splicing(Enum.map(1..arity, &Macro.var(:"arg#{&1}", nil)))
+            unquote_splicing(Enum.map(1..arity, &Macro.var(:"_arg#{&1}", nil)))
           ),
           do: :erlang.nif_error(:nif_library_not_loaded)
     end

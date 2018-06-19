@@ -437,7 +437,7 @@ defmodule MatrexTest do
   end
 
   test "#resize scales up the dimensions of the matrix and interpolaties values" do
-    m = Matrex.reshape(1..4, 2, 2)
+    m = Matrex.reshape(1..4, {2, 2})
     expected = Matrex.new([[1, 1, 2, 2], [1, 1, 2, 2], [3, 3, 4, 4], [3, 3, 4, 4]])
 
     assert Matrex.resize(m, 2) == expected
@@ -452,7 +452,7 @@ defmodule MatrexTest do
     list = Enum.to_list(1..6)
     expected = Matrex.new("1 2; 3 4; 5 6")
 
-    assert Matrex.reshape(list, 3, 2) == expected
+    assert Matrex.reshape(list, {3, 2}) == expected
   end
 
   test "#reshape transforms list of matrices into a one big matrix" do
@@ -600,8 +600,8 @@ defmodule MatrexTest do
   end
 
   test "#subtract subtracts scalar from matrix" do
-    input = Matrex.reshape(1..6, 2, 3)
-    expected = Matrex.reshape(0..5, 2, 3)
+    input = Matrex.reshape(1..6, {2, 3})
+    expected = Matrex.reshape(0..5, {2, 3})
 
     assert Matrex.subtract(input, 1) == expected
   end
