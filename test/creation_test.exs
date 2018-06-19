@@ -31,12 +31,12 @@ defmodule CreationTest do
 
   test "#fill fills new matrex with value" do
     expected = Matrex.new("7.53 7.53 7.53; 7.53 7.53 7.53; 7.53 7.53 7.53")
-    assert Matrex.fill(3, 7.53) == expected
+    assert Matrex.fill({3, 3}, 7.53) == expected
   end
 
   test "#fill fills matrix with special float value" do
     e = new("NegInf NegInf; NegInf NegInf")
-    assert fill(2, :neg_inf) == e
+    assert fill({2, 2}, :neg_inf) == e
   end
 
   test "#magic raises error, when too small is requested" do
@@ -136,18 +136,18 @@ defmodule CreationTest do
         1::float-little-32,
         1::float-little-32
       >>,
-      shape: {2, 3},
+      shape: {rows, columns},
       strides: {12, 4},
       type: :float32
     }
 
-    assert Matrex.new(rows, columns, function) == expected
+    assert Matrex.new({rows, columns}, function) == expected
   end
 
   test "#new creates a new matrix initialized by a function with (row, col) arguments" do
     rows = 3
     columns = 3
-    function = fn row, col -> row * col end
+    function = fn {row, col} -> row * col end
 
     expected = %Matrex{
       data: <<
@@ -166,7 +166,7 @@ defmodule CreationTest do
       type: :float32
     }
 
-    assert Matrex.new(rows, columns, function) == expected
+    assert Matrex.new({rows, columns}, function) == expected
   end
 
   test "#new creates a new matrix initialized by a list of lists" do
@@ -215,7 +215,7 @@ defmodule CreationTest do
                [1, 1, 1, 1, 1, 1, 1]
              ])
 
-    ones_not_square_matrix = Matrex.ones(3, 4)
+    ones_not_square_matrix = Matrex.ones({3, 4})
     assert ones_not_square_matrix == Matrex.new([[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]])
   end
 
@@ -236,6 +236,6 @@ defmodule CreationTest do
 
   test "#zeros/2 returns zero filled matrix" do
     zero_matrix = Matrex.new([[0, 0, 0], [0, 0, 0]])
-    assert Matrex.zeros(2, 3) == zero_matrix
+    assert Matrex.zeros({2, 3}) == zero_matrix
   end
 end

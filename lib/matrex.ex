@@ -406,6 +406,20 @@ defmodule Matrex do
         elem(strides, i) * (elem(pos, i) - 1) + off
       end)
 
+  defp position_from_offset(offset, {row, col} = strides)
+       when is_tuple(strides) and is_integer(offset) do
+    Enum.reduce(0..(tuple_size(strides) - 1), {{}, offset}, fn i, {pos, off} ->
+      {Tuple.insert_at(pos, 0, div(off, elem(strides, i)) + 1), rem(off, elem(strides, i))}
+    end)
+    |> elem(0)
+  end
+
+  defp position_from_index(nil, _, _), do: nil
+
+  defp position_from_index(index, strides, type)
+       when is_integer(index) and is_tuple(strides) and type in @types,
+       do: position_from_offset(index * element_size(type), strides)
+
   # Calculate next position tuple for the given position and shape
   defp next_pos({r, c}, {rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c + 1})
 
@@ -540,9 +554,9 @@ defmodule Matrex do
       do: {:ok, at(matrex, {key, 1})}
 
   # TODO: Return submatrix
-  # def fetch(matrex, key)
-  #     when is_integer(key) and key > 0,
-  #     do: {:ok, row(matrex, key)}
+  def fetch(matrex, key)
+      when is_integer(key) and key > 0,
+      do: {:ok, row(matrex, key)}
 
   # Slice on horizontal vector
   def fetch(%Matrex{shape: {1, columns}, data: data, type: type} = matrex, a..b)
@@ -1012,19 +1026,22 @@ defmodule Matrex do
   def concat(
         %Matrex{
           data: data1,
-          shape: {rows, _},
-          type: type,
-          strides: strides
+          shape: {rows, columns1},
+          type: type
         } = matrex,
         %Matrex{
           data: data2,
-          shape: {rows, _},
-          type: type,
-          strides: strides
+          shape: {rows, columns2},
+          type: type
         },
         :columns
       ),
-      do: %{matrex | data: call_nif(:concat_columns, type, [data1, data2])}
+      do: %Matrex{
+        data: call_nif(:concat_columns, type, [data1, data2, columns1, columns2]),
+        shape: {rows, columns1 + columns2},
+        strides: strides({rows, columns1 + columns2}, type),
+        type: type
+      }
 
   def concat(
         %Matrex{data: data1, shape: {rows1, columns}, type: type, strides: strides} = matrex,
@@ -1394,13 +1411,14 @@ defmodule Matrex do
 
   """
   @spec find(matrex, element) :: position | nil
-  def find(%Matrex{data: data, type: type}, value)
+  def find(%Matrex{data: data, strides: strides, type: type}, value)
       when is_number(value) or value in [:nan, :inf, :neg_inf],
       do:
         call_nif(:find, type, [
           data,
           element_to_binary(value, type)
         ])
+        |> position_from_index(strides, type)
 
   @doc """
   Return first element of a matrix.
@@ -2072,47 +2090,32 @@ defmodule Matrex do
 
   ## Example
 
-      iex> Matrex.ones(2, 3)
-      #Matrex[2×3]
+      iex> Matrex.ones({2, 3})
+      #Matrex[2×3]:float32
       ┌                         ┐
       │     1.0     1.0     1.0 │
       │     1.0     1.0     1.0 │
       └                         ┘
-  """
-  @spec ones(index, index) :: matrex
-  def ones(rows, cols) when is_integer(rows) and is_integer(cols), do: fill(rows, cols, 1)
 
-  @doc """
-  Create matrex of ones of square dimensions or consuming output of `size/1` function.
-
-  ## Examples
+      iex> Matrex.ones({2, 3}, :byte)
+      #Matrex[2×3]:byte
+      ┌                   ┐
+      │     1     1     1 │
+      │     1     1     1 │
+      └                   ┘
 
       iex> Matrex.ones(3)
-      #Matrex[3×3]
+      #Matrex[3×3]:float32
       ┌                         ┐
       │     1.0     1.0     1.0 │
-      │     1.0     1.0     1.0 │
-      │     1.0     1.0     1.0 │
-      └                         ┘
-
-      iex> m = Matrex.new("1 2 3; 4 5 6")
-      #Matrex[2×3]
-      ┌                         ┐
-      │     1.0     2.0     3.0 │
-      │     4.0     5.0     6.0 │
-      └                         ┘
-      iex> Matrex.ones(Matrex.size(m))
-      #Matrex[2×3]
-      ┌                         ┐
       │     1.0     1.0     1.0 │
       │     1.0     1.0     1.0 │
       └                         ┘
   """
-  @spec ones(index) :: matrex
-  @spec ones({index, index}) :: matrex
-  def ones({rows, cols}), do: ones(rows, cols)
-
-  def ones(size) when is_integer(size), do: fill(size, 1)
+  @spec ones(shape, type) :: matrex
+  def ones(shape, type \\ :float32)
+  def ones(shape, type) when is_tuple(shape) and type in @types, do: fill(shape, 1, type)
+  def ones(size, type) when is_integer(size) and type in @types, do: fill({size, size}, 1, type)
 
   @doc """
   Prints matrix to the console.
@@ -2715,7 +2718,7 @@ defmodule Matrex do
     do: %{matrex | data: call_nif(:subtract_from_scalar, type, [scalar, data])}
 
   def subtract(%Matrex{data: data, type: type} = matrex, scalar) when is_number(scalar),
-    do: %{matrex | data: call_nif(:add_scalar, type, [data, -scalar])}
+    do: %{matrex | data: call_nif(:add_scalar, type, [data, -scalar, 1.0])}
 
   @doc """
   Subtracts the second matrix or scalar from the first. Inlined.
@@ -2990,5 +2993,5 @@ defmodule Matrex do
       └                         ┘
   """
   @spec zeros(index, type) :: matrex
-  def zeros(size, type) when is_integer(size), do: zeros({size, size}, type)
+  def zeros(size, type) when is_integer(size) and type in @types, do: zeros({size, size}, type)
 end

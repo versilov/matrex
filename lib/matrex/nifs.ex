@@ -19,7 +19,7 @@ defmodule Matrex.NIFs do
           path
       end
 
-    :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
+    :ok = :erlang.load_nif(:filename.join(priv_dir, "nifs"), 0)
   end
 
   @types [
@@ -37,11 +37,11 @@ defmodule Matrex.NIFs do
   ]
 
   @nifs [
-    add_scalar: 2,
-    add: 2,
+    add_scalar: 3,
+    add: 4,
     argmax: 1,
     column_to_list: 3,
-    concat_columns: 2,
+    concat_columns: 4,
     divide_by_scalar: 2,
     divide_scalar: 2,
     divide: 3,
@@ -53,6 +53,7 @@ defmodule Matrex.NIFs do
     eye: 2,
     fill: 2,
     find: 2,
+    from_range: 2,
     max: 1,
     max_finite: 1,
     min: 1,
@@ -62,19 +63,16 @@ defmodule Matrex.NIFs do
     neg: 1,
     random: 1,
     resize: 4,
-    from_range: 2,
     row_to_list: 2,
     set: 3,
     set_column: 3,
-    multiply: 2,
     submatrix: 5,
     subtract: 2,
     subtract_from_scalar: 2,
     sum: 1,
     to_list: 1,
     to_list_of_lists: 3,
-    transpose: 3,
-    set: 3
+    transpose: 3
   ]
 
   @float_nifs [apply_math: 2, normalize: 1]
@@ -96,6 +94,9 @@ defmodule Matrex.NIFs do
           do: :erlang.nif_error(:nif_library_not_loaded)
     end
   end
+
+  @spec zeros(integer) :: binary
+  def zeros(byte_size) when is_integer(byte_size), do: :erlang.nif_error(:nif_library_not_loaded)
 
   @spec add(binary, binary, number, number) :: binary
   def add(first, second, alpha, beta)
@@ -377,9 +378,4 @@ defmodule Matrex.NIFs do
 
   @spec transpose(binary) :: binary
   def transpose(matrix) when is_binary(matrix), do: :erlang.nif_error(:nif_library_not_loaded)
-
-  @spec zeros(integer, integer) :: binary
-  def zeros(rows, cols) when is_integer(rows) and is_integer(cols) do
-    :erlang.nif_error(:nif_library_not_loaded)
-  end
 end
