@@ -46,15 +46,51 @@ TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
 
 
 TYPED_NIF(argmax, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary matrix;
   ERL_NIF_TERM result;
+  TYPE *matrix_data;
+  TYPE max;
+  int64_t argmax = 0;
+
   UNUSED_VAR(argc);
 
-  return result;
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  matrix_data = (TYPE*)matrix.data;
+
+  max = matrix_data[0];
+  for (int64_t i = 1; i < matrix.size / sizeof(TYPE); i++)
+    if (matrix_data[i] > max) {
+      max = matrix_data[i];
+      argmax = i;
+    } 
+
+  return enif_make_int64(env, argmax);
 }
 
 TYPED_NIF(column_to_list, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  TYPE *matrix_data;
+  long rows, cols, column;
+  ERL_NIF_TERM  result;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[1], &cols);
+  enif_get_int64(env, argv[2], &column);
+
+  rows = matrix.size / (cols * sizeof(TYPE));
+
+  matrix_data = (TYPE*) matrix.data;
+
+  if (column >= cols)
+    return enif_raise_exception(env, enif_make_string(env, "Column index out of bounds.", ERL_NIF_LATIN1));
+
+  result = enif_make_list(env, 0);
+
+  for (int64_t i = (rows-1)*cols + column ; i >= column; i -= cols ) {
+    result = enif_make_list_cell(env, ENIF_MAKE_VAL(matrix_data[i], TOP_TYPE), result);
+  }
 
   return result;
 }
@@ -207,7 +243,7 @@ TYPED_NIF(eye, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 
   memset((void*)result_data, 0, result_byte_size);
 
-  for (uint64_t x = 0, y = 0; x < size && y < size; x++, y++)
+  for (int64_t x = 0, y = 0; x < size && y < size; x++, y++)
     result_data[y*size + x] = (TYPE)value;
 
   return result;
@@ -246,9 +282,15 @@ TYPED_NIF(find, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *arg
   matrix_data = (TYPE*) matrix.data;
   element_data = (TYPE*) element.data;
 
-  for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
-    if (matrix_data[i] == *element_data)
-      return enif_make_int(env, i);
+  if (isnan(*element_data)) {
+    for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+      if (isnan(matrix_data[i]))
+        return enif_make_int(env, i);
+  } else {
+    for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+      if (matrix_data[i] == *element_data)
+        return enif_make_int(env, i);
+  }
 
   return enif_make_atom(env, "nil");
 }
@@ -291,25 +333,22 @@ TYPED_NIF(max, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
   return ENIF_MAKE_VAL(max, TOP_TYPE);
 }
 
-TYPED_NIF(max_finite, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  UNUSED_VAR(argc);
-
-  return result;
-}
-
 TYPED_NIF(min, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary matrix;
   ERL_NIF_TERM result;
+  TYPE *matrix_data;
+  TYPE min;
+
   UNUSED_VAR(argc);
 
-  return result;
-}
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  matrix_data = (TYPE*)matrix.data;
 
-TYPED_NIF(min_finite, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  UNUSED_VAR(argc);
+  min = matrix_data[0];
+  for (int64_t i = 1; i < matrix.size / sizeof(TYPE); i++)
+    if (matrix_data[i] < min) min = matrix_data[i];
 
-  return result;
+  return ENIF_MAKE_VAL(min, TOP_TYPE);
 }
 
 TYPED_NIF(multiply, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
@@ -358,7 +397,19 @@ TYPED_NIF(multiply_with_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const E
 
 TYPED_NIF(neg, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  TYPE *matrix_data, *result_data;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix )) return enif_make_badarg(env);
+
+  matrix_data  = (TYPE*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, matrix.size, &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+    result_data[i] = -matrix_data[i];
 
   return result;
 }
@@ -396,8 +447,29 @@ TYPED_NIF(row_to_list, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TE
 }
 
 TYPED_NIF(set, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix, value;
+  TYPE *matrix_data, *result_data;
+  unsigned long offset;
+  TYPE scalar;
   ERL_NIF_TERM result;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &offset);
+  enif_inspect_binary(env, argv[2], &value);
+
+  scalar = *((TYPE*)value.data);
+
+  matrix_data = (TYPE*)matrix.data;
+
+  if (offset >= matrix.size)
+    return enif_raise_exception(env, enif_make_string(env, "Position out of bounds.", ERL_NIF_LATIN1));
+
+  result_data = (TYPE*) enif_make_new_binary(env, matrix.size, &result);
+
+  memcpy(result_data, matrix_data, matrix.size);
+  result_data[offset/sizeof(TYPE)] = scalar;
 
   return result;
 }
@@ -508,14 +580,14 @@ TYPED_NIF(transpose, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM
 #define MATH_FUNC_FROM_NAME(TN) CAT(math_func_, TN, _from_name)
 
 TYPED_NIF(apply_math, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ErlNifBinary  array;
+  ErlNifBinary  matrix;
   char          function_name[16];
   ERL_NIF_TERM  result;
-  TYPE *array_data, *result_data;
+  TYPE *matrix_data, *result_data;
 
   UNUSED_VAR(argc);
 
-  if (!enif_inspect_binary(env, argv[0], &array )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[0], &matrix )) return enif_make_badarg(env);
   if (enif_get_atom(env, argv[1], function_name, 16, ERL_NIF_LATIN1) == 0)
     return enif_raise_exception(
              env,
@@ -523,19 +595,86 @@ TYPED_NIF(apply_math, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
 
   MATH_FUNC_TYPE(TYPE_NAME) func = MATH_FUNC_FROM_NAME(TYPE_NAME)(function_name);
 
-  array_data  = (TYPE*)array.data;
+  matrix_data  = (TYPE*)matrix.data;
 
-  result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
+  result_data = (TYPE*)enif_make_new_binary(env, matrix.size, &result);
 
-  for (uint64_t i = 0; i < array.size / sizeof(TYPE); i++)
-    result_data[i] = func(array_data[i]);
+  for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+    result_data[i] = func(matrix_data[i]);
 
   return result;
 }
 
+TYPED_NIF(max_finite, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  TYPE max = NAN;
+  TYPE *matrix_data;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (TYPE*) matrix.data;
+
+  for (uint64_t index = 0; index < matrix.size/sizeof(TYPE); index += 1) {
+    if (isfinite(matrix_data[index]) && (isnan(max) || max < matrix_data[index])) {
+      max = matrix_data[index];
+    }
+  }
+
+  if (isnan(max))
+    return enif_make_atom(env, "nil");
+  else
+    return enif_make_double(env, max);
+}
+
+TYPED_NIF(min_finite, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  TYPE min = NAN;
+  TYPE *matrix_data;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (TYPE*) matrix.data;
+
+  for (uint64_t index = 0; index < matrix.size/sizeof(TYPE); index += 1) {
+    if (isfinite(matrix_data[index]) && (isnan(min) || min > matrix_data[index])) {
+      min = matrix_data[index];
+    }
+  }
+
+  if (isnan(min))
+    return enif_make_atom(env, "nil");
+  else
+    return enif_make_double(env, min);
+}
 
 TYPED_NIF(normalize, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  TYPE *matrix_data, *result_data;
+  TYPE min, max, range;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (TYPE*)matrix.data;
+
+  min = matrix_data[0]; max = matrix_data[0];
+
+  for (uint64_t i = 1; i < matrix.size / sizeof(TYPE); i++) {
+    if (matrix_data[i] < min) min = matrix_data[i];
+    if (matrix_data[i] > max) max = matrix_data[i];
+  }
+  range = max - min;
+
+  result_data = (TYPE*) enif_make_new_binary(env, matrix.size, &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+    result_data[i] = (matrix_data[i] - min) / range;
 
   return result;
 }

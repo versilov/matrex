@@ -173,7 +173,7 @@ defmodule MatrexTest do
   end
 
   test "#max_finite returns nil for totally infinite matrix" do
-    m = fill(3, 3, :inf)
+    m = fill({3, 3}, :inf)
     assert max_finite(m) == nil
   end
 
@@ -183,7 +183,7 @@ defmodule MatrexTest do
   end
 
   test "#min_finite returns nil for totally infinite matrix" do
-    m = fill(3, 3, :neg_inf)
+    m = fill({3, 3}, :neg_inf)
     assert min_finite(m) == nil
   end
 
@@ -311,14 +311,14 @@ defmodule MatrexTest do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = Matrex.new([[1, 2, 99], [4, 5, 6]])
 
-    assert Matrex.set(matrix, 1, 3, 99) == expected
+    assert Matrex.set(matrix, {1, 3}, 99) == expected
   end
 
   test "#set can handle special values" do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
     expected = Matrex.new([[1, :nan, 3], [4, 5, 6]])
 
-    assert Matrex.set(matrix, 1, 2, :nan) == expected
+    assert Matrex.set(matrix, {1, 2}, :nan) == expected
   end
 
   test "#size returns the size of the matrix" do

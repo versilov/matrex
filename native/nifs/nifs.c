@@ -15,7 +15,7 @@ typedef uint64_t uint64;
 
 #define TYPED_NIF(title, type_name) static ERL_NIF_TERM CAT(title, _, type_name)
 
-#define ENIF_MAKE_VAL(VAL, TYPE) CAT(enif_make, _, TYPE)(env, VAL)
+#define ENIF_MAKE_VAL(VAL, TYPE) CAT(make, _, TYPE)(env, VAL)
 
 #define ENIF_GET_VAL(VAL, ARG, TYPE) CAT(get_scalar, _, TYPE)(env, ARG, &VAL)
 
@@ -40,6 +40,27 @@ get_scalar_int64(ErlNifEnv *env, ERL_NIF_TERM arg, int64_t* scalar) {
     *scalar = (long) double_scalar;
   }
 }
+
+static inline ERL_NIF_TERM
+make_int64(ErlNifEnv* env, const int64_t value) {
+  return enif_make_int64(env, value);
+}
+
+
+static inline ERL_NIF_TERM
+make_double(ErlNifEnv* env, const double value) {
+  if (isfinite(value))
+    return enif_make_double(env, value);
+  else if (isnan(value))
+    return enif_make_atom(env, "nan");
+  else if (value == INFINITY)
+    return enif_make_atom(env, "inf");
+  else if (value == -INFINITY)
+    return enif_make_atom(env, "neg_inf");
+  else
+    return enif_make_badarg(env);
+}
+
 
 static ERL_NIF_TERM
 zeros(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
@@ -135,9 +156,9 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(fill, 2, 0),
   TYPED_NIFS_DECL(find, 2, 0),
   TYPED_NIFS_DECL(max, 1, 0),
-  TYPED_NIFS_DECL(max_finite, 1, 0),
+  FLOAT_TYPED_NIFS_DECL(max_finite, 1, 0),
   TYPED_NIFS_DECL(min, 1, 0),
-  TYPED_NIFS_DECL(min_finite, 1, 0),
+  FLOAT_TYPED_NIFS_DECL(min_finite, 1, 0),
   TYPED_NIFS_DECL(multiply, 3, 0),
   TYPED_NIFS_DECL(multiply_with_scalar, 2, 0),
   TYPED_NIFS_DECL(neg, 1, 0),

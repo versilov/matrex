@@ -55,9 +55,7 @@ defmodule Matrex.NIFs do
     find: 2,
     from_range: 2,
     max: 1,
-    max_finite: 1,
     min: 1,
-    min_finite: 1,
     multiply: 3,
     multiply_with_scalar: 2,
     neg: 1,
@@ -75,7 +73,7 @@ defmodule Matrex.NIFs do
     transpose: 3
   ]
 
-  @float_nifs [apply_math: 2, normalize: 1]
+  @float_nifs [apply_math: 2, normalize: 1, max_finite: 1, min_finite: 1]
 
   for {name, arity} <- @nifs do
     for type <- @types do
