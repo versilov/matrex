@@ -232,9 +232,8 @@ defmodule Matrex do
   """
 
   alias Matrex.NIFs
-  import Matrex.Guards
 
-  @enforce_keys [:data]
+  @enforce_keys [:data, :shape, :strides, :type]
   defstruct data: nil, type: :float32, strides: {}, shape: {}
   @types [:float32, :float64, :int16, :int32, :int64, :byte, :bool]
   @floats [:float32, :float64]
@@ -500,31 +499,6 @@ defmodule Matrex do
 
   @behaviour Access
 
-  defmacrop matrex_data(rows, columns, body) do
-    quote do
-      %Matrex{
-        data: <<
-          unquote(rows)::unsigned-integer-little-32,
-          unquote(columns)::unsigned-integer-little-32,
-          unquote(body)::binary
-        >>
-      }
-    end
-  end
-
-  defmacrop matrex_data(rows, columns, body, data) do
-    quote do
-      %Matrex{
-        data:
-          <<
-            unquote(rows)::unsigned-integer-little-32,
-            unquote(columns)::unsigned-integer-little-32,
-            unquote(body)::binary
-          >> = unquote(data)
-      }
-    end
-  end
-
   defmacrop type_and_size() do
     {type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
 
@@ -602,20 +576,24 @@ defmodule Matrex do
   def pop(%Matrex{shape: {rows, columns}, data: body, type: type}, row)
       when is_integer(row) and row >= 1 and row <= rows do
     get = %Matrex{
-      shape: {1, columns},
       data:
-        binary_part(body, (row - 1) * columns * element_size(type), columns * element_size(type))
+        binary_part(body, (row - 1) * columns * element_size(type), columns * element_size(type)),
+      shape: {1, columns},
+      strides: strides({1, columns}, type),
+      type: type
     }
 
     update = %Matrex{
-      shape: {rows - 1, columns},
       data:
         binary_part(body, 0, (row - 1) * columns * element_size(type)) <>
           binary_part(
             body,
             row * columns * element_size(type),
             (rows - row) * columns * element_size(type)
-          )
+          ),
+      shape: {rows - 1, columns},
+      strides: strides({rows - 1, columns}, type),
+      type: type
     }
 
     {get, update}
@@ -1384,7 +1362,7 @@ defmodule Matrex do
         data:
           call_nif(:fill, type, [
             elements_count(shape),
-            Kernel.apply(__MODULE__, :"#{type}_to_binary", [value])
+            element_to_binary(value, type)
           ]),
         shape: shape,
         strides: strides(shape, type),
@@ -1421,7 +1399,7 @@ defmodule Matrex do
       do:
         call_nif(:find, type, [
           data,
-          Kernel.apply(__MODULE__, :"#{type}_to_binary", [value])
+          element_to_binary(value, type)
         ])
 
   @doc """
@@ -1552,7 +1530,12 @@ defmodule Matrex do
 
   defp do_list_rows(<<rows::binary>>, row_num, columns, type) do
     [
-      matrex_data(1, columns, binary_part(rows, 0, columns * element_size(type)))
+      %Matrex{
+        data: binary_part(rows, 0, columns * element_size(type)),
+        shape: {1, columns},
+        strides: strides({1, columns}, type),
+        type: type
+      }
       | do_list_rows(
           binary_part(
             rows,
@@ -1610,8 +1593,11 @@ defmodule Matrex do
     do: do_load(File.read!(file_name), format)
 
   defp do_load(data, :csv), do: new(data)
-  defp do_load(data, :mtx), do: %Matrex{data: data}
-  defp do_load(data, :idx), do: %Matrex{data: Matrex.IDX.load(data)}
+  # TODO: set matrix info
+  defp do_load(data, :mtx), do: %Matrex{data: data, shape: {}, strides: {}, type: :float32}
+
+  defp do_load(data, :idx),
+    do: %Matrex{data: Matrex.IDX.load(data), shape: {}, strides: {}, type: :float32}
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal.
@@ -1823,16 +1809,6 @@ defmodule Matrex do
     end
   end
 
-  float_types = [
-    float64: {:float, 64},
-    float32: {:float, 32}
-  ]
-
-  for {guard, type_and_size} <- float_types do
-    @guard guard
-    @type_and_size type_and_size
-  end
-
   @spec list_to_binary([element], type) :: binary
   defp list_to_binary(list, type) when is_list(list) and type in @types,
     do:
@@ -1874,11 +1850,11 @@ defmodule Matrex do
       }),
       do: %{matrex | data: call_nif(:multiply, type, [first, second])}
 
-  def multiply(%Matrex{data: data, type: type}, scalar) when is_number(scalar),
-    do: %Matrex{data: call_nif(:multiply_with_scalar, type, [data, scalar])}
+  def multiply(%Matrex{data: data, type: type} = matrex, scalar) when is_number(scalar),
+    do: %{matrex | data: call_nif(:multiply_with_scalar, type, [data, scalar])}
 
-  def multiply(scalar, %Matrex{data: data, type: type}) when is_number(scalar),
-    do: %Matrex{data: call_nif(:multiply_with_scalar, type, [data, scalar])}
+  def multiply(scalar, %Matrex{data: data, type: type} = matrex) when is_number(scalar),
+    do: %{matrex | data: call_nif(:multiply_with_scalar, type, [data, scalar])}
 
   @doc """
   Negates each element of the matrix. NIF.
@@ -2735,11 +2711,11 @@ defmodule Matrex do
       }),
       do: %{matrex | data: call_nif(:subtract, type, [first, second])}
 
-  def subtract(scalar, %Matrex{data: data, type: type}) when is_number(scalar),
-    do: %Matrex{data: call_nif(:subtract_from_scalar, type, [scalar, data])}
+  def subtract(scalar, %Matrex{data: data, type: type} = matrex) when is_number(scalar),
+    do: %{matrex | data: call_nif(:subtract_from_scalar, type, [scalar, data])}
 
-  def subtract(%Matrex{data: data, type: type}, scalar) when is_number(scalar),
-    do: %Matrex{data: call_nif(:add_scalar, type, [data, -scalar])}
+  def subtract(%Matrex{data: data, type: type} = matrex, scalar) when is_number(scalar),
+    do: %{matrex | data: call_nif(:add_scalar, type, [data, -scalar])}
 
   @doc """
   Subtracts the second matrix or scalar from the first. Inlined.
@@ -2922,7 +2898,12 @@ defmodule Matrex do
   def transpose(%Matrex{shape: {rows, 1}} = m), do: reshape(m, 1, rows)
 
   def transpose(%Matrex{data: data, shape: {rows, cols}, type: type}),
-    do: %Matrex{data: call_nif(:transpose, type, [data, rows, cols])}
+    do: %Matrex{
+      data: call_nif(:transpose, type, [data, rows, cols]),
+      shape: {cols, rows},
+      strides: strides({cols, rows}, type),
+      type: type
+    }
 
   @doc """
   Updates the element at the given position in matrix with function.

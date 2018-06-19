@@ -129,15 +129,16 @@ defmodule CreationTest do
 
     expected = %Matrex{
       data: <<
-        2::unsigned-integer-little-32,
-        3::unsigned-integer-little-32,
         1::float-little-32,
         1::float-little-32,
         1::float-little-32,
         1::float-little-32,
         1::float-little-32,
         1::float-little-32
-      >>
+      >>,
+      shape: {2, 3},
+      strides: {12, 4},
+      type: :float32
     }
 
     assert Matrex.new(rows, columns, function) == expected
@@ -150,8 +151,6 @@ defmodule CreationTest do
 
     expected = %Matrex{
       data: <<
-        3::unsigned-integer-little-32,
-        3::unsigned-integer-little-32,
         1::float-little-32,
         2::float-little-32,
         3::float-little-32,
@@ -161,7 +160,10 @@ defmodule CreationTest do
         3::float-little-32,
         6::float-little-32,
         9::float-little-32
-      >>
+      >>,
+      shape: {3, 3},
+      strides: {12, 4},
+      type: :float32
     }
 
     assert Matrex.new(rows, columns, function) == expected
@@ -180,7 +182,8 @@ defmodule CreationTest do
         6::float-little-32
       >>,
       shape: {2, 3},
-      strides: {12, 4}
+      strides: {12, 4},
+      type: :float32
     }
 
     assert Matrex.new(list) == expected

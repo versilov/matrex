@@ -122,11 +122,11 @@ defmodule MatrexTest do
     matrix = Matrex.new([[1, 2, 3], [4, 5, 6]])
 
     assert_raise ArgumentError, fn ->
-      Matrex.at(matrix, 2, 5)
+      Matrex.at(matrix, {2, 5})
     end
 
     assert_raise ArgumentError, fn ->
-      Matrex.at(matrix, 1, -1)
+      Matrex.at(matrix, {1, -1})
     end
   end
 
@@ -157,8 +157,8 @@ defmodule MatrexTest do
   end
 
   test "#concat concatenates two matrices along columns" do
-    first = Matrex.reshape(1..6, 2, 3)
-    second = Matrex.reshape(1..4, 2, 2)
+    first = Matrex.reshape(1..6, {2, 3})
+    second = Matrex.reshape(1..4, {2, 2})
     expected = Matrex.new("1 2 3 1 2; 4 5 6 3 4")
 
     assert Matrex.concat(first, second) == expected
@@ -174,16 +174,16 @@ defmodule MatrexTest do
   end
 
   test "#concat concatenates two matrices along rows" do
-    first = Matrex.reshape(1..6, 3, 2)
-    second = Matrex.reshape(1..4, 2, 2)
+    first = Matrex.reshape(1..6, {3, 2})
+    second = Matrex.reshape(1..4, {2, 2})
     expected = Matrex.new("1 2; 3 4; 5 6; 1 2; 3 4")
 
     assert Matrex.concat(first, second, :rows) == expected
   end
 
   test "#concat raises when sizes do not match" do
-    first = Matrex.reshape(1..6, 3, 2)
-    second = Matrex.reshape(1..6, 2, 3)
+    first = Matrex.reshape(1..6, {3, 2})
+    second = Matrex.reshape(1..6, {2, 3})
 
     assert_raise ArgumentError, fn ->
       Matrex.concat(first, second, :rows)
@@ -307,7 +307,7 @@ defmodule MatrexTest do
   end
 
   test "#find returns position tuple of the element" do
-    matrex = Matrex.reshape(1..100, 10, 10)
+    matrex = Matrex.reshape(1..100, {10, 10})
     assert Matrex.find(matrex, 11) == {2, 1}
     assert Matrex.find(matrex, 101) == nil
   end
@@ -416,7 +416,7 @@ defmodule MatrexTest do
   end
 
   test "#normalize puts matrix values in [0, 1] range" do
-    matrix = Matrex.reshape(1..12, 4, 3)
+    matrix = Matrex.reshape(1..12, {4, 3})
 
     expected =
       Matrex.new([
@@ -430,7 +430,7 @@ defmodule MatrexTest do
   end
 
   test "#resize scales down the dimensions of the matrix and interpolaties values" do
-    m = Matrex.reshape(1..16, 4, 4)
+    m = Matrex.reshape(1..16, {4, 4})
     expected = Matrex.new([[1, 3], [9, 11]])
 
     assert Matrex.resize(m, 0.5) == expected
@@ -681,13 +681,13 @@ defmodule MatrexTest do
   end
 
   test "#update updates element of a matrix with a function" do
-    m = reshape(1..6, 3, 2)
+    m = reshape(1..6, {3, 2})
     e = new("1 2; 3 16; 5 6")
     assert update(m, {2, 2}, fn x -> x * x end) == e
   end
 
   test "#update raises when position is out of bounds" do
-    m = reshape(1..6, 3, 2)
+    m = reshape(1..6, {3, 2})
     assert_raise ArgumentError, fn -> update(m, {2, 3}, fn x -> x * x end) end
   end
 end

@@ -22,6 +22,81 @@ defmodule Matrex.NIFs do
     :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
   end
 
+  @types [
+    "float64",
+    "float32",
+    "byte",
+    "int16",
+    "int32",
+    "int64"
+  ]
+
+  @float_types [
+    "float64",
+    "float32"
+  ]
+
+  @nifs [
+    add_scalar: 2,
+    add: 2,
+    argmax: 1,
+    column_to_list: 2,
+    concat_columns: 2,
+    divide_by_scalar: 2,
+    divide_scalar: 2,
+    divide: 3,
+    dot: 6,
+    dot_and_add: 7,
+    dot_and_appply: 7,
+    dot_nt: 6,
+    dot_tn: 6,
+    eye: 2,
+    fill: 2,
+    find: 2,
+    max: 1,
+    max_finite: 1,
+    min: 1,
+    min_finite: 1,
+    multiply: 2,
+    multiply_with_scalar: 2,
+    neg: 1,
+    random: 1,
+    resize: 4,
+    from_range: 2,
+    row_to_list: 2,
+    set: 3,
+    set_column: 3,
+    multiply: 2,
+    submatrix: 5,
+    subtract: 2,
+    subtract_from_scalar: 2,
+    sum: 1,
+    to_list: 1,
+    to_list_of_lists: 3,
+    transpose: 3,
+    set: 3
+  ]
+
+  @float_nifs [apply_math: 2, normalize: 1]
+
+  for {name, arity} <- @nifs do
+    for type <- @types do
+      def unquote(:"#{name}_#{type}")(
+            unquote_splicing(Enum.map(1..arity, &Macro.var(:"arg#{&1}", nil)))
+          ),
+          do: :erlang.nif_error(:nif_library_not_loaded)
+    end
+  end
+
+  for {name, arity} <- @float_nifs do
+    for type <- @float_types do
+      def unquote(:"#{name}_#{type}")(
+            unquote_splicing(Enum.map(1..arity, &Macro.var(:"arg#{&1}", nil)))
+          ),
+          do: :erlang.nif_error(:nif_library_not_loaded)
+    end
+  end
+
   @spec add(binary, binary, number, number) :: binary
   def add(first, second, alpha, beta)
       when is_binary(first) and is_binary(second) and is_number(alpha) and is_number(beta),
@@ -204,7 +279,9 @@ defmodule Matrex.NIFs do
     mx = max(matrex)
     range = mx - mn
 
-    Matrex.apply(%Matrex{data: matrex}, fn x -> (x - mn) / range end).data
+    Matrex.apply(%Matrex{data: matrex, shape: {}, strides: {}, type: :float32}, fn x ->
+      (x - mn) / range
+    end).data
   end
 
   @spec random(non_neg_integer, non_neg_integer) :: binary
