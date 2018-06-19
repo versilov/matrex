@@ -2337,7 +2337,7 @@ defmodule Matrex do
   def reshape(
         %Matrex{shape: shape} = matrex,
         new_shape,
-        _type
+        type
       )
       when is_tuple(new_shape),
       do:
@@ -2349,7 +2349,7 @@ defmodule Matrex do
               message:
                 "Cannot reshape: #{inspect(shape)} does not fit into #{inspect(new_shape)}."
             ),
-          else: %{matrex | shape: new_shape}
+          else: %{matrex | shape: new_shape, strides: strides(new_shape, type)}
         )
 
   def reshape(a..b, shape, type) when is_tuple(shape) and type in @types,

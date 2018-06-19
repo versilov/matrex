@@ -84,7 +84,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap(:mono256) uses 256 color palette" do
-    m = Matrex.reshape(1..64, 8, 8)
+    m = Matrex.reshape(1..64, {8, 8})
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m8\e[0m×\e[33m8\e[0m]\n\e[0m┌        ┐\n│\e[48;5;0;38;5;234m▄▄▄\e[48;5;232;38;5;235m▄▄\e[38;5;236m▄\e[48;5;233m▄▄\e[0m│\n│\e[48;5;237;38;5;240m▄▄\e[48;5;238;38;5;241m▄▄\e[38;5;242m▄\e[48;5;239m▄▄\e[48;5;240;38;5;243m▄\e[0m│\n│\e[48;5;243;38;5;246m▄\e[48;5;244;38;5;247m▄▄\e[38;5;248m▄\e[48;5;245m▄▄\e[48;5;246;38;5;249m▄▄\e[0m│\n│\e[48;5;250;38;5;253m▄▄\e[38;5;254m▄\e[48;5;251m▄▄\e[48;5;252;38;5;255m▄▄\e[38;5;231m▄\e[0m│\n\e[0m└        ┘\e[?25h\n"
@@ -98,7 +98,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap(:color256) uses 256 color palette" do
-    m = Matrex.reshape(1..64, 8, 8)
+    m = Matrex.reshape(1..64, {8, 8})
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m8\e[0m×\e[33m8\e[0m]\n\e[0m┌        ┐\n│\e[48;5;17;38;5;19m▄▄\e[48;5;18;38;5;20m▄▄▄▄\e[48;5;19m▄▄\e[0m│\n│\e[48;5;20;38;5;37m▄\e[48;5;26m▄▄▄\e[48;5;32;38;5;36m▄▄\e[48;5;31;38;5;42m▄\e[38;5;41m▄\e[0m│\n│\e[48;5;41;38;5;46m▄\e[38;5;82m▄▄\e[48;5;40;38;5;118m▄▄▄\e[48;5;46;38;5;154m▄▄\e[0m│\n│\e[48;5;190;38;5;208m▄▄\e[38;5;202m▄\e[48;5;220m▄▄\e[48;5;214;38;5;196m▄▄▄\e[0m│\n\e[0m└        ┘\e[?25h\n"
@@ -112,7 +112,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap(:color8) uses 8 color palette" do
-    m = Matrex.reshape(1..16, 4, 4)
+    m = Matrex.reshape(1..16, {4, 4})
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m4\e[0m×\e[33m4\e[0m]\n\e[0m┌    ┐\n│\e[40;34m▄\e[44m \e[36m▄\e[32m▄\e[0m│\n│\e[42;33m▄▄\e[31m▄\e[43m▄\e[0m│\n\e[0m└    ┘\e[?25h\n"
@@ -126,7 +126,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap(:mono8) uses b&w color palette" do
-    m = Matrex.reshape(1..15, 5, 3)
+    m = Matrex.reshape(1..15, {5, 3})
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m5\e[0m×\e[33m3\e[0m]\n\e[0m┌   ┐\n│\e[40m   \e[0m│\n│\e[40;37m▄\e[47m  \e[0m│\n│\e[7m\e[37m▄▄▄\e[0m│\n\e[0m└   ┘\e[?25h\n"
@@ -140,7 +140,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap marks special float values (NaN)" do
-    m = Matrex.reshape([1, 2, :nan, 4, 5, 6], 3, 2)
+    m = Matrex.reshape([1, 2, :nan, 4, 5, 6], {3, 2})
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m2\e[0m]\n\e[0m┌  ┐\n│\e[48;5;0;38;5;196m▄\e[48;5;236;38;5;246m▄\e[0m│\n│\e[7m\e[38;5;251m▄\e[38;5;231m▄\e[0m│\n\e[0m└  ┘\e[?25h\n"
@@ -154,7 +154,7 @@ defmodule InspectTest do
   end
 
   test "#heatmap displays matrices with inifinte values, marks infinity" do
-    m = reshape([:inf, 2, :neg_inf, 4, :nan, 6], 3, 2)
+    m = reshape([:inf, 2, :neg_inf, 4, :nan, 6], {3, 2})
 
     expected =
       "\e[?25l\e[0m#Matrex[\e[33m3\e[0m×\e[33m2\e[0m]\n\e[0m┌  ┐\n│\e[48;5;87;38;5;27m▄\e[48;5;0;38;5;243m▄\e[0m│\n│\e[7m\e[38;5;196m▄\e[38;5;231m▄\e[0m│\n\e[0m└  ┘\e[?25h\n"

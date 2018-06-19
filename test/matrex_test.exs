@@ -622,8 +622,8 @@ defmodule MatrexTest do
   end
 
   test "#subtract_inverse subtracts scalar from matrix" do
-    input = Matrex.reshape(1..6, 2, 3)
-    expected = Matrex.reshape(0..5, 2, 3)
+    input = Matrex.reshape(1..6, {2, 3})
+    expected = Matrex.reshape(0..5, {2, 3})
 
     assert Matrex.subtract_inverse(1, input) == expected
   end
