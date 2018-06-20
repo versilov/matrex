@@ -5,15 +5,7 @@ defimpl Enumerable, for: Matrex do
     quote do: binary - unquote(size)
   end
 
-  import Matrex,
-    only: [
-      binary_to_byte: 1,
-      binary_to_int16: 1,
-      binary_to_int32: 1,
-      binary_to_int64: 1,
-      binary_to_float32: 1,
-      binary_to_float64: 1
-    ]
+  import Matrex, only: [binary_to_element: 2]
 
   @doc false
   def count(%Matrex{shape: shape}), do: {:ok, Matrex.elements_count(shape)}
@@ -65,14 +57,14 @@ defimpl Enumerable, for: Matrex do
         do:
           unquote(:"reduce_each_#{@guard}")(
             rest,
-            fun.(unquote(:"binary_to_#{@guard}")(elem), acc),
+            fun.(binary_to_element(elem, @guard), acc),
             fun
           )
 
     def unquote(:"reduce_each_#{@guard}")(<<>>, {:cont, acc}, _fun), do: {:done, acc}
 
     def unquote(:"binary_to_list_#{@guard}")(<<elem::type_and_size(), rest::binary>>),
-      do: [unquote(:"binary_to_#{@guard}")(elem) | unquote(:"binary_to_list_#{@guard}")(rest)]
+      do: [binary_to_element(elem, @guard) | unquote(:"binary_to_list_#{@guard}")(rest)]
 
     def unquote(:"binary_to_list_#{@guard}")(<<>>), do: []
   end

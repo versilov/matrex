@@ -283,9 +283,6 @@ defmodule Matrex do
     :lgamma
   ]
 
-  # Size of matrix element in bytes and bits
-  @element_size 4
-
   @doc false
   def element_size(:float32), do: 4
   def element_size(:float64), do: 8
@@ -296,14 +293,6 @@ defmodule Matrex do
   # Actually, for bool this is bitsize
   def element_size(:bool), do: 1
 
-  defp element_bit_size(:float32), do: 32
-  defp element_bit_size(:float64), do: 64
-  defp element_bit_size(:int16), do: 16
-  defp element_bit_size(:int32), do: 32
-  defp element_bit_size(:int64), do: 64
-  defp element_bit_size(:byte), do: 8
-  defp element_bit_size(:bool), do: 1
-
   # Float special values in binary form
   @not_a_number_float32 <<0, 0, 192, 255>>
   @positive_infinity_float32 <<0, 0, 128, 127>>
@@ -312,49 +301,6 @@ defmodule Matrex do
   @not_a_number_float64 <<0, 0, 0, 0, 0, 0, 248, 255>>
   @positive_infinity_float64 <<0, 0, 0, 0, 0, 0, 240, 127>>
   @negative_infinity_float64 <<0, 0, 0, 0, 0, 0, 240, 255>>
-
-  @doc false
-  @spec binary_to_float32(<<_::32>>) :: element
-  def binary_to_float32(@not_a_number_float32), do: :nan
-  def binary_to_float32(@positive_infinity_float32), do: :inf
-  def binary_to_float32(@negative_infinity_float32), do: :neg_inf
-  def binary_to_float32(<<val::float-little-32>>), do: val
-
-  # To be deleted
-  defdelegate binary_to_float(bin), to: __MODULE__, as: :binary_to_float32
-
-  @spec binary_to_float64(<<_::64>>) :: element
-  def binary_to_float64(@not_a_number_float64), do: :nan
-  def binary_to_float64(@positive_infinity_float64), do: :inf
-  def binary_to_float64(@negative_infinity_float64), do: :neg_inf
-  def binary_to_float64(<<val::float-little-64>>), do: val
-
-  def binary_to_int16(<<int::integer-little-16>>), do: int
-  def binary_to_int32(<<int::integer-little-32>>), do: int
-  def binary_to_int64(<<int::integer-little-64>>), do: int
-  def binary_to_byte(<<byte>>), do: byte
-  def binary_to_bool(<<b::size(1)>>), do: b
-
-  @spec float32_to_binary(element) :: <<_::32>>
-  def float32_to_binary(val) when is_number(val), do: <<val::float-little-32>>
-  def float32_to_binary(:nan), do: @not_a_number_float32
-  def float32_to_binary(:inf), do: @positive_infinity_float32
-  def float32_to_binary(:neg_inf), do: @negative_infinity_float32
-
-  def float32_to_binary(unknown_val),
-    do: raise(ArgumentError, message: "Unknown matrix element value: #{unknown_val}")
-
-  # To be deleted
-  defdelegate float_to_binary(float), to: __MODULE__, as: :float32_to_binary
-
-  @spec float64_to_binary(element) :: <<_::64>>
-  defp float64_to_binary(val) when is_number(val), do: <<val::float-little-64>>
-  defp float64_to_binary(:nan), do: @not_a_number_float64
-  defp float64_to_binary(:inf), do: @positive_infinity_float64
-  defp float64_to_binary(:neg_inf), do: @negative_infinity_float64
-
-  defp float64_to_binary(unknown_val),
-    do: raise(ArgumentError, message: "Unknown matrix element value: #{unknown_val}")
 
   @spec element_to_binary(element, type) :: binary
   defp element_to_binary(elem, :byte), do: <<elem::unsigned-integer-8>>
@@ -373,20 +319,21 @@ defmodule Matrex do
   defp element_to_binary(elem, :float64), do: <<elem::float-little-64>>
 
   @spec binary_to_element(binary, type) :: element
-  defp binary_to_element(<<elem::unsigned-integer-8>>, :byte), do: elem
-  defp binary_to_element(<<elem::integer-little-16>>, :int16), do: elem
-  defp binary_to_element(<<elem::integer-little-32>>, :int32), do: elem
-  defp binary_to_element(<<elem::integer-little-64>>, :int64), do: elem
+  def binary_to_element(<<b::size(1)>>, :bool), do: b
+  def binary_to_element(<<elem::unsigned-integer-8>>, :byte), do: elem
+  def binary_to_element(<<elem::integer-little-16>>, :int16), do: elem
+  def binary_to_element(<<elem::integer-little-32>>, :int32), do: elem
+  def binary_to_element(<<elem::integer-little-64>>, :int64), do: elem
 
-  defp binary_to_element(@not_a_number_float32, :float32), do: :nan
-  defp binary_to_element(@positive_infinity_float32, :float32), do: :inf
-  defp binary_to_element(@negative_infinity_float32, :float32), do: :neg_inf
-  defp binary_to_element(<<elem::float-little-32>>, :float32), do: elem
+  def binary_to_element(@not_a_number_float32, :float32), do: :nan
+  def binary_to_element(@positive_infinity_float32, :float32), do: :inf
+  def binary_to_element(@negative_infinity_float32, :float32), do: :neg_inf
+  def binary_to_element(<<elem::float-little-32>>, :float32), do: elem
 
-  defp binary_to_element(@not_a_number_float64, :float64), do: :nan
-  defp binary_to_element(@positive_infinity_float64, :float64), do: :inf
-  defp binary_to_element(@negative_infinity_float64, :float64), do: :neg_inf
-  defp binary_to_element(<<elem::float-little-64>>, :float64), do: elem
+  def binary_to_element(@not_a_number_float64, :float64), do: :nan
+  def binary_to_element(@positive_infinity_float64, :float64), do: :inf
+  def binary_to_element(@negative_infinity_float64, :float64), do: :neg_inf
+  def binary_to_element(<<elem::float-little-64>>, :float64), do: elem
 
   @doc false
   def strides({_}, type), do: {element_size(type)}
@@ -406,7 +353,7 @@ defmodule Matrex do
         elem(strides, i) * (elem(pos, i) - 1) + off
       end)
 
-  defp position_from_offset(offset, {row, col} = strides)
+  defp position_from_offset(offset, strides)
        when is_tuple(strides) and is_integer(offset) do
     Enum.reduce(0..(tuple_size(strides) - 1), {{}, offset}, fn i, {pos, off} ->
       {Tuple.append(pos, div(off, elem(strides, i)) + 1), rem(off, elem(strides, i))}
@@ -421,7 +368,7 @@ defmodule Matrex do
        do: position_from_offset(index * element_size(type), strides)
 
   # Calculate next position tuple for the given position and shape
-  defp next_pos({r, c}, {rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c + 1})
+  defp next_pos({r, c}, {_rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c + 1})
 
   defp next_pos(pos, shape) do
     Enum.reduce_while((tuple_size(shape) - 1)..0, pos, fn i, p ->
@@ -455,20 +402,11 @@ defmodule Matrex do
     |> Enum.reduce(&(&1 * &2))
   end
 
-  defp byte_size(shape, type) when is_tuple(shape) and type in @types,
-    do: elements_count(shape) * element_size(type)
-
   @compile {:inline,
             add: 2,
             argmax: 1,
             at: 3,
-            binary_to_float32: 1,
-            binary_to_float64: 1,
-            binary_to_int16: 1,
-            binary_to_int32: 1,
-            binary_to_int64: 1,
-            binary_to_byte: 1,
-            binary_to_bool: 1,
+            binary_to_element: 2,
             call_nif: 3,
             column_to_list: 2,
             contains?: 2,
@@ -485,7 +423,6 @@ defmodule Matrex do
             fill: 2,
             first: 1,
             fetch: 2,
-            float_to_binary: 1,
             max: 1,
             multiply: 2,
             ones: 2,
@@ -521,12 +458,6 @@ defmodule Matrex do
     else
       quote do: size(unquote(size)) - unquote(type)() - little
     end
-  end
-
-  defmacrop binary_size() do
-    {type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
-
-    quote do: binary - unquote(div(size, 8))
   end
 
   @spec call_nif(atom, type, list) :: any
@@ -904,7 +835,11 @@ defmodule Matrex do
   def at(%Matrex{} = matrex, row, col), do: at(matrex, {row, col})
 
   @spec at(matrex, position) :: element
-  def at(matrex, pos)
+  def at(%Matrex{data: data, strides: strides, type: type}, pos) when is_tuple(pos) do
+    data
+    |> binary_part(offset(strides, pos), element_size(type))
+    |> binary_to_element(type)
+  end
 
   @doc """
   Get column of matrix as matrix (vector) in matrex form. One-based.
@@ -1029,7 +964,7 @@ defmodule Matrex do
           data: data1,
           shape: {rows, columns1},
           type: type
-        } = matrex,
+        },
         %Matrex{
           data: data2,
           shape: {rows, columns2},
@@ -1120,6 +1055,8 @@ defmodule Matrex do
     do: %{matrex | data: call_nif(:divide_scalar, type, [scalar, data])}
 
   @spec divide(matrex, matrex, number) :: matrex
+  def divide(matrex1, matrex2, alpha \\ 1.0)
+
   def divide(
         %Matrex{data: dividend, shape: shape, strides: strides, type: type} = matrex,
         %Matrex{
@@ -1128,7 +1065,7 @@ defmodule Matrex do
           strides: strides,
           type: type
         },
-        alpha \\ 1.0
+        alpha
       )
       when is_number(alpha),
       do: %{matrex | data: call_nif(:divide, type, [dividend, divisor, alpha])}
@@ -1484,6 +1421,9 @@ defmodule Matrex do
   @spec first(matrex) :: element
   def first(matrex)
 
+  def first(%Matrex{data: data, type: type}),
+    do: data |> binary_part(0, element_size(type)) |> binary_to_element(type)
+
   @doc """
   Prints monochrome or color heatmap of the matrix to the console.
 
@@ -1837,15 +1777,6 @@ defmodule Matrex do
       unquote(:"apply_on_matrices_#{@guard}")(first_rest, second_rest, function, new_accumulator)
     end
 
-    def at(%Matrex{data: data, strides: strides, type: @guard}, pos) when is_tuple(pos) do
-      data
-      |> binary_part(offset(strides, pos), element_size(@guard))
-      |> unquote(:"binary_to_#{@guard}")()
-    end
-
-    def first(%Matrex{data: <<element::binary_size(), _::binary>>, type: @guard}),
-      do: unquote(:"binary_to_#{@guard}")(element)
-
     @doc false
     def unquote(:"new_matrix_from_function_#{@guard}")(0, _, accumulator), do: accumulator
 
@@ -1957,7 +1888,7 @@ defmodule Matrex do
 
   ## Examples
 
-      iex> Matrex.new(3, 3, fn -> :rand.uniform() end)
+      iex> Matrex.new({3, 3}, fn -> :rand.uniform() end)
       #Matrex[3×3]
       ┌                         ┐
       │ 0.45643 0.91533 0.25332 │
@@ -1965,7 +1896,7 @@ defmodule Matrex do
       │ 0.42451 0.05422 0.92863 │
       └                         ┘
 
-      iex> Matrex.new(3, 3, fn row, col -> row*col end)
+      iex> Matrex.new({3, 3}, fn {row, col} -> row*col end)
       #Matrex[3×3]
       ┌                         ┐
       │     1.0     2.0     3.0 │
@@ -1974,10 +1905,9 @@ defmodule Matrex do
       └                         ┘
 
   """
+
   @spec new(shape, (() -> element), type) :: matrex
   @spec new(shape, (tuple -> element), type) :: matrex
-  def new(shape, function) when is_tuple(shape) and is_function(function),
-    do: new(shape, function, :float32)
 
   def new(shape, function, type)
       when is_tuple(shape) and is_function(function, 0) and type in @types,
@@ -2055,7 +1985,6 @@ defmodule Matrex do
       └                                 ┘
 
   """
-
   @spec new([[matrex]]) :: matrex
   def new(
         [
@@ -2071,6 +2000,9 @@ defmodule Matrex do
   end
 
   def new(source), do: new(source, :float32)
+
+  def new(shape, function) when is_tuple(shape) and is_function(function),
+    do: new(shape, function, :float32)
 
   @spec new([[element]] | binary, type) :: matrex
   def new([first_list | _] = lol_or_binary, type) when is_list(first_list) and type in @types do
@@ -2311,7 +2243,7 @@ defmodule Matrex do
 
   def resize(%Matrex{} = matrex, 1, _), do: matrex
 
-  def resize(%Matrex{data: data, shape: {rows, cols}, type: type} = matrex, scale, :nearest)
+  def resize(%Matrex{data: data, shape: {rows, cols}, type: type}, scale, :nearest)
       when is_number(scale) and scale > 0,
       do: %Matrex{
         data: call_nif(:resize, type, [data, rows, cols, scale]),
@@ -2617,7 +2549,7 @@ defmodule Matrex do
       └                         ┘
   """
   @spec set(matrex, position, element) :: matrex
-  def set(%Matrex{data: data, shape: shape, strides: strides, type: type} = matrex, pos, value)
+  def set(%Matrex{data: data, strides: strides, type: type} = matrex, pos, value)
       when is_number(value) or (value in [:nan, :inf, :neg_inf] and is_tuple(pos)),
       do: %{
         matrex

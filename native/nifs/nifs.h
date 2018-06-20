@@ -895,7 +895,7 @@ TYPED_NIF(to_list_of_lists, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_N
   ErlNifBinary  matrix;
   TYPE *matrix_data;
   ERL_NIF_TERM  result;
-  uint64_t rows, cols;
+  unsigned long rows, cols;
 
   UNUSED_VAR(argc);
 
@@ -922,7 +922,7 @@ TYPED_NIF(transpose, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM
   ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
   TYPE *matrix_data, *result_data;
-  uint64_t rows, cols;
+  unsigned long rows, cols;
 
   UNUSED_VAR(argc);
 
