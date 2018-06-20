@@ -1,5 +1,6 @@
 defmodule OperatorsTest do
   use ExUnit.Case, async: true
+  alias Matrex, as: M
 
   test "#Matrex.Operators defines shortcuts for common math functions" do
     m = Matrex.random(9, 20)
@@ -14,11 +15,11 @@ defmodule OperatorsTest do
     import Matrex.Operators
     import Kernel, except: [-: 1, +: 2, -: 2, *: 2, /: 2, <|>: 2]
 
-    a = Matrex.random(5, 8)
-    b = Matrex.reshape(1..40, {5, 8})
-    c = Matrex.magic(8)
+    a = M.random({5, 8})
+    b = M.reshape(1..40, {5, 8})
+    c = M.magic(8)
 
-    expected = Matrex.add(a, b, 1.5, 2.3) |> Matrex.divide(23) |> Matrex.dot(c)
+    expected = M.add(M.multiply(a, 1.5), M.multiply(b, 2.3)) |> M.divide(23) |> M.dot(c)
 
     assert (1.5 * a + 2.3 * b) / 23 * c == expected
   end
