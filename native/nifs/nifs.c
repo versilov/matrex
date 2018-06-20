@@ -172,7 +172,7 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(row_to_list, 3, 0),
   TYPED_NIFS_DECL(set, 3, 0),
   TYPED_NIFS_DECL(set_column, 4, 0),
-  TYPED_NIFS_DECL(submatrix, 5, 0),
+  TYPED_NIFS_DECL(submatrix, 6, 0),
   TYPED_NIFS_DECL(subtract, 4, 0),
   TYPED_NIFS_DECL(subtract_from_scalar, 3, 0),
   TYPED_NIFS_DECL(sum, 1, 0),

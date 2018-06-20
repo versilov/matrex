@@ -63,7 +63,7 @@ defmodule Matrex.NIFs do
     row_to_list: 3,
     set: 3,
     set_column: 4,
-    submatrix: 5,
+    submatrix: 6,
     subtract: 4,
     subtract_from_scalar: 3,
     sum: 1,

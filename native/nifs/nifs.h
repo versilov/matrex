@@ -769,8 +769,41 @@ TYPED_NIF(set_column, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
 }
 
 TYPED_NIF(submatrix, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+ErlNifBinary  matrix;
+  TYPE *matrix_data, *result_data;
+  uint64_t  result_size;
+  unsigned long source_columns, row_from, row_to, column_from, column_to;
+  ERL_NIF_TERM  result;
+  uint64_t rows, cols;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &source_columns);
+  enif_get_uint64(env, argv[2], &row_from);
+  enif_get_uint64(env, argv[3], &row_to);
+  enif_get_uint64(env, argv[4], &column_from);
+  enif_get_uint64(env, argv[5], &column_to);
+
+
+  matrix_data = (TYPE *) matrix.data;
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
+
+  if (row_from >= rows || column_from >= cols || row_to >= rows || column_to >= cols)
+    return enif_raise_exception(env, enif_make_string(env,
+      "Submatrix position out of bounds.", ERL_NIF_LATIN1));
+
+
+  rows = row_to - row_from + 1;
+  cols = column_to - column_from + 1;
+  result_size = rows * cols  * sizeof(TYPE);
+  result_data = (TYPE *) enif_make_new_binary(env, result_size, &result);
+
+  for (uint32_t row = row_from; row <= row_to; row++)
+    memcpy(&result_data[(row - row_from)*cols],
+           &matrix_data[row*source_columns + column_from],
+           cols * sizeof(TYPE));
 
   return result;
 }

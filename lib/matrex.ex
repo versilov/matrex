@@ -2733,7 +2733,14 @@ defmodule Matrex do
              col_to in col_from..cols,
       do: %Matrex{
         data:
-          call_nif(:submatrix, type, [data, row_from - 1, row_to - 1, col_from - 1, col_to - 1]),
+          call_nif(:submatrix, type, [
+            data,
+            cols,
+            row_from - 1,
+            row_to - 1,
+            col_from - 1,
+            col_to - 1
+          ]),
         shape: {row_to - row_from + 1, col_to - col_from + 1},
         strides: strides({row_to - row_from + 1, col_to - col_from + 1}, type),
         type: type
