@@ -47,7 +47,6 @@ defmodule Matrex.NIFs do
     divide: 3,
     dot: 6,
     dot_and_add: 7,
-    dot_and_appply: 7,
     dot_nt: 6,
     dot_tn: 6,
     eye: 2,
@@ -61,9 +60,9 @@ defmodule Matrex.NIFs do
     neg: 1,
     random: 1,
     resize: 4,
-    row_to_list: 2,
+    row_to_list: 3,
     set: 3,
-    set_column: 3,
+    set_column: 4,
     submatrix: 5,
     subtract: 4,
     subtract_from_scalar: 3,
@@ -73,7 +72,7 @@ defmodule Matrex.NIFs do
     transpose: 3
   ]
 
-  @float_nifs [apply_math: 2, normalize: 1, max_finite: 1, min_finite: 1]
+  @float_nifs [apply_math: 2, dot_and_apply: 7, normalize: 1, max_finite: 1, min_finite: 1]
 
   for {name, arity} <- @nifs do
     for type <- @types do

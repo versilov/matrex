@@ -21,6 +21,9 @@ typedef uint64_t uint64;
 
 #define UNUSED_VAR(v) (void)(v)
 
+#define MATH_FUNC_TYPE(TN) CAT(math_func_, TN, _ptr_t)
+#define MATH_FUNC_FROM_NAME(TN) CAT(math_func_, TN, _from_name)
+
 static void
 get_scalar_double(ErlNifEnv *env, ERL_NIF_TERM arg, double* scalar) {
   if (enif_get_double(env, arg, scalar) == 0) {
@@ -149,7 +152,7 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(divide, 3, 0),
   TYPED_NIFS_DECL(dot, 6, 0),
   TYPED_NIFS_DECL(dot_and_add, 7, 0),
-  TYPED_NIFS_DECL(dot_and_appply, 7, 0),
+  FLOAT_TYPED_NIFS_DECL(dot_and_apply, 7, 0),
   TYPED_NIFS_DECL(dot_nt, 6, 0),
   TYPED_NIFS_DECL(dot_tn, 6, 0),
   TYPED_NIFS_DECL(eye, 2, 0),
@@ -166,9 +169,9 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(random, 1, 0),
   TYPED_NIFS_DECL(resize, 4, 0),
   TYPED_NIFS_DECL(from_range, 2, 0),
-  TYPED_NIFS_DECL(row_to_list, 2, 0),
+  TYPED_NIFS_DECL(row_to_list, 3, 0),
   TYPED_NIFS_DECL(set, 3, 0),
-  TYPED_NIFS_DECL(set_column, 3, 0),
+  TYPED_NIFS_DECL(set_column, 4, 0),
   TYPED_NIFS_DECL(submatrix, 5, 0),
   TYPED_NIFS_DECL(subtract, 4, 0),
   TYPED_NIFS_DECL(subtract_from_scalar, 3, 0),

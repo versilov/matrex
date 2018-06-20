@@ -294,7 +294,7 @@ defmodule MatrexTest do
     assert Matrex.row(matrix, 4) == Matrex.new([[9, 11, 18, 25, 2]])
   end
 
-  test "#row_as_list returns row of a matrix" do
+  test "#row_to_list returns row of a matrix" do
     matrix =
       Matrex.new([
         [16, 23, 5, 7, 14],
@@ -319,6 +319,23 @@ defmodule MatrexTest do
     expected = Matrex.new([[1, :nan, 3], [4, 5, 6]])
 
     assert Matrex.set(matrix, {1, 2}, :nan) == expected
+  end
+
+  test "#set_column changes column of a 2D matrix" do
+    matrix = reshape(1..9, {3, 3})
+    column = fill({3, 1}, 77)
+    expected = new([[1, 2, 77], [4, 5, 77], [7, 8, 77]])
+
+    assert set_column(matrix, 3, column) == expected
+  end
+
+  test "#set_column raises, when column out of bounds" do
+    matrix = reshape(1..9, {3, 3})
+    column = fill({3, 1}, 77)
+
+    assert_raise FunctionClauseError, fn ->
+      set_column(matrix, 4, column)
+    end
   end
 
   test "#size returns the size of the matrix" do

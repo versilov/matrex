@@ -132,7 +132,7 @@ defmodule ArithmeticTest do
     first = Matrex.new([[1, 2, 3], [4, 5, 6]])
     second = Matrex.new([[2, 2, 3], [3, 5, 6]])
 
-    assert_raise FunctionClauseError, fn ->
+    assert_raise ArgumentError, ~r/matrices' shapes mismatch./, fn ->
       Matrex.dot(first, second)
     end
   end
@@ -153,6 +153,28 @@ defmodule ArithmeticTest do
 
     assert_raise ArgumentError, ~r/matrices' shapes mismatch/, fn ->
       Matrex.dot_and_add(first, second, third)
+    end
+  end
+
+  test "#dot_and_apply multiplies two matrices and applies function to the result" do
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[1, 2], [3, 4], [5, 6]])
+
+    expected =
+      Matrex.new([
+        [-0.008851309306919575, 0.2709057927131653],
+        [-0.9537526369094849, 0.9200260639190674]
+      ])
+
+    assert Matrex.dot_and_apply(first, second, :sin) == expected
+  end
+
+  test "#dot_and_apply raises when sizes do not match" do
+    first = Matrex.new([[1, 2, 3], [4, 5, 6]])
+    second = Matrex.new([[2, 2, 3], [3, 5, 6]])
+
+    assert_raise ArgumentError, ~r/matrices' shapes mismatch/, fn ->
+      Matrex.dot_and_apply(first, second, :sigmoid)
     end
   end
 

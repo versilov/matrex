@@ -1163,6 +1163,8 @@ defmodule Matrex do
 
   """
   @spec dot(matrex, matrex, number) :: matrex
+  def dot(matrex1, matrex2, alpha \\ 1.0)
+
   def dot(
         %Matrex{data: data1, shape: {rows, common_dim}, type: type},
         %Matrex{
@@ -1170,7 +1172,7 @@ defmodule Matrex do
           shape: {common_dim, columns},
           type: type
         },
-        alpha \\ 1.0
+        alpha
       )
       when is_number(alpha),
       do: %Matrex{
@@ -1179,6 +1181,18 @@ defmodule Matrex do
         strides: strides({rows, columns}, type),
         type: type
       }
+
+  def dot(
+        %Matrex{shape: {_rows1, cols1}},
+        %Matrex{shape: {rows2, _cols2}},
+        _alpha
+      )
+      when cols1 != rows2,
+      do:
+        raise(
+          ArgumentError,
+          message: "matrices' shapes mismatch."
+        )
 
   @doc """
   Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
@@ -1197,11 +1211,13 @@ defmodule Matrex do
 
   """
   @spec dot_and_add(matrex, matrex, matrex) :: matrex
+  def dot_and_add(matrex1, matrex2, matrex3, alpha \\ 1.0)
+
   def dot_and_add(
         %Matrex{data: data1, shape: {rows, common_dim}, type: type},
         %Matrex{data: data2, shape: {common_dim, columns}, type: type},
         %Matrex{data: data3, shape: {rows, columns}, type: type},
-        alpha \\ 1.0
+        alpha
       )
       when is_number(alpha),
       do: %Matrex{
@@ -1220,6 +1236,15 @@ defmodule Matrex do
         type: type
       }
 
+  def dot_and_add(
+        %Matrex{shape: {rows1, cols1}},
+        %Matrex{shape: {rows2, cols2}},
+        %Matrex{shape: {rows3, cols3}},
+        _alpha
+      )
+      when cols1 != rows2 or rows1 != rows3 or cols2 != cols3,
+      do: raise(ArgumentError, message: "matrices' shapes mismatch.")
+
   @doc """
   Computes dot product of two matrices, then applies math function to each element
   of the resulting matrix.
@@ -1235,11 +1260,13 @@ defmodule Matrex do
       └                 ┘
   """
   @spec dot_and_apply(matrex, matrex, atom) :: matrex
+  def dot_and_apply(matrex1, matrex2, function_atom, alpha \\ 1.0)
+
   def dot_and_apply(
         %Matrex{data: data1, shape: {rows, common_dim}, type: type},
         %Matrex{data: data2, shape: {common_dim, columns}, type: type},
         function_atom,
-        alpha \\ 1.0
+        alpha
       )
       when function_atom in @math_functions and is_number(alpha) and type in @floats,
       do: %Matrex{
@@ -1257,6 +1284,19 @@ defmodule Matrex do
         strides: strides({rows, columns}, type),
         type: type
       }
+
+  def dot_and_apply(
+        %Matrex{shape: {_rows1, cols1}},
+        %Matrex{shape: {rows2, _cols2}},
+        _function_atom,
+        _alpha
+      )
+      when cols1 != rows2,
+      do:
+        raise(
+          ArgumentError,
+          message: "matrices' shapes mismatch."
+        )
 
   @doc """
   Matrix multiplication where the second matrix needs to be transposed.  NIF, via `cblas_sgemm()`.
@@ -2273,7 +2313,12 @@ defmodule Matrex do
 
   def resize(%Matrex{data: data, shape: {rows, cols}, type: type} = matrex, scale, :nearest)
       when is_number(scale) and scale > 0,
-      do: %{matrex | data: call_nif(:resize, type, [data, rows, cols, scale])}
+      do: %Matrex{
+        data: call_nif(:resize, type, [data, rows, cols, scale]),
+        shape: {round(rows * scale), round(cols * scale)},
+        strides: strides({round(rows * scale), round(cols * scale)}, type),
+        type: type
+      }
 
   @doc """
   Reshapes list of values into a matrix of given size or changes the shape of existing matrix.
@@ -2412,8 +2457,9 @@ defmodule Matrex do
       [3.0, 10.0, 12.0, 19.0, 21.0]
   """
   @spec row_to_list(matrex, index) :: [element]
-  def row_to_list(%Matrex{data: matrix, type: type}, row) when is_integer(row) and row > 0,
-    do: call_nif(:row_to_list, type, [matrix, row - 1])
+  def row_to_list(%Matrex{data: matrix, shape: {rows, cols}, type: type}, row)
+      when is_integer(row) and row <= rows and row > 0,
+      do: call_nif(:row_to_list, type, [matrix, cols, row - 1])
 
   @doc """
   Get row of matrix as matrix (vector) in matrex form. One-based.
@@ -2613,7 +2659,7 @@ defmodule Matrex do
         }
       )
       when column in 1..columns,
-      do: %{matrex | data: call_nif(:set_column, type, [data, column - 1, column_data])}
+      do: %{matrex | data: call_nif(:set_column, type, [data, columns, column - 1, column_data])}
 
   @doc """
   Return size of matrix as `{rows, cols}`

@@ -191,6 +191,232 @@ TYPED_NIF(divide, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
   return result;
 }
 
+#ifdef BLAS_GEMM
+
+TYPED_NIF(dot, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *result_data;
+  long rows, dim, cols;
+  double alpha;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  get_scalar_double(env, argv[5], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,
+    CblasNoTrans,
+    CblasNoTrans,
+    rows,
+    cols,
+    dim,
+    alpha,
+    first_data,
+    dim,
+    second_data,
+    cols,
+    0.0,
+    result_data,
+    cols
+  );
+
+  return result;
+}
+
+TYPED_NIF(dot_and_add, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second, third;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *third_data, *result_data;
+  long rows, dim, cols;
+  double alpha;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  if (!enif_inspect_binary(env, argv[5], &third)) return enif_make_badarg(env);
+  get_scalar_double(env, argv[6], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+  third_data = (TYPE*)third.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,
+    CblasNoTrans,
+    CblasNoTrans,
+    rows,
+    cols,
+    dim,
+    alpha,
+    first_data,
+    dim,
+    second_data,
+    cols,
+    0.0,
+    result_data,
+    cols
+  );
+
+  for(uint64_t index = 0; index < rows*cols; index += 1) {
+    result_data[index] += third_data[index];
+  }
+
+  return result;
+}
+
+TYPED_NIF(dot_and_apply, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *result_data;
+  long rows, dim, cols;
+  char function_name[16];
+  double alpha;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  if (enif_get_atom(env, argv[5], function_name, 16, ERL_NIF_LATIN1) == 0)
+    return enif_raise_exception(env, enif_make_string(env, "Second argument must be an atom.", ERL_NIF_LATIN1));
+  get_scalar_double(env, argv[6], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  MATH_FUNC_TYPE(TYPE_NAME) func = MATH_FUNC_FROM_NAME(TYPE_NAME)(function_name);
+
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,
+    CblasNoTrans,
+    CblasNoTrans,
+    rows,
+    cols,
+    dim,
+    alpha,
+    first_data,
+    dim,
+    second_data,
+    cols,
+    0.0,
+    result_data,
+    cols
+  );
+
+  for(uint64_t index = 0; index < rows*cols; index += 1) {
+    result_data[index] = func(result_data[index]);
+  }
+
+  return result;
+}
+
+TYPED_NIF(dot_nt, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *result_data;
+  long rows, dim, cols;
+  double alpha;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  get_scalar_double(env, argv[5], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,// Order — Specifies row-major (C) or column-major (Fortran) data ordering.
+    CblasNoTrans,   // TransA — Specifies whether to transpose matrix A.
+    CblasTrans, // TransB — Specifies whether to transpose matrix B.
+    rows,         // M — Number of rows in matrices A and C.
+    cols,         // N — Number of columns in matrices B and C.
+    dim,          // K — Number of columns in matrix A; number of rows in matrix B.
+    alpha,        // alpha — Scaling factor for the product of matrices A and B.
+    first_data,   // A — Matrix A.
+    dim,         // lda — The size of the first dimention of matrix A; if you are passing a matrix A[m][n], the value should be m.
+    second_data,  // B — Matrix B.
+    dim,         // ldb — The size of the first dimention of matrix B; if you are passing a matrix B[m][n], the value should be m.
+    0.0,          // beta — Scaling factor for matrix C.
+    result_data,  // C — Matrix C.
+    cols          // ldc — The size of the first dimention of matrix C; if you are passing a matrix C[m][n], the value should be m.
+  );
+
+  return result;
+}
+
+TYPED_NIF(dot_tn, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary first, second;
+  ERL_NIF_TERM result;
+  TYPE *first_data, *second_data, *result_data;
+  long rows, dim, cols;
+  double alpha;
+
+  UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[2], &rows);
+  enif_get_int64(env, argv[3], &dim);
+  enif_get_int64(env, argv[4], &cols);
+  get_scalar_double(env, argv[5], &alpha);
+
+  first_data  = (TYPE*)first.data;
+  second_data = (TYPE*)second.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, rows*cols*sizeof(TYPE), &result);
+
+  BLAS_GEMM(
+    CblasRowMajor,// Order — Specifies row-major (C) or column-major (Fortran) data ordering.
+    CblasTrans,   // TransA — Specifies whether to transpose matrix A.
+    CblasNoTrans, // TransB — Specifies whether to transpose matrix B.
+    rows,         // M — Number of rows in matrices A and C.
+    cols,         // N — Number of columns in matrices B and C.
+    dim,          // K — Number of columns in matrix A; number of rows in matrix B.
+    alpha,        // alpha — Scaling factor for the product of matrices A and B.
+    first_data,   // A — Matrix A.
+    rows,         // lda — The size of the first dimention of matrix A; if you are passing a matrix A[m][n], the value should be m.
+    second_data,  // B — Matrix B.
+    cols,         // ldb — The size of the first dimention of matrix B; if you are passing a matrix B[m][n], the value should be m.
+    0.0,          // beta — Scaling factor for matrix C.
+    result_data,  // C — Matrix C.
+    cols          // ldc — The size of the first dimention of matrix C; if you are passing a matrix C[m][n], the value should be m.
+  );
+
+  return result;
+}
+
+#else
+
+// Implement naive integer matrix dot
+
 TYPED_NIF(dot, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   UNUSED_VAR(argc);
@@ -199,13 +425,6 @@ TYPED_NIF(dot, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 }
 
 TYPED_NIF(dot_and_add, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  UNUSED_VAR(argc);
-
-  return result;
-}
-
-TYPED_NIF(dot_and_appply, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   UNUSED_VAR(argc);
 
@@ -225,6 +444,10 @@ TYPED_NIF(dot_tn, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
 
   return result;
 }
+
+
+#endif
+
 
 TYPED_NIF(eye, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
@@ -432,18 +655,57 @@ TYPED_NIF(random, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
 }
 
 TYPED_NIF(resize, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  double  scale;
+  int64_t rows, cols, new_rows, new_cols;
+  TYPE  *matrix_data, *result_data;
+  size_t result_size;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[1], &rows);
+  enif_get_int64(env, argv[2], &cols);
+  get_scalar_double(env, argv[3], &scale);
+
+  matrix_data = (TYPE *) matrix.data;
+
+  new_rows = (int64_t)round((double)rows * scale);
+  new_cols = (int64_t)round((double)cols * scale);
+
+  result_size = sizeof(TYPE) * new_rows * new_cols;
+  result_data = (TYPE *) enif_make_new_binary(env, result_size, &result);
+
+  for (int64_t row = 0; row < new_rows; row++)
+    for (int64_t col = 0; col < new_cols; col++)
+      result_data[row*new_cols + col] =
+        matrix_data[(int)trunc((double)row/scale)*cols + (int)trunc((double)col/scale)];
 
   return result;
 }
 
 TYPED_NIF(row_to_list, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  TYPE *matrix_data;
+  long columns, row;
+  ERL_NIF_TERM  result;
 
   UNUSED_VAR(argc);
 
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_int64(env, argv[1], &columns);
+  enif_get_int64(env, argv[2], &row);
+
+  matrix_data = (TYPE *) matrix.data;
+
+  result = enif_make_list(env, 0);
+
+  for (int64_t i = (row + 1)*columns; i-- > row*columns; )
+    result = enif_make_list_cell(env, ENIF_MAKE_VAL(matrix_data[i], TOP_TYPE), result);
+
   return result;
+
 }
 
 TYPED_NIF(set, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
@@ -475,8 +737,33 @@ TYPED_NIF(set, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 }
 
 TYPED_NIF(set_column, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix, column_matrix;
+  TYPE *matrix_data, *column_matrix_data, *result_data;
+  uint64_t  result_size;
+  unsigned long column, rows, cols;
+  ERL_NIF_TERM  result;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &cols);
+  enif_get_uint64(env, argv[2], &column);
+  if (!enif_inspect_binary(env, argv[3], &column_matrix)) return enif_make_badarg(env);
+
+
+  matrix_data = (TYPE *) matrix.data;
+  column_matrix_data = (TYPE *) column_matrix.data;
+
+  if (column >= cols)
+    return enif_raise_exception(env, enif_make_string(env, "Position out of bounds.", ERL_NIF_LATIN1));
+
+  result_data = (TYPE *) enif_make_new_binary(env, matrix.size, &result);
+  rows = matrix.size / (cols*sizeof(TYPE));
+
+  memcpy(result_data, matrix_data, matrix.size);
+
+  for (uint64_t row = 0; row < rows; row++ )
+    result_data[row*cols + column] = column_matrix_data[row];
 
   return result;
 }
@@ -575,9 +862,6 @@ TYPED_NIF(transpose, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM
 
 // NIFs defined only for floating point types (float32 & float64)
 #ifdef FLOAT_NIFS
-
-#define MATH_FUNC_TYPE(TN) CAT(math_func_, TN, _ptr_t)
-#define MATH_FUNC_FROM_NAME(TN) CAT(math_func_, TN, _from_name)
 
 TYPED_NIF(apply_math, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  matrix;
