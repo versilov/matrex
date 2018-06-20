@@ -498,7 +498,7 @@ defmodule Matrex.Algorithms do
     m = y[:rows]
 
     h = sigmoid(x * theta)
-    l = ones(size(theta)) |> set(1, 1, 0.0)
+    l = ones(shape(theta)) |> set(1, 1, 0.0)
 
     j = (-t(y) * log(h) - t(1 - y) * log(1 - h) + lambda / 2 * t(l) * pow2(theta)) / m
 
@@ -692,8 +692,8 @@ defmodule Matrex.Algorithms do
     # Compute gradients
     classes = M.reshape(1..num_labels, num_labels, 1)
 
-    delta1_init = M.zeros(M.size(theta1))
-    delta2_init = M.zeros(M.size(theta2))
+    delta1_init = M.zeros(M.shape(theta1))
+    delta2_init = M.zeros(M.shape(theta2))
 
     n_chunks = 5
     chunk_size = trunc(m / n_chunks)

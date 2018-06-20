@@ -338,10 +338,10 @@ defmodule MatrexTest do
     end
   end
 
-  test "#size returns the size of the matrix" do
+  test "#shape returns the shape of the matrix" do
     matrix = Matrex.new([[4, 8, 22], [20, 0, 9]])
 
-    assert Matrex.size(matrix) == {2, 3}
+    assert Matrex.shape(matrix) == {2, 3}
   end
 
   test "#submatrix returns part of original matrix" do

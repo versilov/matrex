@@ -47,7 +47,6 @@ TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
 
 TYPED_NIF(argmax, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary matrix;
-  ERL_NIF_TERM result;
   TYPE *matrix_data;
   TYPE max;
   int64_t argmax = 0;
@@ -540,7 +539,6 @@ TYPED_NIF(from_range, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TER
 
 TYPED_NIF(max, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary matrix;
-  ERL_NIF_TERM result;
   TYPE *matrix_data;
   TYPE max;
 
@@ -558,7 +556,6 @@ TYPED_NIF(max, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 
 TYPED_NIF(min, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary matrix;
-  ERL_NIF_TERM result;
   TYPE *matrix_data;
   TYPE min;
 

@@ -434,7 +434,7 @@ defmodule Matrex do
             row_to_list: 2,
             row: 2,
             set: 4,
-            size: 1,
+            shape: 1,
             square: 1,
             subtract: 2,
             subtract_inverse: 2,
@@ -1074,11 +1074,24 @@ defmodule Matrex do
         %Matrex{shape: shape1},
         %Matrex{shape: shape2},
         _alpha
-      ),
+      )
+      when shape1 != shape2,
       do:
         raise(
           ArgumentError,
           message: "matrices' shapes mismatch: #{inspect(shape1)} and #{inspect(shape2)}."
+        )
+
+  def divide(
+        %Matrex{type: type1},
+        %Matrex{type: type2},
+        _alpha
+      )
+      when type1 != type2,
+      do:
+        raise(
+          ArgumentError,
+          message: "matrices' types mismatch: #{type1} and #{type2}."
         )
 
   @doc """
@@ -1606,8 +1619,7 @@ defmodule Matrex do
   # TODO: set matrix info
   defp do_load(data, :mtx), do: %Matrex{data: data, shape: {}, strides: {}, type: :float32}
 
-  defp do_load(data, :idx),
-    do: %Matrex{data: Matrex.IDX.load(data), shape: {}, strides: {}, type: :float32}
+  defp do_load(data, :idx), do: Matrex.IDX.load(data)
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal.
@@ -2450,8 +2462,10 @@ defmodule Matrex do
   @spec save(matrex, binary) :: :ok | :error
   def save(
         %Matrex{
-          data: data
-        },
+          data: data,
+          shape: {rows, cols},
+          type: type
+        } = matrex,
         file_name
       )
       when is_binary(file_name) do
@@ -2459,10 +2473,12 @@ defmodule Matrex do
       :filename.extension(file_name) == ".mtx" ->
         File.write!(file_name, data)
 
+      :filename.extension(file_name) == ".idx" ->
+        Matrex.IDX.write!(matrex, file_name)
+
       :filename.extension(file_name) == ".csv" ->
         csv =
-          data
-          |> NIFs.to_list_of_lists()
+          call_nif(:to_list_of_lists, type, [data, rows, cols])
           |> Enum.reduce("", fn row_list, acc ->
             acc <>
               Enum.reduce(row_list, "", fn elem, line ->
@@ -2471,6 +2487,16 @@ defmodule Matrex do
           end)
 
         File.write!(file_name, csv)
+
+      true ->
+        raise "Unknown file format: #{file_name}"
+    end
+  end
+
+  def save(%Matrex{} = matrex, file_name) when is_binary(file_name) do
+    cond do
+      :filename.extension(file_name) == ".idx" ->
+        Matrex.IDX.write!(matrex, file_name)
 
       true ->
         raise "Unknown file format: #{file_name}"
@@ -2594,7 +2620,7 @@ defmodule Matrex do
       do: %{matrex | data: call_nif(:set_column, type, [data, columns, column - 1, column_data])}
 
   @doc """
-  Return size of matrix as `{rows, cols}`
+  Return shape of matrix as `{rows, cols}`
 
   ## Example
 
@@ -2604,11 +2630,11 @@ defmodule Matrex do
       │ 0.69745 0.23668 0.36376 │
       │ 0.63423 0.29651 0.22844 │
       └                         ┘
-      iex> Matrex.size(m)
+      iex> Matrex.shape(m)
       {2, 3}
   """
-  @spec size(matrex) :: shape
-  def size(%Matrex{shape: shape}), do: shape
+  @spec shape(matrex) :: shape
+  def shape(%Matrex{shape: shape}), do: shape
 
   @doc """
   Produces element-wise squared matrix. NIF through `multiply/4`.
