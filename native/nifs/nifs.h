@@ -872,22 +872,75 @@ TYPED_NIF(sum, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 }
 
 TYPED_NIF(to_list, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  TYPE *matrix_data;
+  ERL_NIF_TERM  result;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (TYPE *) matrix.data;
+
+  result = enif_make_list(env, 0);
+  for (uint64_t i = matrix.size / sizeof(TYPE); i-- > 0; ) {
+    result = enif_make_list_cell(env, ENIF_MAKE_VAL(matrix_data[i], TOP_TYPE), result);
+  }
 
   return result;
 }
 
 TYPED_NIF(to_list_of_lists, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  /* to_list_of_lists(matrix) -> [[first row], [second row], ...,[last row]] */
+  ErlNifBinary  matrix;
+  TYPE *matrix_data;
+  ERL_NIF_TERM  result;
+  uint64_t rows, cols;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &rows);
+  enif_get_uint64(env, argv[2], &cols);
+
+  matrix_data = (TYPE *) matrix.data;
+
+  result = enif_make_list(env, 0);
+
+  for (uint64_t r = rows; r-- > 0; ) {
+    ERL_NIF_TERM row = enif_make_list(env, 0);
+    for (uint64_t c = cols; c-- > 0; ) {
+      row = enif_make_list_cell(env, ENIF_MAKE_VAL(matrix_data[cols*r + c], TOP_TYPE), row);
+    }
+    result = enif_make_list_cell(env, row, result);
+  }
 
   return result;
 }
 
 TYPED_NIF(transpose, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  TYPE *matrix_data, *result_data;
+  uint64_t rows, cols;
+
   UNUSED_VAR(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+  enif_get_uint64(env, argv[1], &rows);
+  enif_get_uint64(env, argv[2], &cols);
+
+  matrix_data = (TYPE *) matrix.data;
+  result_data = (TYPE *) enif_make_new_binary(env, matrix.size, &result);
+
+
+  for (uint64_t row = 0; row < rows; row += 1)
+    for (uint64_t column = 0; column < cols; column += 1) {
+      uint64_t result_index = column * rows + row;
+      uint64_t matrix_index = row * cols + column;
+
+      result_data[result_index] = matrix_data[matrix_index];
+    }
 
   return result;
 }
