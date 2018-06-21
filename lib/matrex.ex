@@ -2664,7 +2664,7 @@ defmodule Matrex do
   """
   @spec square(matrex) :: matrex
   def square(%Matrex{data: data, type: type} = matrex),
-    do: %{matrex | data: call_nif(:multiply, type, [data, data])}
+    do: %{matrex | data: call_nif(:multiply, type, [data, data, 1])}
 
   @doc """
   Returns submatrix for a given matrix. NIF.
@@ -2954,8 +2954,8 @@ defmodule Matrex do
   """
   @spec transpose(matrex) :: matrex
   # Vectors are transposed by simply reshaping
-  def transpose(%Matrex{shape: {1, columns}} = m), do: reshape(m, columns, 1)
-  def transpose(%Matrex{shape: {rows, 1}} = m), do: reshape(m, 1, rows)
+  def transpose(%Matrex{shape: {1, columns}} = m), do: reshape(m, {columns, 1})
+  def transpose(%Matrex{shape: {rows, 1}} = m), do: reshape(m, {1, rows})
 
   def transpose(%Matrex{data: data, shape: {rows, cols}, type: type}),
     do: %Matrex{

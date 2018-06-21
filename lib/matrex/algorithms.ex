@@ -428,7 +428,7 @@ defmodule Matrex.Algorithms do
     m = y[:rows]
 
     h = Matrex.dot_and_apply(x, theta, :sigmoid)
-    l = Matrex.ones(theta[:rows], theta[:cols]) |> Matrex.set(1, 1, 0)
+    l = Matrex.ones({theta[:rows], theta[:cols]}) |> Matrex.set(1, 1, 0)
 
     regularization =
       Matrex.dot_tn(l, Matrex.square(theta))
@@ -523,8 +523,8 @@ defmodule Matrex.Algorithms do
           {Matrex.load("test/data/Xtest.mtx.gz"), Matrex.load("test/data/Ytest.mtx")}
       end
 
-    x = Matrex.concat(Matrex.ones(x[:rows], 1), x)
-    theta = Matrex.zeros(x[:cols], 1)
+    x = Matrex.concat(Matrex.ones({x[:rows], 1}), x)
+    theta = Matrex.zeros({x[:cols], 1})
 
     lambda = 0.3
 
@@ -631,11 +631,11 @@ defmodule Matrex.Algorithms do
 
     theta1 =
       theta[1..(hidden_layer_size * (input_layer_size + 1))]
-      |> M.reshape(hidden_layer_size, input_layer_size + 1)
+      |> M.reshape({hidden_layer_size, input_layer_size + 1})
 
     theta2 =
       theta[(hidden_layer_size * (input_layer_size + 1) + 1)..theta[:rows]]
-      |> M.reshape(num_labels, hidden_layer_size + 1)
+      |> M.reshape({num_labels, hidden_layer_size + 1})
 
     # IO.write(IO.ANSI.home())
     #
@@ -648,12 +648,12 @@ defmodule Matrex.Algorithms do
 
     m = x[:rows]
 
-    x = M.concat(M.ones(m, 1), x)
+    x = M.concat(M.ones({m, 1}), x)
     a2 = M.dot_nt(theta1, x) |> M.apply(:sigmoid)
-    a2 = M.concat(M.ones(1, m), a2, :rows)
+    a2 = M.concat(M.ones({1, m}), a2, :rows)
     a3 = M.dot_and_apply(theta2, a2, :sigmoid)
 
-    y_b = M.zeros(num_labels, m)
+    y_b = M.zeros({num_labels, m})
     y_b = Enum.reduce(1..m, y_b, fn i, y_b -> M.set(y_b, trunc(y[i]), i, 1) end)
 
     c =
@@ -690,7 +690,7 @@ defmodule Matrex.Algorithms do
     j = sum_c / m + reg
 
     # Compute gradients
-    classes = M.reshape(1..num_labels, num_labels, 1)
+    classes = M.reshape(1..num_labels, {num_labels, 1})
 
     delta1_init = M.zeros(M.shape(theta1))
     delta2_init = M.zeros(M.shape(theta2))
@@ -727,8 +727,8 @@ defmodule Matrex.Algorithms do
         {M.add(delta1_result, delta1), M.add(delta2_result, delta2)}
       end)
 
-    theta1 = M.set_column(theta1, 1, M.zeros(hidden_layer_size, 1))
-    theta2 = M.set_column(theta2, 1, M.zeros(num_labels, 1))
+    theta1 = M.set_column(theta1, 1, M.zeros({hidden_layer_size, 1}))
+    theta2 = M.set_column(theta2, 1, M.zeros({num_labels, 1}))
     theta1_grad = M.divide(delta1, m) |> M.add(M.multiply(lambda / m, theta1))
     theta2_grad = M.divide(delta2, m) |> M.add(M.multiply(lambda / m, theta2))
 
