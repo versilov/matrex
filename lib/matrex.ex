@@ -1616,8 +1616,17 @@ defmodule Matrex do
     do: do_load(File.read!(file_name), format)
 
   defp do_load(data, :csv), do: new(data)
-  # TODO: set matrix info
-  defp do_load(data, :mtx), do: %Matrex{data: data, shape: {}, strides: {}, type: :float32}
+
+  defp do_load(
+         <<rows::unsigned-integer-little-32, cols::unsigned-integer-little-32, data::binary>>,
+         :mtx
+       ),
+       do: %Matrex{
+         data: data,
+         shape: {rows, cols},
+         strides: strides({rows, cols}, :float32),
+         type: :float32
+       }
 
   defp do_load(data, :idx), do: Matrex.IDX.load(data)
 
@@ -2470,9 +2479,6 @@ defmodule Matrex do
       )
       when is_binary(file_name) do
     cond do
-      :filename.extension(file_name) == ".mtx" ->
-        File.write!(file_name, data)
-
       :filename.extension(file_name) == ".idx" ->
         Matrex.IDX.write!(matrex, file_name)
 
