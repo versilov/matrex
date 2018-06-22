@@ -1607,7 +1607,7 @@ defmodule Matrex do
         do_load(File.read!(file_name), :idx)
 
       true ->
-        raise "Unknown file format: #{file_name}"
+        raise ArgumentError, message: "Unknown file format: #{file_name}"
     end
   end
 
@@ -2467,24 +2467,14 @@ defmodule Matrex do
 
       iex> Matrex.random(5) |> Matrex.save("r.idx")
       :ok
+
+      iex> Matrx.random(10) |> Matrex.save("rand.dat", format: :idx, gzip: true)
+      :ok
   """
 
   @spec save(matrex, binary) :: :ok | :error
-  def save(%Matrex{} = matrex, file_name) when is_binary(file_name) do
-    cond do
-      :filename.extension(file_name) == ".idx" ->
-        save(matrex, file_name, format: :idx)
-
-      :filename.extension(file_name) == ".csv" ->
-        save(matrex, file_name, format: :csv)
-
-      :filename.extension(file_name) == ".gz" ->
-        save(matrex, file_name, format: :idx, gzip: true)
-
-      true ->
-        raise "Unknown file format: #{file_name}"
-    end
-  end
+  def save(%Matrex{} = matrex, file_name) when is_binary(file_name),
+    do: save(matrex, file_name, opts_from_filename(file_name))
 
   @spec save(matrex, binary, [{:format, :csv | :idx}, {:gzip, true | false}]) :: :ok | :error
   def save(matrex, file_name, format)
@@ -2504,7 +2494,7 @@ defmodule Matrex do
           Matrex.IDX.to_idx(matrex)
 
         uformat ->
-          raise "Unknown file format: #{uformat}"
+          raise ArgumentError, message: "Unknown file format: #{uformat}"
       end
 
     file_data = if Keyword.get(format, :gzip), do: :zlib.gzip(iodata), else: iodata
@@ -2514,12 +2504,27 @@ defmodule Matrex do
   @spec to_csv(matrex) :: iodata
   defp to_csv(%Matrex{data: data, shape: {rows, cols}, type: type}) do
     call_nif(:to_list_of_lists, type, [data, rows, cols])
-    |> Enum.map(fn row_list ->
+    |> Task.async_stream(fn row_list ->
       Enum.reduce(row_list, "", fn elem, line ->
-        line <> element_to_string(elem) <> ","
+        <<line::binary, element_to_string(elem)::binary, ",">>
       end) <> "\n"
     end)
+    |> Enum.map(fn {:ok, line} -> line end)
   end
+
+  defp opts_from_filename(filename) when is_binary(filename),
+    do: filename |> String.split(".") |> Enum.reverse() |> opts_from_filename()
+
+  defp opts_from_filename(["gz" | rest]), do: [gzip: true] ++ opts_from_filename(rest)
+  defp opts_from_filename(["idx" | rest]), do: [format: :idx]
+  defp opts_from_filename(["csv" | rest]), do: [format: :csv]
+
+  defp opts_from_filename([uext | rest]),
+    do:
+      raise(
+        ArgumentError,
+        message: "unknown file extension '.#{uext}'. Allowed extensions: '.csv', '.idx', '.gz'"
+      )
 
   @doc false
   @spec element_to_string(element) :: binary

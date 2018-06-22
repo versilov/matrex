@@ -18,13 +18,13 @@ defmodule SaveLoadTest do
   end
 
   test "#load raises, when format is unkonwn" do
-    assert_raise RuntimeError, fn ->
+    assert_raise ArgumentError, fn ->
       Matrex.load("test/data/matrex.txt")
     end
   end
 
   test "#save raises, when file format is unkonwn" do
-    assert_raise RuntimeError, fn ->
+    assert_raise ArgumentError, fn ->
       Matrex.random(3) |> Matrex.save("m.txt")
     end
   end
@@ -84,6 +84,15 @@ defmodule SaveLoadTest do
   test "#save saves to gziped idx format with explicit format set" do
     m = random({100, 80})
     save(m, @test_file_name_idx_gzip, format: :idx, gzip: true)
+
+    l = load(@test_file_name_idx_gzip)
+    assert l == m
+    assert File.rm(@test_file_name_idx_gzip) == :ok
+  end
+
+  test "#save saves to gziped idx format with format guessed from extension" do
+    m = random({100, 80})
+    save(m, @test_file_name_idx_gzip)
 
     l = load(@test_file_name_idx_gzip)
     assert l == m
