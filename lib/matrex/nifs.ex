@@ -69,7 +69,13 @@ defmodule Matrex.NIFs do
     sum: 1,
     to_list: 1,
     to_list_of_lists: 3,
-    transpose: 3
+    transpose: 3,
+    byte_to: 1,
+    int16_to: 1,
+    int32_to: 1,
+    int64_to: 1,
+    float32_to: 1,
+    float64_to: 1
   ]
 
   @float_nifs [apply_math: 2, dot_and_apply: 7, normalize: 1, max_finite: 1, min_finite: 1]

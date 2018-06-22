@@ -23,23 +23,23 @@ TYPED_NIF(add, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 }
 
 TYPED_NIF(add_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ErlNifBinary  array;
+  ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
-  TYPE        *array_data, *result_data;
+  TYPE        *matrix_data, *result_data;
   TOP_TYPE scalar, alpha;
 
   UNUSED_VAR(argc);
 
-  if (!enif_inspect_binary(env, argv[0], &array)) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
   ENIF_GET_VAL(scalar, argv[1], TOP_TYPE);
   ENIF_GET_VAL(alpha, argv[2], TOP_TYPE);
 
-  array_data  = (TYPE*)array.data;
+  matrix_data  = (TYPE*)matrix.data;
 
-  result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
+  result_data = (TYPE*)enif_make_new_binary(env, matrix.size, &result);
 
-  for (uint64_t i = 0; i < array.size / sizeof(TYPE); i++)
-    result_data[i] = alpha*array_data[i] + scalar;
+  for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+    result_data[i] = alpha*matrix_data[i] + scalar;
 
   return result;
 }
@@ -849,23 +849,23 @@ TYPED_NIF(subtract, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM 
 }
 
 TYPED_NIF(subtract_from_scalar, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ErlNifBinary  array;
+  ErlNifBinary  matrix;
   ERL_NIF_TERM  result;
-  TYPE        *array_data, *result_data;
+  TYPE        *matrix_data, *result_data;
   TOP_TYPE scalar, alpha;
 
   UNUSED_VAR(argc);
 
   ENIF_GET_VAL(scalar, argv[0], TOP_TYPE);
-  if (!enif_inspect_binary(env, argv[1], &array)) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &matrix)) return enif_make_badarg(env);
   ENIF_GET_VAL(alpha, argv[2], TOP_TYPE);
 
-  array_data  = (TYPE*)array.data;
+  matrix_data  = (TYPE*)matrix.data;
 
-  result_data = (TYPE*)enif_make_new_binary(env, array.size, &result);
+  result_data = (TYPE*)enif_make_new_binary(env, matrix.size, &result);
 
-  for (uint64_t i = 0; i < array.size / sizeof(TYPE); i++)
-    result_data[i] = scalar - alpha*array_data[i];
+  for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
+    result_data[i] = scalar - alpha*matrix_data[i];
 
   return result;
 }
@@ -957,6 +957,126 @@ TYPED_NIF(transpose, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM
 
       result_data[result_index] = matrix_data[matrix_index];
     }
+
+  return result;
+}
+
+TYPED_NIF(byte_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  byte       *matrix_data;
+  TYPE       *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (byte*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, (matrix.size / sizeof(byte)) * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(byte); i++)
+    result_data[i] = (TYPE)matrix_data[i];
+
+  return result;
+}
+
+TYPED_NIF(int16_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  int16_t       *matrix_data;
+  TYPE       *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (int16_t*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, (matrix.size / sizeof(int16_t)) * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(int16_t); i++)
+    result_data[i] = (TYPE)matrix_data[i];
+
+  return result;
+}
+
+TYPED_NIF(int32_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  int32_t       *matrix_data;
+  TYPE       *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (int32_t*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, (matrix.size / sizeof(int32_t)) * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(int32_t); i++)
+    result_data[i] = (TYPE)matrix_data[i];
+
+  return result;
+}
+
+TYPED_NIF(int64_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  int64_t       *matrix_data;
+  TYPE       *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (int64_t*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, (matrix.size / sizeof(int64_t)) * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(int64_t); i++)
+    result_data[i] = (TYPE)matrix_data[i];
+
+  return result;
+}
+
+TYPED_NIF(float32_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  float       *matrix_data;
+  TYPE       *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, (matrix.size / sizeof(float)) * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(float); i++)
+    result_data[i] = (TYPE)matrix_data[i];
+
+  return result;
+}
+
+TYPED_NIF(float64_to, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  double       *matrix_data;
+  TYPE       *result_data;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (double*)matrix.data;
+
+  result_data = (TYPE*)enif_make_new_binary(env, (matrix.size / sizeof(double)) * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < matrix.size / sizeof(double); i++)
+    result_data[i] = (TYPE)matrix_data[i];
 
   return result;
 }

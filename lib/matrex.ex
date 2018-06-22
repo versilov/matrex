@@ -2942,14 +2942,14 @@ defmodule Matrex do
   ## Example
 
       iex> m = Matrex.magic(3)
-      #Matrex[3×3]
+      #Matrex[3×3]:float32
       ┌                         ┐
       │     8.0     1.0     6.0 │
       │     3.0     5.0     7.0 │
       │     4.0     9.0     2.0 │
       └                         ┘
       iex> Matrex.to_row(m)
-      #Matrex[1×9]
+      #Matrex[1×9]:float32
       ┌                                                                         ┐
       │     8.0     1.0     6.0     3.0     5.0     7.0     4.0     9.0     2.0 │
       └                                                                         ┘
@@ -2958,6 +2958,32 @@ defmodule Matrex do
   @spec to_row(matrex) :: matrex
   def to_row(%Matrex{shape: {1, _columns}} = m), do: m
   def to_row(%Matrex{shape: {rows, columns}} = m), do: reshape(m, {1, rows * columns})
+
+  @doc """
+  Convertes matrex type.
+
+  ## Example
+
+    iex> Matrex.random({10, 10}, :int16) |> Matrex.to_type(:float32)
+    #Matrex[3×3]:float32
+    ┌                         ┐
+    │     8.0     1.0     6.0 │
+    │     3.0     5.0     7.0 │
+    │     4.0     9.0     2.0 │
+    └                         ┘
+
+  """
+  @spec to_type(matrex, type) :: matrex
+  def to_type(%Matrex{type: type} = matrex, type), do: matrex
+
+  def to_type(%Matrex{data: data, shape: shape, type: type_from} = matrex, type_to)
+      when type_to in @types,
+      do: %{
+        matrex
+        | data: Kernel.apply(NIFs, :"#{type_from}_to_#{type_to}", [data]),
+          strides: strides(shape, type_to),
+          type: type_to
+      }
 
   @doc """
   Transposes a matrix. NIF.

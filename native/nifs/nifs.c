@@ -179,7 +179,14 @@ static ErlNifFunc nif_functions[] = {
   TYPED_NIFS_DECL(to_list, 1, 0),
   TYPED_NIFS_DECL(to_list_of_lists, 3, 0),
   TYPED_NIFS_DECL(transpose, 3, 0),
-  NIF_DECL(zeros, 1, 0)
+  NIF_DECL(zeros, 1, 0),
+  // Type conversions
+  TYPED_NIFS_DECL(byte_to, 1, 0),
+  TYPED_NIFS_DECL(int16_to, 1, 0),
+  TYPED_NIFS_DECL(int32_to, 1, 0),
+  TYPED_NIFS_DECL(int64_to, 1, 0),
+  TYPED_NIFS_DECL(float32_to, 1, 0),
+  TYPED_NIFS_DECL(float64_to, 1, 0)
 };
 
 
