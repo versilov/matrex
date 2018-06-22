@@ -148,7 +148,7 @@ defmodule Matrex.Inspect do
   end
 
   defp chunk_offset(row, columns, suffix_size),
-    do: (2 + ((row - 1) * columns + (columns - suffix_size))) * @element_byte_size
+    do: ((row - 1) * columns + (columns - suffix_size)) * @element_byte_size
 
   defp format_row_head_tail(<<>>, _, _), do: <<>>
 

@@ -98,4 +98,22 @@ defmodule SaveLoadTest do
     assert l == m
     assert File.rm(@test_file_name_idx_gzip) == :ok
   end
+
+  test "#save saves to gziped csv format with explicit format set" do
+    m = random({100, 80})
+    save(m, @test_file_name_csv_gzip, format: :csv, gzip: true)
+
+    l = load(@test_file_name_csv_gzip)
+    assert l == m
+    assert File.rm(@test_file_name_csv_gzip) == :ok
+  end
+
+  test "#save saves to gziped csv format with format guessed from extension" do
+    m = random({100, 80})
+    save(m, @test_file_name_csv_gzip)
+
+    l = load(@test_file_name_csv_gzip)
+    assert l == m
+    assert File.rm(@test_file_name_csv_gzip) == :ok
+  end
 end

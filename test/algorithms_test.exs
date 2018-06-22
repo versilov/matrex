@@ -89,7 +89,7 @@ defmodule AlgorithmsTest do
 
   # Split data into training and testing set, permute it randomly
   @spec split_data(Matrex.t(), Matrex.t()) :: {Matrex.t(), Matrex.t(), Matrex.t(), Matrex.t()}
-  defp split_data(x, y) do
+  def split_data(x, y) do
     n = x[:rows]
     n_train = trunc(0.8 * n)
     n_test = n - n_train
