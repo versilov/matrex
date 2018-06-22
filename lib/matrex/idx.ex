@@ -25,8 +25,8 @@ defmodule Matrex.IDX do
   defp to_idx_type(:float64), do: @double
   defp to_idx_type(type), do: "Unsupported data type: #{type}"
 
-  @spec load(binary) :: binary
-  def load(data) when is_binary(data) do
+  @spec to_matrex(binary) :: Matrex.t()
+  def to_matrex(data) when is_binary(data) do
     <<0, 0, data_type, dimensions_count>> = binary_part(data, 0, 4)
 
     shape =
@@ -35,8 +35,8 @@ defmodule Matrex.IDX do
       |> binary_to_list_of_integers()
       |> List.to_tuple()
 
-    idx_data =
-      binary_part(data, 4 + dimensions_count * 4, byte_size(data) - (4 + dimensions_count * 4))
+    header_size = 4 + dimensions_count * 4
+    idx_data = binary_part(data, header_size, byte_size(data) - header_size)
 
     %Matrex{
       data: idx_data,
@@ -46,42 +46,28 @@ defmodule Matrex.IDX do
     }
   end
 
-  def read!(file_name) do
-    {:ok, file} = File.open(file_name, :binary)
+  @spec read!(binary) :: Matrex.t()
+  def read!(file_name),
+    do:
+      file_name
+      |> File.read!()
+      |> to_matrex()
 
-    <<0, 0, data_type, dimensions>> = IO.binread(file, 4)
+  @spec to_idx(Matrex.t()) :: iodata()
+  def to_idx(%Matrex{data: data, shape: shape, type: type}),
+    do: [
+      <<0, 0, to_idx_type(type), tuple_size(shape)>>,
+      list_of_integers_to_binary(Tuple.to_list(shape), <<>>),
+      data
+    ]
 
-    shape =
-      file
-      |> IO.binread(dimensions * 4)
-      |> binary_to_list_of_integers()
-      |> List.to_tuple()
+  def write!(%Matrex{} = matrex, file_name, :gzip),
+    do: File.write!(file_name, :zlib.gzip(to_idx_binary(matrex)), [:binary, :write])
 
-    idx_data = IO.binread(file, :all)
-    File.close(file)
-
-    %Matrex{
-      data: idx_data,
-      shape: shape,
-      strides: Matrex.strides(shape, from_idx_type(data_type)),
-      type: from_idx_type(data_type)
-    }
-  end
-
-  def write!(%Matrex{data: data, shape: shape, type: type}, file_name) do
-    # File.write!(
-    #   file_name,
-    #   <<0, 0, to_idx_type(type), tuple_size(shape),
-    #     list_of_integers_to_binary(Tuple.to_list(shape), <<>>)::binary, data::binary>>,
-    #   [:binary, :write]
-    # )
-
-    {:ok, file} = File.open(file_name, [:binary, :write])
-    IO.binwrite(file, <<0, 0, to_idx_type(type), tuple_size(shape)>>)
-    IO.binwrite(file, list_of_integers_to_binary(Tuple.to_list(shape), <<>>))
-    IO.binwrite(file, data)
-    File.close(file)
-  end
+  def to_idx_binary(%Matrex{data: data, shape: shape, type: type}),
+    do:
+      <<0, 0, to_idx_type(type), tuple_size(shape),
+        list_of_integers_to_binary(Tuple.to_list(shape), <<>>)::binary, data::binary>>
 
   def idx_to_float_binary(result, <<>>, _), do: result
 
@@ -112,5 +98,5 @@ defmodule Matrex.IDX do
   defp list_of_integers_to_binary([], bin), do: bin
 
   defp list_of_integers_to_binary([h | t], bin),
-    do: list_of_integers_to_binary(t, <<h::unsigned-integer-big-32, bin::binary>>)
+    do: list_of_integers_to_binary(t, <<bin::binary, h::unsigned-integer-big-32>>)
 end

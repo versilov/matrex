@@ -1,5 +1,6 @@
 defmodule SaveLoadTest do
   use ExUnit.Case, async: true
+  import Matrex
 
   test "#load loads matrex from CSV" do
     m = Matrex.load("test/data/matrex.csv")
@@ -30,6 +31,9 @@ defmodule SaveLoadTest do
 
   @test_file_name_idx "_test_m.idx"
   @test_file_name_csv "_test_m.csv"
+  @test_file_name_idx_gzip "_test_m.idx.gz"
+  @test_file_name_csv_gzip "_test_m.csv.gz"
+
   test "Saves to and loads from binary .idx format" do
     m = Matrex.random(100)
     Matrex.save(m, @test_file_name_idx)
@@ -75,5 +79,14 @@ defmodule SaveLoadTest do
   test "#load loads matrix from .idx.gz format" do
     m = Matrex.load("test/data/t10k-images-idx3-ubyte.idx.gz")
     assert Matrex.shape(m) == {10_000, 28, 28}
+  end
+
+  test "#save saves to gziped idx format with explicit format set" do
+    m = random({100, 80})
+    save(m, @test_file_name_idx_gzip, format: :idx, gzip: true)
+
+    l = load(@test_file_name_idx_gzip)
+    assert l == m
+    assert File.rm(@test_file_name_idx_gzip) == :ok
   end
 end

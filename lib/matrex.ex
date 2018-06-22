@@ -1628,7 +1628,7 @@ defmodule Matrex do
          type: :float32
        }
 
-  defp do_load(data, :idx), do: Matrex.IDX.load(data)
+  defp do_load(data, :idx), do: Matrex.IDX.to_matrex(data)
 
   @doc """
   Creates "magic" n*n matrix, where sums of all dimensions are equal.
@@ -2461,52 +2461,64 @@ defmodule Matrex do
 
   Binary (.mtx) and CSV formats are supported currently.
 
-  Format is defined by the extension of the filename.
+  Format is defined by the extension of the filename or is set explicitly.
 
   ## Example
 
-      iex> Matrex.random(5) |> Matrex.save("r.mtx")
+      iex> Matrex.random(5) |> Matrex.save("r.idx")
       :ok
   """
+
   @spec save(matrex, binary) :: :ok | :error
-  def save(
-        %Matrex{
-          data: data,
-          shape: {rows, cols},
-          type: type
-        } = matrex,
-        file_name
-      )
-      when is_binary(file_name) do
+  def save(%Matrex{} = matrex, file_name) when is_binary(file_name) do
     cond do
       :filename.extension(file_name) == ".idx" ->
-        Matrex.IDX.write!(matrex, file_name)
+        save(matrex, file_name, format: :idx)
 
       :filename.extension(file_name) == ".csv" ->
-        csv =
-          call_nif(:to_list_of_lists, type, [data, rows, cols])
-          |> Enum.reduce("", fn row_list, acc ->
-            acc <>
-              Enum.reduce(row_list, "", fn elem, line ->
-                line <> element_to_string(elem) <> ","
-              end) <> "\n"
-          end)
+        save(matrex, file_name, format: :csv)
 
-        File.write!(file_name, csv)
+      :filename.extension(file_name) == ".gz" ->
+        save(matrex, file_name, format: :idx, gzip: true)
 
       true ->
         raise "Unknown file format: #{file_name}"
     end
   end
 
-  def save(%Matrex{} = matrex, file_name) when is_binary(file_name) do
-    cond do
-      :filename.extension(file_name) == ".idx" ->
-        Matrex.IDX.write!(matrex, file_name)
+  @spec save(matrex, binary, [{:format, :csv | :idx}, {:gzip, true | false}]) :: :ok | :error
+  def save(matrex, file_name, format)
 
-      true ->
-        raise "Unknown file format: #{file_name}"
-    end
+  def save(
+        %Matrex{} = matrex,
+        file_name,
+        format
+      )
+      when is_binary(file_name) do
+    iodata =
+      case Keyword.get(format, :format) do
+        :csv ->
+          to_csv(matrex)
+
+        :idx ->
+          Matrex.IDX.to_idx(matrex)
+
+        uformat ->
+          raise "Unknown file format: #{uformat}"
+      end
+
+    file_data = if Keyword.get(format, :gzip), do: :zlib.gzip(iodata), else: iodata
+    File.write!(file_name, file_data)
+  end
+
+  @spec to_csv(matrex) :: iodata
+  defp to_csv(%Matrex{data: data, shape: {rows, cols}, type: type}) do
+    call_nif(:to_list_of_lists, type, [data, rows, cols])
+    |> Enum.map(fn row_list ->
+      Enum.reduce(row_list, "", fn elem, line ->
+        line <> element_to_string(elem) <> ","
+      end) <> "\n"
+    end)
   end
 
   @doc false
