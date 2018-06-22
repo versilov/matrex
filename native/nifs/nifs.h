@@ -190,6 +190,8 @@ TYPED_NIF(divide, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
   return result;
 }
 
+// BLAS_GEMM is defined for float and double types. 
+// Here it is used also as switch between floating point and integer types
 #ifdef BLAS_GEMM
 
 TYPED_NIF(dot, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
@@ -412,6 +414,23 @@ TYPED_NIF(dot_tn, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
   return result;
 }
 
+TYPED_NIF(random, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM result;
+  TYPE *result_data;
+  unsigned long size;
+
+  UNUSED_VAR(argc);
+
+  enif_get_uint64(env, argv[0], &size);
+
+  result_data = (TYPE*)enif_make_new_binary(env, size * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < size; i++)
+    result_data[i] = (TYPE)random() / (TYPE)RAND_MAX;
+
+  return result;
+}
+
 #else
 
 // Implement naive integer matrix dot
@@ -444,6 +463,23 @@ TYPED_NIF(dot_tn, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
   return result;
 }
 
+TYPED_NIF(random, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ERL_NIF_TERM result;
+  TYPE *result_data;
+  unsigned long size;
+  const TYPE max_val = 2 << (sizeof(TYPE) * 8 - 1) - 2;
+
+  UNUSED_VAR(argc);
+
+  enif_get_uint64(env, argv[0], &size);
+
+  result_data = (TYPE*)enif_make_new_binary(env, size * sizeof(TYPE), &result);
+
+  for (uint64_t i = 0; i < size; i++)
+    result_data[i] = (TYPE)(random() % max_val);
+
+  return result;
+}
 
 #endif
 
@@ -630,23 +666,6 @@ TYPED_NIF(neg, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv
 
   for (uint64_t i = 0; i < matrix.size / sizeof(TYPE); i++)
     result_data[i] = -matrix_data[i];
-
-  return result;
-}
-
-TYPED_NIF(random, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
-  ERL_NIF_TERM result;
-  TYPE *result_data;
-  unsigned long size;
-
-  UNUSED_VAR(argc);
-
-  enif_get_uint64(env, argv[0], &size);
-
-  result_data = (TYPE*)enif_make_new_binary(env, size * sizeof(TYPE), &result);
-
-  for (uint64_t i = 0; i < size; i++)
-    result_data[i] = (TYPE)random() / (TYPE)RAND_MAX;
 
   return result;
 }

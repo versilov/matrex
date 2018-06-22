@@ -453,7 +453,7 @@ defmodule Matrex do
   defmacrop type_and_size() do
     {type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
 
-    if size == 8 do
+    if size <= 8 do
       quote do: size(unquote(size))
     else
       quote do: size(unquote(size)) - unquote(type)() - little
@@ -1737,7 +1737,8 @@ defmodule Matrex do
     byte: {:integer, 8},
     int16: {:integer, 16},
     int32: {:integer, 32},
-    int64: {:integer, 64}
+    int64: {:integer, 64},
+    bool: {:binary, 1}
   ]
 
   for {guard, type_and_size} <- types do
@@ -2192,6 +2193,14 @@ defmodule Matrex do
     do: random({rows, columns}, :float32)
 
   @spec random(shape, type) :: matrex
+  def random(shape, :bool) when is_tuple(shape),
+    do: %Matrex{
+      data: call_nif(:random, :int32, [round(elements_count(shape) / 32)]),
+      shape: shape,
+      strides: strides(shape, :bool),
+      type: :bool
+    }
+
   def random(shape, type) when is_tuple(shape) and type in @types,
     do: %Matrex{
       data: call_nif(:random, type, [elements_count(shape)]),
@@ -2981,6 +2990,18 @@ defmodule Matrex do
       strides: strides({cols, rows}, type),
       type: type
     }
+
+  @doc """
+  Returns list of supported matrex types
+
+  ## Example
+
+      iex> Matrex.types()
+      [:byte, :int16, :int32, :int64, :float32, :float64, :bool]
+
+  """
+  @spec types() :: list(type)
+  def types(), do: @types
 
   @doc """
   Updates the element at the given position in matrix with function.
