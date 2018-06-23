@@ -2465,6 +2465,15 @@ defmodule Matrex do
         type: type
       }
 
+  def row(%Matrex{data: data, shape: shape, strides: strides, type: type}, row)
+      when is_integer(row) and row > 0 and row <= elem(shape, 0),
+      do: %Matrex{
+        data: binary_part(data, elem(strides, 0) * row, elem(strides, 0)),
+        shape: Tuple.delete_at(shape, 0),
+        strides: Tuple.delete_at(strides, 0),
+        type: type
+      }
+
   @doc """
   Saves matrex into file.
 
@@ -2525,10 +2534,10 @@ defmodule Matrex do
     do: filename |> String.split(".") |> Enum.reverse() |> opts_from_filename()
 
   defp opts_from_filename(["gz" | rest]), do: [gzip: true] ++ opts_from_filename(rest)
-  defp opts_from_filename(["idx" | rest]), do: [format: :idx]
-  defp opts_from_filename(["csv" | rest]), do: [format: :csv]
+  defp opts_from_filename(["idx" | _]), do: [format: :idx]
+  defp opts_from_filename(["csv" | _]), do: [format: :csv]
 
-  defp opts_from_filename([uext | rest]),
+  defp opts_from_filename([uext | _]),
     do:
       raise(
         ArgumentError,
