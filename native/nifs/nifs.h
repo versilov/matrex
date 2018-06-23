@@ -467,7 +467,7 @@ TYPED_NIF(random, TYPE_NAME)(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *a
   ERL_NIF_TERM result;
   TYPE *result_data;
   unsigned long size;
-  const TYPE max_val = 2 << (sizeof(TYPE) * 8 - 1) - 2;
+  const TYPE max_val = (1 << sizeof(TYPE) * 8) - 1;
 
   UNUSED_VAR(argc);
 
