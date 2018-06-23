@@ -1,25 +1,28 @@
 defmodule Matrex.Inspect do
   @moduledoc false
+  alias Matrex, as: M
 
   @ansi_formatting ~r/\e\[(\d{1,2};?)+m/
 
-  def do_inspect(matrex, screen_width \\ 80, display_rows \\ 21)
+  def do_inspect(%Matrex{type: type} = matrex, screen_width \\ 80, display_rows \\ 21),
+    do: do_inspect(matrex, screen_width, display_rows, element_chars_size(type))
 
-  def do_inspect(
-        %Matrex{
-          shape: {rows, columns} = shape,
-          type: type
-        } = matrex,
-        screen_width,
-        display_rows
-      )
-      when columns < (screen_width - 3) / 8 and rows <= display_rows do
+  defp do_inspect(
+         %Matrex{
+           shape: {rows, columns} = shape,
+           type: type
+         } = matrex,
+         screen_width,
+         display_rows,
+         element_chars_size
+       )
+       when columns < (screen_width - 3) / element_chars_size and rows <= display_rows do
     rows_as_strings =
       for(
         row <- 1..rows,
         do:
           row_to_list_of_binaries(matrex, row)
-          |> Enum.map(&format_elem(&1))
+          |> Enum.map(&format_elem(&1, type))
           |> Enum.join()
       )
 
@@ -33,21 +36,25 @@ defmodule Matrex.Inspect do
     "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
-  @element_byte_size 4
-  @element_chars_size 8
-  @integer_chars_size 6
+  defp element_chars_size(:byte), do: 4
+  defp element_chars_size(:int16), do: 6
+  defp element_chars_size(:int32), do: 10
+  defp element_chars_size(:int64), do: 10
+  defp element_chars_size(:float32), do: 8
+  defp element_chars_size(:float64), do: 8
 
-  def do_inspect(
-        %Matrex{
-          data: body,
-          shape: {rows, columns} = shape,
-          type: type
-        } = matrex,
-        screen_width,
-        display_rows
-      )
-      when columns >= (screen_width - 3) / 8 or rows > display_rows do
-    available_columns = div(screen_width - 7, 8)
+  defp do_inspect(
+         %Matrex{
+           data: body,
+           shape: {rows, columns} = shape,
+           type: type
+         } = matrex,
+         screen_width,
+         display_rows,
+         element_chars_size
+       )
+       when columns >= (screen_width - 3) / element_chars_size or rows > display_rows do
+    available_columns = div(screen_width - 7, element_chars_size(type))
     prefix_size = suffix_size = div(available_columns, 2)
     prefix_size = prefix_size + rem(available_columns, 2)
 
@@ -59,8 +66,8 @@ defmodule Matrex.Inspect do
       case suffix_size + prefix_size < columns do
         true ->
           [
-            binary_part(body, 0, prefix_size * @element_byte_size)
-            |> format_row_head_tail(0, prefix_size)
+            binary_part(body, 0, prefix_size * M.element_size(type))
+            |> format_row_head_tail(0, prefix_size, type)
             | rows_as_strings
           ]
 
@@ -68,9 +75,9 @@ defmodule Matrex.Inspect do
           rows_as_strings
       end
 
-    row_length = row_length(columns, suffix_size, prefix_size)
-    prefix_length = prefix_size * @element_chars_size
-    suffix_length = suffix_size * @element_chars_size
+    row_length = row_length(columns, suffix_size, prefix_size, type)
+    prefix_length = prefix_size * element_chars_size(type)
+    suffix_length = suffix_size * element_chars_size(type)
 
     contents_str =
       rows_as_strings
@@ -80,7 +87,8 @@ defmodule Matrex.Inspect do
         suffix_length,
         columns,
         suffix_size,
-        prefix_size
+        prefix_size,
+        type
       )
 
     contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
@@ -104,12 +112,12 @@ defmodule Matrex.Inspect do
   # Put the vertical ellipsis marker, which we will use later to insert full ellipsis row
   defp format_row(_matrix, -1, _rows, _columns, _, _), do: "⋮"
 
-  defp format_row(%Matrex{data: matrix}, row, rows, columns, suffix_size, prefix_size)
+  defp format_row(%Matrex{data: matrix, type: type}, row, rows, columns, suffix_size, prefix_size)
        when row == rows and suffix_size + prefix_size < columns do
-    n = chunk_offset(row, columns, suffix_size)
+    n = chunk_offset(row, columns, suffix_size, M.element_size(type))
 
-    binary_part(matrix, n, suffix_size * @element_byte_size)
-    |> format_row_head_tail(suffix_size, 0)
+    binary_part(matrix, n, suffix_size * M.element_size(type))
+    |> format_row_head_tail(suffix_size, 0, type)
   end
 
   defp format_row(%Matrex{} = matrex, row, _rows, columns, suffix_size, prefix_size)
@@ -120,12 +128,19 @@ defmodule Matrex.Inspect do
     |> Enum.join()
   end
 
-  defp format_row(%Matrex{data: matrix}, row, _rows, columns, suffix_size, prefix_size)
+  defp format_row(
+         %Matrex{data: matrix, type: type},
+         row,
+         _rows,
+         columns,
+         suffix_size,
+         prefix_size
+       )
        when is_binary(matrix) do
-    n = chunk_offset(row, columns, suffix_size)
+    n = chunk_offset(row, columns, suffix_size, M.element_size(type))
 
-    binary_part(matrix, n, (suffix_size + prefix_size) * @element_byte_size)
-    |> format_row_head_tail(suffix_size, prefix_size)
+    binary_part(matrix, n, (suffix_size + prefix_size) * M.element_size(type))
+    |> format_row_head_tail(suffix_size, prefix_size, type)
   end
 
   defp row_to_list_of_binaries(
@@ -141,77 +156,99 @@ defmodule Matrex.Inspect do
     |> Enum.map(fn c ->
       binary_part(
         data,
-        ((row - 1) * columns + c) * Matrex.element_size(type),
-        Matrex.element_size(type)
+        ((row - 1) * columns + c) * M.element_size(type),
+        M.element_size(type)
       )
     end)
   end
 
-  defp chunk_offset(row, columns, suffix_size),
-    do: ((row - 1) * columns + (columns - suffix_size)) * @element_byte_size
+  defp chunk_offset(row, columns, suffix_size, element_size),
+    do: ((row - 1) * columns + (columns - suffix_size)) * element_size
 
-  defp format_row_head_tail(<<>>, _, _), do: <<>>
+  defp format_row_head_tail(<<>>, _, _, _), do: <<>>
 
-  defp format_row_head_tail(<<val::binary-4, rest::binary>>, 1, prefix_size)
-       when prefix_size > 0 do
-    <<format_elem(val) <> IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow(),
-      format_row_head_tail(rest, 0, prefix_size)::binary>>
-  end
+  types = [
+    float64: {:float, 8},
+    float32: {:float, 4},
+    byte: {:integer, 1},
+    int16: {:integer, 2},
+    int32: {:integer, 4},
+    int64: {:integer, 8}
+  ]
 
-  defp format_row_head_tail(<<val::binary-4, rest::binary>>, 0, prefix_size)
-       when prefix_size > 0 do
-    <<
-      format_elem(val)::binary,
-      # Separate for investigation
-      format_row_head_tail(rest, 0, prefix_size - 1)::binary
-    >>
-  end
+  Enum.each(types, fn {type, {super_type, size}} ->
+    @size size
+    @type_guard type
+    defp format_row_head_tail(<<val::binary-@size, rest::binary>>, 1, prefix_size, @type_guard)
+         when prefix_size > 0 do
+      <<format_elem(val, @type_guard) <> IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow(),
+        format_row_head_tail(rest, 0, prefix_size, @type_guard)::binary>>
+    end
 
-  defp format_row_head_tail(<<val::binary-4, rest::binary>>, suffix_size, prefix_size)
-       when suffix_size > 0 do
-    <<format_elem(val)::binary, format_row_head_tail(rest, suffix_size - 1, prefix_size)::binary>>
-  end
+    defp format_row_head_tail(<<val::binary-@size, rest::binary>>, 0, prefix_size, @type_guard)
+         when prefix_size > 0 do
+      <<
+        format_elem(val, @type_guard)::binary,
+        # Separate for investigation
+        format_row_head_tail(rest, 0, prefix_size - 1, @type_guard)::binary
+      >>
+    end
+
+    defp format_row_head_tail(
+           <<val::binary-@size, rest::binary>>,
+           suffix_size,
+           prefix_size,
+           @type_guard
+         )
+         when suffix_size > 0 do
+      <<format_elem(val, @type_guard)::binary,
+        format_row_head_tail(rest, suffix_size - 1, prefix_size, @type_guard)::binary>>
+    end
+  end)
 
   @not_a_number <<0, 0, 192, 255>>
   @positive_infinity <<0, 0, 128, 127>>
   @negative_infinity <<0, 0, 128, 255>>
   @zero <<0, 0, 0, 0>>
 
-  defp format_elem(@not_a_number),
-    do: "#{IO.ANSI.red()}#{String.pad_leading("NaN ", @element_chars_size)}#{IO.ANSI.yellow()}"
-
-  defp format_elem(@positive_infinity),
-    do: "#{IO.ANSI.cyan()}#{String.pad_leading("∞  ", @element_chars_size)}#{IO.ANSI.yellow()}"
-
-  defp format_elem(@negative_infinity),
-    do: "#{IO.ANSI.cyan()}#{String.pad_leading("-∞  ", @element_chars_size)}#{IO.ANSI.yellow()}"
-
-  defp format_elem(@zero),
+  defp format_elem(@not_a_number, :float32 = type),
     do:
-      "#{IO.ANSI.color(2, 2, 2)}#{String.pad_leading("0.0", @element_chars_size)}#{
+      "#{IO.ANSI.red()}#{String.pad_leading("NaN ", element_chars_size(type))}#{IO.ANSI.yellow()}"
+
+  defp format_elem(@positive_infinity, :float32 = type),
+    do:
+      "#{IO.ANSI.cyan()}#{String.pad_leading("∞  ", element_chars_size(type))}#{IO.ANSI.yellow()}"
+
+  defp format_elem(@negative_infinity, :float32 = type),
+    do:
+      "#{IO.ANSI.cyan()}#{String.pad_leading("-∞  ", element_chars_size(type))}#{IO.ANSI.yellow()}"
+
+  defp format_elem(@zero, :float32 = type),
+    do:
+      "#{IO.ANSI.color(2, 2, 2)}#{String.pad_leading("0.0", element_chars_size(type))}#{
         IO.ANSI.yellow()
       }"
 
-  defp format_elem(<<f::float-little-32>>), do: format_elem(f)
-  defp format_elem(<<f::float-little-64>>), do: format_elem(f)
+  defp format_elem(<<f::float-little-32>>, :float32), do: format_elem(f)
+  defp format_elem(<<f::float-little-64>>, :float64), do: format_elem(f)
 
-  defp format_elem(<<e::unsigned-integer-8>>),
-    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+  defp format_elem(<<e::unsigned-integer-8>>, :byte = type),
+    do: Integer.to_string(e) |> String.pad_leading(element_chars_size(type))
 
-  defp format_elem(<<e::integer-little-16>>),
-    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+  defp format_elem(<<e::integer-little-16>>, :int16 = type),
+    do: Integer.to_string(e) |> String.pad_leading(element_chars_size(type))
 
-  defp format_elem(<<e::integer-little-32>>),
-    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+  defp format_elem(<<e::integer-little-32>>, :int32 = type),
+    do: Integer.to_string(e) |> String.pad_leading(element_chars_size(type))
 
-  defp format_elem(<<e::integer-little-64>>),
-    do: Integer.to_string(e) |> String.pad_leading(@integer_chars_size)
+  defp format_elem(<<e::integer-little-64>>, :int64 = type),
+    do: Integer.to_string(e) |> String.pad_leading(element_chars_size(type))
 
   defp format_elem(f) when is_float(f) do
     f
     |> Float.round(5)
     |> Float.to_string()
-    |> String.pad_leading(@element_chars_size)
+    |> String.pad_leading(element_chars_size(:float32))
   end
 
   def ffloat(f) when is_float(f) do
@@ -238,13 +275,20 @@ defmodule Matrex.Inspect do
          _suffix_length,
          columns,
          suffix_size,
-         prefix_size
+         prefix_size,
+         type
        )
        when suffix_size + prefix_size >= columns do
     String.replace(
       matrix_as_string,
       ~r/\n.*⋮.*\n/,
-      "\n│#{String.pad_leading("", row_length(columns, suffix_size, prefix_size), "     ⋮  ")}│\n"
+      "\n│#{
+        String.pad_leading(
+          "",
+          row_length(columns, suffix_size, prefix_size, type),
+          vellipsis_cell(type)
+        )
+      }│\n"
     )
   end
 
@@ -254,22 +298,30 @@ defmodule Matrex.Inspect do
          suffix_length,
          _columns,
          _suffix_size,
-         _prefix_size
+         _prefix_size,
+         type
        ) do
     String.replace(
       matrix_as_string,
       ~r/\n.*⋮.*\n/,
-      "\n│#{String.pad_leading("", prefix_length + 2, "     ⋮  ")}… #{
-        String.pad_trailing("", suffix_length + 1, "     ⋮  ")
+      "\n│#{String.pad_leading("", prefix_length + 2, vellipsis_cell(type))}… #{
+        String.pad_trailing("", suffix_length + 1, vellipsis_cell(type))
       }│\n"
     )
   end
 
-  defp row_length(columns, suffix_size, prefix_size) when suffix_size + prefix_size >= columns,
-    do: @element_chars_size * columns + 1
+  defp vellipsis_cell(:byte), do: "   ⋮"
+  defp vellipsis_cell(:int16), do: "     ⋮"
+  defp vellipsis_cell(:int32), do: "         ⋮"
+  defp vellipsis_cell(:int64), do: "         ⋮"
+  defp vellipsis_cell(type), do: "     ⋮  "
 
-  defp row_length(_columns, suffix_size, prefix_size),
-    do: @element_chars_size * (suffix_size + prefix_size) + 5
+  defp row_length(columns, suffix_size, prefix_size, type)
+       when suffix_size + prefix_size >= columns,
+       do: element_chars_size(type) * columns + 1
+
+  defp row_length(_columns, suffix_size, prefix_size, type),
+    do: element_chars_size(type) * (suffix_size + prefix_size) + 5
 
   defp joiner(columns, suffix_size, prefix_size) when suffix_size + prefix_size >= columns,
     do: " #{IO.ANSI.white()}│\n│#{IO.ANSI.yellow()}"
@@ -292,9 +344,12 @@ defmodule Matrex.Inspect do
   #
   @spec heatmap(Matrex.t(), :mono24bit | :color24bit | :mono8 | :color8 | :mono256 | :color256) ::
           Matrex.t()
-  def heatmap(%Matrex{} = m, type \\ :mono256, opts \\ []) do
-    mn = Matrex.min_finite(m)
-    mx = Matrex.max_finite(m)
+  def heatmap(%Matrex{type: dtype} = m, type \\ :mono256, opts \\ []) do
+    {mn, mx} =
+      if dtype in [:float32, :float64],
+        do: {M.min_finite(m), M.max_finite(m)},
+        else: {M.min(m), M.max(m)}
+
     range = if mx != mn, do: mx - mn, else: 1
 
     at_opts = Keyword.take(opts, [:at])
