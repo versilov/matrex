@@ -98,6 +98,7 @@ defmodule Matrex.Inspect do
 
   # Multi-dimensional matrix printing
 
+  # Our goal:
   # Matrex[2×2×3×2×2]:int32
   # ┌┌┌           ┐┌           ┐┌           ┐┐┐
   # │││11111 11112││11211 11212││11311 11312│││
@@ -127,6 +128,7 @@ defmodule Matrex.Inspect do
     print_elem(matrex, shape, pos, element_chars_size)
   end
 
+  # Last element reached.
   defp print_elem(_, _, nil, _), do: ""
 
   defp print_elem(%Matrex{} = matrex, shape, pos, chars_size) do
@@ -134,10 +136,13 @@ defmodule Matrex.Inspect do
       print_elem(matrex, shape, next_pos(pos, shape), chars_size)
   end
 
+  # Catch all for unexpected situations
   defp print_elem(_, shape, pos, _), do: "#{inspect(shape)}, #{inspect(pos)}"
 
+  # We reached the last element, no next pos.
   def next_pos(pos, shape) when pos == shape, do: nil
 
+  # Get next element position for multi-dim matrix line-by-line display.
   def next_pos(pos, shape) do
     Enum.reduce_while(dims_order(tuple_size(shape)), pos, fn i, p ->
       new_coord = elem(p, i) + 1
@@ -150,6 +155,8 @@ defmodule Matrex.Inspect do
     end)
   end
 
+  # Get the order of dimensions change, while travering the matrix
+  # For line-by-line display.
   defp dims_order(1), do: [0]
   defp dims_order(2), do: [1, 0]
   defp dims_order(3), do: [2, 1, 0]
@@ -161,6 +168,7 @@ defmodule Matrex.Inspect do
 
   # defp dims_order(n) when is_odd(n), do: [n-1 | ]
 
+  # Should we start a new line now?
   defp new_line(shape, pos) do
     ndims = (tuple_size(shape) / 2) |> trunc()
 
