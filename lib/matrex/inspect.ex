@@ -184,6 +184,8 @@ defmodule Matrex.Inspect do
     end
   end
 
+  # End of multi-dimensional.
+
   defp displayable_rows(rows, display_rows) when rows > display_rows,
     do:
       Enum.to_list(1..(div(display_rows, 2) + rem(display_rows, 2))) ++
