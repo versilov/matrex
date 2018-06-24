@@ -368,9 +368,14 @@ defmodule Matrex do
        do: position_from_offset(index * element_size(type), strides)
 
   # Calculate next position tuple for the given position and shape
-  defp next_pos({r, c}, {_rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c + 1})
 
-  defp next_pos(pos, shape) do
+  @doc false
+  # If position is equal to shape, than it's the last element in the matrix and we cannot increase further.
+  def next_pos(pos, shape) when pos == shape, do: nil
+
+  def next_pos({r, c}, {_rows, cols}), do: if(c + 1 > cols, do: {r + 1, 1}, else: {r, c + 1})
+
+  def next_pos(pos, shape) do
     Enum.reduce_while((tuple_size(shape) - 1)..0, pos, fn i, p ->
       new_coord = elem(p, i) + 1
 
@@ -486,7 +491,7 @@ defmodule Matrex do
 
   # TODO: Return submatrix
   def fetch(matrex, key)
-      when is_integer(key) and key > 0,
+      when is_integer(key),
       do: {:ok, row(matrex, key)}
 
   # Slice on horizontal vector
@@ -2468,11 +2473,14 @@ defmodule Matrex do
   def row(%Matrex{data: data, shape: shape, strides: strides, type: type}, row)
       when is_integer(row) and row > 0 and row <= elem(shape, 0),
       do: %Matrex{
-        data: binary_part(data, elem(strides, 0) * row, elem(strides, 0)),
+        data: binary_part(data, elem(strides, 0) * (row - 1), elem(strides, 0)),
         shape: Tuple.delete_at(shape, 0),
         strides: Tuple.delete_at(strides, 0),
         type: type
       }
+
+  def row(%Matrex{shape: shape}, row) when row <= 0 or row > elem(shape, 0),
+    do: raise(ArgumentError, message: "row index out of bounds.")
 
   @doc """
   Saves matrex into file.

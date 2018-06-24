@@ -96,6 +96,94 @@ defmodule Matrex.Inspect do
     "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
+  # Multi-dimensional matrix printing
+
+  # Matrex[2×2×3×2×2]:int32
+  # ┌┌┌           ┐┌           ┐┌           ┐┐┐
+  # │││11111 11112││11211 11212││11311 11312│││
+  # │││11121 11122││11221 11222││11321 11322│││
+  # ││└           ┘└           ┘└           ┘││
+  # ││┌           ┐┌           ┐┌           ┐││
+  # │││12111 12112││12211 12212││12311 12312│││
+  # │││12121 12122││12221 12222││12321 12322│││
+  # │└└           ┘└           ┘└           ┘┘│
+  # │┌┌           ┐┌           ┐┌           ┐┐│
+  # │││21111 21112││21211 21212││21311 21312│││
+  # │││21121 21122││21221 21222││21321 21322│││
+  # ││└           ┘└           ┘└           ┘││
+  # ││┌           ┐┌           ┐┌           ┐││
+  # │││22111 22112││22211 22212││22311 22312│││
+  # │││22121 22122││22221 22222││22321 22322│││
+  # └└└           ┘└           ┘└           ┘┘┘
+
+  defp do_inspect(
+         %Matrex{shape: shape} = matrex,
+         _screen_width,
+         _display_rows,
+         element_chars_size
+       ) do
+    pos = Tuple.duplicate(1, tuple_size(shape))
+
+    print_elem(matrex, shape, pos, element_chars_size)
+  end
+
+  defp print_elem(_, _, nil, _), do: ""
+
+  defp print_elem(%Matrex{} = matrex, shape, pos, chars_size) do
+    "#{String.pad_leading(inspect(M.at(matrex, pos)), chars_size)} #{new_line(shape, pos)}" <>
+      print_elem(matrex, shape, next_pos(pos, shape), chars_size)
+  end
+
+  defp print_elem(_, shape, pos, _), do: "#{inspect(shape)}, #{inspect(pos)}"
+
+  def next_pos(pos, shape) when pos == shape, do: nil
+
+  def next_pos(pos, shape) do
+    Enum.reduce_while(dims_order(tuple_size(shape)), pos, fn i, p ->
+      new_coord = elem(p, i) + 1
+
+      if new_coord <= elem(shape, i) do
+        {:halt, put_elem(p, i, new_coord)}
+      else
+        {:cont, put_elem(p, i, 1)}
+      end
+    end)
+  end
+
+  defp dims_order(1), do: [0]
+  defp dims_order(2), do: [1, 0]
+  defp dims_order(3), do: [2, 1, 0]
+  defp dims_order(4), do: [3, 1, 2, 0]
+  defp dims_order(5), do: [4, 2, 3, 1, 0]
+  defp dims_order(6), do: [5, 3, 1, 4, 2, 0]
+  defp dims_order(7), do: [6, 4, 2, 5, 3, 1, 0]
+  defp dims_order(8), do: [7, 5, 3, 1, 6, 4, 2, 0]
+
+  # defp dims_order(n) when is_odd(n), do: [n-1 | ]
+
+  defp new_line(shape, pos) do
+    ndims = (tuple_size(shape) / 2) |> trunc()
+
+    dims =
+      shape
+      |> tuple_size()
+      |> dims_order()
+      |> Enum.take(ndims)
+
+    seps =
+      if elem(pos, hd(dims)) == elem(shape, hd(dims)) do
+        Enum.count(dims, &(elem(pos, &1) == elem(shape, &1)))
+      else
+        0
+      end
+
+    if Enum.all?(dims, &(elem(pos, &1) == elem(shape, &1))) do
+      String.duplicate("│", seps) <> "\n" <> String.duplicate("│", seps)
+    else
+      String.duplicate("│", seps * 2)
+    end
+  end
+
   defp displayable_rows(rows, display_rows) when rows > display_rows,
     do:
       Enum.to_list(1..(div(display_rows, 2) + rem(display_rows, 2))) ++
@@ -176,7 +264,7 @@ defmodule Matrex.Inspect do
     int64: {:integer, 8}
   ]
 
-  Enum.each(types, fn {type, {super_type, size}} ->
+  Enum.each(types, fn {type, {_super_type, size}} ->
     @size size
     @type_guard type
     defp format_row_head_tail(<<val::binary-@size, rest::binary>>, 1, prefix_size, @type_guard)
@@ -314,7 +402,7 @@ defmodule Matrex.Inspect do
   defp vellipsis_cell(:int16), do: "     ⋮"
   defp vellipsis_cell(:int32), do: "         ⋮"
   defp vellipsis_cell(:int64), do: "         ⋮"
-  defp vellipsis_cell(type), do: "     ⋮  "
+  defp vellipsis_cell(_type), do: "     ⋮  "
 
   defp row_length(columns, suffix_size, prefix_size, type)
        when suffix_size + prefix_size >= columns,
