@@ -846,6 +846,12 @@ defmodule Matrex do
   def at(%Matrex{} = matrex, row, col), do: at(matrex, {row, col})
 
   @spec at(matrex, position) :: element
+  def at(%Matrex{data: data, strides: strides, type: :bool}, pos) when is_tuple(pos) do
+    off = offset(strides, pos)
+    <<_::size(off), x::size(1), _rest::bitstring>> = data
+    x
+  end
+
   def at(%Matrex{data: data, strides: strides, type: type}, pos) when is_tuple(pos) do
     data
     |> binary_part(offset(strides, pos), element_size(type))
@@ -1748,8 +1754,7 @@ defmodule Matrex do
     byte: {:integer, 8},
     int16: {:integer, 16},
     int32: {:integer, 32},
-    int64: {:integer, 64},
-    bool: {:binary, 1}
+    int64: {:integer, 64}
   ]
 
   for {guard, type_and_size} <- types do
@@ -1841,6 +1846,31 @@ defmodule Matrex do
         new_accumulator
       )
     end
+  end
+
+  # Bool
+
+  def apply_on_matrix_bool(<<x::size(1), rest::bitstring>>, fun, accumulator)
+      when is_function(fun, 1),
+      do: apply_on_matrix_bool(rest, fun, <<accumulator::bitstring, fun.(x)::size(1)>>)
+
+  def apply_on_matrix_bool(<<>>, _, accumulator), do: accumulator
+
+  # We reached the last element
+  def apply_on_matrix_bool(<<x::size(1), rest::bitstring>>, fun, shape, pos, accumulator)
+      when shape == pos,
+      do: <<accumulator::bitstring, fun.(x, pos)::size(1)>>
+
+  def apply_on_matrix_bool(<<x::size(1), rest::bitstring>>, fun, pos, shape, accumulator) do
+    new_pos = next_pos(pos, shape)
+
+    apply_on_matrix_bool(
+      rest,
+      fun,
+      new_pos,
+      shape,
+      <<accumulator::bitstring, fun.(x, pos)::size(1)>>
+    )
   end
 
   @spec list_to_binary([element], type) :: binary
@@ -2213,7 +2243,7 @@ defmodule Matrex do
   @spec random(shape, type) :: matrex
   def random(shape, :bool) when is_tuple(shape),
     do: %Matrex{
-      data: call_nif(:random, :int32, [round(elements_count(shape) / 32)]),
+      data: call_nif(:random, :int32, [:math.ceil(elements_count(shape) / 32) |> trunc()]),
       shape: shape,
       strides: strides(shape, :bool),
       type: :bool

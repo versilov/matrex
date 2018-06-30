@@ -36,6 +36,7 @@ defmodule Matrex.Inspect do
     "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
+  defp element_chars_size(:bool), do: 1
   defp element_chars_size(:byte), do: 4
   defp element_chars_size(:int16), do: 6
   defp element_chars_size(:int32), do: 10
@@ -243,6 +244,13 @@ defmodule Matrex.Inspect do
   end
 
   defp row_to_list_of_binaries(
+         %Matrex{data: data, shape: {rows, columns}, type: :bool} = matrex,
+         row
+       )
+       when row <= rows,
+       do: Enum.map(1..columns, &M.at(matrex, {row, &1}))
+
+  defp row_to_list_of_binaries(
          %Matrex{
            data: data,
            shape: {rows, columns},
@@ -305,6 +313,33 @@ defmodule Matrex.Inspect do
     end
   end)
 
+  # Bool
+  defp format_row_head_tail(<<val::size(1), rest::bitstring>>, 1, prefix_size, :bool)
+       when prefix_size > 0 do
+    <<format_elem(val, :bool) <> IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow(),
+      format_row_head_tail(rest, 0, prefix_size, :bool)::binary>>
+  end
+
+  defp format_row_head_tail(<<val::size(1), rest::bitstring>>, 0, prefix_size, :bool)
+       when prefix_size > 0 do
+    <<
+      format_elem(val, :bool)::binary,
+      # Separate for investigation
+      format_row_head_tail(rest, 0, prefix_size - 1, :bool)::binary
+    >>
+  end
+
+  defp format_row_head_tail(
+         <<val::size(1), rest::bitstring>>,
+         suffix_size,
+         prefix_size,
+         :bool
+       )
+       when suffix_size > 0 do
+    <<format_elem(val, :bool)::binary,
+      format_row_head_tail(rest, suffix_size - 1, prefix_size, :bool)::binary>>
+  end
+
   @not_a_number <<0, 0, 192, 255>>
   @positive_infinity <<0, 0, 128, 127>>
   @negative_infinity <<0, 0, 128, 255>>
@@ -342,6 +377,8 @@ defmodule Matrex.Inspect do
 
   defp format_elem(<<e::integer-little-64>>, :int64 = type),
     do: Integer.to_string(e) |> String.pad_leading(element_chars_size(type))
+
+  defp format_elem(b, :bool = type), do: String.pad_leading("#{b}", element_chars_size(type))
 
   defp format_elem(f) when is_float(f) do
     f
@@ -443,7 +480,19 @@ defmodule Matrex.Inspect do
   #
   @spec heatmap(Matrex.t(), :mono24bit | :color24bit | :mono8 | :color8 | :mono256 | :color256) ::
           Matrex.t()
-  def heatmap(%Matrex{type: dtype} = m, type \\ :mono256, opts \\ []) do
+  def heatmap(matrex, type \\ :mono256, opts \\ [])
+
+  def heatmap(%Matrex{shape: {rows, _cols}, type: :bool} = matrex, _, _) do
+    for n <- 1..div(rows, 2) do
+      rows_string(matrex, n)
+    end
+    |> Enum.join("\n")
+    |> IO.puts()
+
+    matrex
+  end
+
+  def heatmap(%Matrex{type: dtype} = m, type, opts) do
     {mn, mx} =
       if dtype in [:float32, :float64],
         do: {M.min_finite(m), M.max_finite(m)},
@@ -474,6 +523,18 @@ defmodule Matrex.Inspect do
 
     m
   end
+
+  # Bool
+  defp rows_string(%Matrex{shape: {_rows, cols}, type: :bool} = matrex, n) do
+    Enum.reduce(1..cols, <<>>, fn c, acc ->
+      acc <> bool_pixel(Matrex.at(matrex, {n * 2 - 1, c}), Matrex.at(matrex, {n * 2, c}))
+    end)
+  end
+
+  defp bool_pixel(1, 1), do: "█"
+  defp bool_pixel(0, 0), do: " "
+  defp bool_pixel(1, 0), do: "▀"
+  defp bool_pixel(0, 1), do: "▄"
 
   defp hide_cursor(), do: "\e[?25l"
   defp show_cursor(), do: "\e[?25h"
