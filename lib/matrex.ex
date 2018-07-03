@@ -303,11 +303,6 @@ defmodule Matrex do
   @negative_infinity_float64 <<0, 0, 0, 0, 0, 0, 240, 255>>
 
   @spec element_to_binary(element, type) :: binary
-  defp element_to_binary(elem, :byte), do: <<elem::unsigned-integer-8>>
-  defp element_to_binary(elem, :int16), do: <<elem::integer-little-16>>
-  defp element_to_binary(elem, :int32), do: <<elem::integer-little-32>>
-  defp element_to_binary(elem, :int64), do: <<elem::integer-little-64>>
-
   defp element_to_binary(:nan, :float32), do: @not_a_number_float32
   defp element_to_binary(:inf, :float32), do: @positive_infinity_float32
   defp element_to_binary(:neg_inf, :float32), do: @negative_infinity_float32
@@ -317,6 +312,17 @@ defmodule Matrex do
   defp element_to_binary(:inf, :float64), do: @positive_infinity_float64
   defp element_to_binary(:neg_inf, :float64), do: @negative_infinity_float64
   defp element_to_binary(elem, :float64), do: <<elem::float-little-64>>
+
+  defp element_to_binary(elem, type) when is_float(elem) and type not in @floats,
+    do: element_to_binary(trunc(elem), type)
+
+  defp element_to_binary(elem, type) when elem in [:nan, :inf, :neg_inf] and type not in @floats,
+    do: raise("Cannot create integer element from float special value #{elem}")
+
+  defp element_to_binary(elem, :byte), do: <<elem::unsigned-integer-8>>
+  defp element_to_binary(elem, :int16), do: <<elem::integer-little-16>>
+  defp element_to_binary(elem, :int32), do: <<elem::integer-little-32>>
+  defp element_to_binary(elem, :int64), do: <<elem::integer-little-64>>
 
   @spec binary_to_element(binary, type) :: element
   def binary_to_element(<<b::size(1)>>, :bool), do: b
@@ -432,7 +438,7 @@ defmodule Matrex do
             multiply: 2,
             ones: 2,
             ones: 1,
-            parse_float: 1,
+            parse_element: 2,
             random: 2,
             random: 1,
             reshape: 3,
@@ -2057,21 +2063,28 @@ defmodule Matrex do
     |> Enum.map(fn line ->
       line
       |> String.split(["\s", ","], trim: true)
-      |> Enum.map(fn f -> parse_float(f) end)
+      |> Enum.map(fn f -> parse_element(f, type) end)
     end)
-    |> new()
+    |> new(type)
   end
 
   @doc false
-  @spec parse_float(binary) :: element | :nan | :inf | :neg_inf
-  def parse_float("NaN"), do: :nan
-  def parse_float("Inf"), do: :inf
-  def parse_float("+Inf"), do: :inf
-  def parse_float("-Inf"), do: :neg_inf
-  def parse_float("NegInf"), do: :neg_inf
+  @spec parse_element(binary, type) :: element
+  def parse_element("NaN", _type), do: :nan
+  def parse_element("Inf", _type), do: :inf
+  def parse_element("+Inf", _type), do: :inf
+  def parse_element("-Inf", _type), do: :neg_inf
+  def parse_element("NegInf", _type), do: :neg_inf
 
-  def parse_float(string) do
+  def parse_element(string, type) when type in [:float32, :float64] do
     case Float.parse(string) do
+      {value, _rem} -> value
+      :error -> raise ArgumentError, message: "Unparseable matrix element value: #{string}"
+    end
+  end
+
+  def parse_element(string, type) when type in [:byte, :int16, :int32, :int64] do
+    case Integer.parse(string) do
       {value, _rem} -> value
       :error -> raise ArgumentError, message: "Unparseable matrix element value: #{string}"
     end
