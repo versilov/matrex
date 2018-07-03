@@ -123,6 +123,7 @@ defmodule Matrex.Inspect do
          _display_rows,
          element_chars_size
        ) do
+    # Position of the very first element.
     pos = Tuple.duplicate(1, tuple_size(shape))
 
     print_elem(matrex, shape, pos, element_chars_size)
