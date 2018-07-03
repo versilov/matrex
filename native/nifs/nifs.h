@@ -648,7 +648,7 @@ TYPED_NIF(random, TYPE_NAME)
   ERL_NIF_TERM result;
   TYPE *result_data;
   unsigned long size;
-  const TYPE max_val = (1 << sizeof(TYPE) * 8) - 1;
+  const TYPE max_val = (((TYPE)1) << (sizeof(TYPE) * 8 - 2)) - 2;
 
   UNUSED_VAR(argc);
 
