@@ -1854,6 +1854,7 @@ defmodule Matrex do
       when is_function(fun, 1),
       do: apply_on_matrix_bool(rest, fun, <<accumulator::bitstring, fun.(x)::size(1)>>)
 
+  # TODO: Stop at the end, don't process exceed bits.
   def apply_on_matrix_bool(<<>>, _, accumulator), do: accumulator
 
   # We reached the last element
