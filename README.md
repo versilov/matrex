@@ -118,7 +118,11 @@ end
 ```
 ### MacOS
 
-Everything works out of the box, thanks to Accelerate framework.
+Everything works out of the box, thanks to Accelerate framework. If you encounter a compilation error
+ 
+```native/src/matrix_dot.c:5:10: fatal error: 'cblas.h' file not found``` 
+
+then make sure the XCode command-line tools are installed (`xcode-select --install`)
 
 ### Ubuntu
 
