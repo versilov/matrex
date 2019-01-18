@@ -57,3 +57,5 @@ matrex-*.tar
 .ipynb_checkpoints
 
 .elixir_ls
+
+.vscode
