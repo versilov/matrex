@@ -122,7 +122,10 @@ Everything works out of the box, thanks to Accelerate framework. If you encounte
  
 ```native/src/matrix_dot.c:5:10: fatal error: 'cblas.h' file not found``` 
 
-then make sure the XCode command-line tools are installed (`xcode-select --install`)
+then make sure the XCode command-line tools are installed (`xcode-select --install`).
+If the error still not resolved, for MacOS Mojave, run
+```open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg```
+to restore /usr/include and /usr/lib.
 
 ### Ubuntu
 
