@@ -55,3 +55,7 @@ matrex-*.tar
 .tags1
 
 .ipynb_checkpoints
+
+.elixir_ls
+
+.vscode
