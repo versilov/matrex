@@ -110,6 +110,19 @@ defmodule MatrexTest do
     refute Matrex.contains?(matrix, 10)
   end
 
+  test "#diag returns diagonal of the matrix" do
+    matrix =
+      Matrex.new([
+        [16, 23, 5, 7, 14],
+        [22, 4, 6, 13, 20],
+        [3, 10, 12, 19, 21],
+        [9, 11, 18, 25, 2],
+        [15, 17, 24, 1, 8]
+      ])
+
+    assert Matrex.diag(matrix) == Matrex.new([[16], [4], [12], [25], [8]])
+  end
+
   test "#find returns position tuple of the element" do
     matrex = Matrex.reshape(1..100, {10, 10})
     assert Matrex.find(matrex, 11) == {2, 1}

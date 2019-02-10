@@ -1032,6 +1032,57 @@ defmodule Matrex do
   def contains?(%Matrex{} = matrex, value), do: find(matrex, value) != nil
 
   @doc """
+  Returns diagonal of the given matrix as a column matrix.
+
+  ## Example
+
+      iex> m = Matrex.random({5, 5}, :byte)
+      #Matrex[5×5]:byte
+      ┌                     ┐
+      │   4  37  49  30   6 │
+      │   4  45  48  28   4 │
+      │  49  16  59  33  33 │
+      │  27  57  26  12  34 │
+      │  42   7  42  56  43 │
+      └                     ┘
+      iex> Matrex.diag(m)
+      #Matrex[5×1]:byte
+      ┌     ┐
+      │   4 │
+      │  45 │
+      │  59 │
+      │  12 │
+      │  43 │
+      └     ┘
+  """
+  @spec diag(matrex) :: matrex
+  def diag(%Matrex{data: data, shape: {size, size}, type: type} = m) do
+    data =
+      Enum.map(0..(size - 1), fn pos ->
+        binary_part(
+          data,
+          (pos * size + pos) * element_size(type),
+          element_size(type)
+        )
+      end)
+      |> IO.iodata_to_binary()
+
+    %Matrex{
+      data: data,
+      shape: {size, 1},
+      strides: strides({size, 1}, type),
+      type: type
+    }
+  end
+
+  def diag(%Matrex{}),
+    do:
+      raise(
+        ArgumentError,
+        message: "diagonal is returned only for square 2-dimensional matrix."
+      )
+
+  @doc """
   Divides two matrices element-wise or matrix by scalar or scalar by matrix. NIF through `find/2`.
 
   Raises `ErlangError` if matrices' sizes do not match.
@@ -1344,7 +1395,7 @@ defmodule Matrex do
       }
 
   @doc """
-  Create eye (identity) square matrix of given size.
+  Create eye (identity) square matrix of given size. NIF.
 
   ## Examples
 
