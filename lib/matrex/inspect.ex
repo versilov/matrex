@@ -119,7 +119,7 @@ defmodule Matrex.Inspect do
   # └└└           ┘└           ┘└           ┘┘┘
 
   defp do_inspect(
-         %Matrex{shape: shape} = matrex,
+         %Matrex{shape: shape, type: type} = matrex,
          _screen_width,
          _display_rows,
          element_chars_size
@@ -127,15 +127,16 @@ defmodule Matrex.Inspect do
     # Position of the very first element.
     pos = Tuple.duplicate(1, tuple_size(shape))
 
-    print_elem(matrex, shape, pos, element_chars_size)
+    "#{header(shape, type)}\n#{print_elem(matrex, shape, pos, element_chars_size)}"
   end
 
   # Last element reached.
   defp print_elem(_, _, nil, _), do: ""
 
   defp print_elem(%Matrex{} = matrex, shape, pos, chars_size) do
-    "#{String.pad_leading(inspect(M.at(matrex, pos)), chars_size)} #{new_line(shape, pos)}" <>
-      print_elem(matrex, shape, next_pos(pos, shape), chars_size)
+    "#{String.pad_leading(inspect(M.at(matrex, pos)), chars_size)} #{
+      separators(shape, pos, chars_size)
+    }" <> print_elem(matrex, shape, next_pos(pos, shape), chars_size)
   end
 
   # Catch all for unexpected situations
@@ -171,7 +172,7 @@ defmodule Matrex.Inspect do
   # defp dims_order(n) when is_odd(n), do: [n-1 | ]
 
   # Should we start a new line now?
-  defp new_line(shape, pos) do
+  defp separators(shape, pos, char_size) do
     ndims = (tuple_size(shape) / 2) |> trunc()
 
     dims =
@@ -180,19 +181,79 @@ defmodule Matrex.Inspect do
       |> dims_order()
       |> Enum.take(ndims)
 
-    seps =
+    # We reached the border?
+    seps_count =
       if elem(pos, hd(dims)) == elem(shape, hd(dims)) do
         Enum.count(dims, &(elem(pos, &1) == elem(shape, &1)))
       else
         0
       end
 
-    if Enum.all?(dims, &(elem(pos, &1) == elem(shape, &1))) do
-      String.duplicate("│", seps) <> "\n" <> String.duplicate("│", seps)
+    extra_sep = rem(tuple_size(shape), 2)
+
+    # We reached all borders of the first half of dimensions?
+
+    separators =
+      if Enum.all?(dims, &(elem(pos, &1) == elem(shape, &1))) do
+        String.duplicate("│", seps_count + extra_sep) <>
+          "\n" <> new_row(shape, pos, char_size) <> String.duplicate("│", seps_count + extra_sep)
+      else
+        String.duplicate("│", seps_count * 2)
+      end
+
+    "#{IO.ANSI.reset()}#{separators}#{IO.ANSI.yellow()}"
+  end
+
+  # Should we start new matrices row?
+  defp new_row({_, x, y}, {_, x, y}, _), do: "\n"
+  defp new_row({_, _, _}, {_, _, _}, _), do: ""
+
+  defp new_row(shape, pos, char_size) do
+    last_dim = tuple_size(shape) - 1
+
+    if Enum.all?((last_dim - 2)..last_dim, &(elem(pos, &1) == elem(shape, &1))) do
+      "#{closing_row(shape, char_size)}\n#{opening_row(shape, char_size)}\n"
     else
-      String.duplicate("│", seps * 2)
+      ""
     end
   end
+
+  defp opening_row(shape, char_size) do
+    last_dim = elem(shape, tuple_size(shape) - 1)
+    "│┌┌#{String.duplicate(" ", (char_size + 1) * last_dim)}┐"
+  end
+
+  defp closing_row(shape, char_size) do
+    "└        ┘"
+  end
+
+  # Matrex[2×2×3×2×2]:int16
+  # ┌┌┌        ┐┌        ┐┌        ┐┐┐
+  # │││  1   2 ││  5   6 ││  9  10 │││
+  # │││  3   4 ││  7   8 ││ 11  12 │││
+  # ││└        ┘└        ┘└        ┘││
+  # ││┌        ┐┌        ┐┌        ┐││
+  # │││ 13  14 ││ 17  18 ││ 21  22 │││
+  # │││ 15  16 ││ 19  20 ││ 23  24 │││
+  # │└└        ┘└        ┘└        ┘┘│
+  # │┌┌        ┐┌        ┐┌        ┐┐│
+  # │││ 25  26 ││ 29  30 ││ 33  34 │││
+  # │││ 27  28 ││ 31  32 ││ 35  36 │││
+  # ││└        ┘└        ┘└        ┘││
+  # ││┌        ┐┌        ┐┌        ┐││
+  # │││ 37  38 ││ 41  42 ││ 45  46 │││
+  # │││ 39  40 ││ 43  44 ││ 47  48 │││
+  # └└└        ┘└        ┘└        ┘┘┘
+
+  # Matrex[2×2×3]:int16
+  # ┌┌            ┐┐
+  # ││  1   2   3 ││
+  # ││  4   5   6 ││
+  # │└            ┘│
+  # │┌            ┐│
+  # ││  7   8   9 ││
+  # ││ 10  11  12 ││
+  # └└            ┘┘
 
   # End of multi-dimensional.
 
@@ -244,7 +305,7 @@ defmodule Matrex.Inspect do
   end
 
   defp row_to_list_of_binaries(
-         %Matrex{data: data, shape: {rows, columns}, type: :bool} = matrex,
+         %Matrex{data: _data, shape: {rows, columns}, type: :bool} = matrex,
          row
        )
        when row <= rows,
