@@ -112,6 +112,13 @@ defmodule Matrex.Array do
 
   def set(array, row, col, value), do: set(array, {row, col}, value)
 
+  defp random_cell(:float32), do: :rand.uniform()
+  defp random_cell(:float64), do: :rand.uniform()
+  defp random_cell(:byte), do: :rand.uniform(256) - 1
+  defp random_cell(:int32), do: :rand.uniform(65_536) - 1
+  defp random_cell(:int32), do: :rand.uniform(2_147_483_647 * 2) - 1
+  defp random_cell(:int64), do: :rand.uniform(18_446_744_073_709_551_615) - 1
+
   types = [
     float64: {:float, 64},
     float32: {:float, 32},
