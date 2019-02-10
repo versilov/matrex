@@ -1,6 +1,6 @@
 language: elixir
-elixir: '1.4'
-otp_release: '19.0'
+elixir: '1.5'
+otp_release: '20.0'
 
 before_install:
   - sudo apt-get install build-essential erlang-dev libatlas-base-dev
