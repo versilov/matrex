@@ -282,6 +282,16 @@ defmodule ArithmeticTest do
                Float.round(:math.exp(at(input, 325, 414)), 5)
     end
 
+    test "#apply/2 applies function to matirx with special values of type #{type}" do
+      input = new([[4.5, :inf, 9.1], [:nan, 49.7, :neg_inf]], unquote(type))
+      expected = new([[5, :inf, 9], [:nan, 50, :neg_inf]], unquote(type))
+
+      assert Matrex.apply(input, fn
+               x when is_float(x) -> Float.round(x)
+               other -> other
+             end) == expected
+    end
+
     test "#divide divides matrix by zero of type #{type}" do
       dividend = new([[10, 20, 25], [8, 9, 4]], unquote(type))
       expected = new("Inf Inf Inf; Inf Inf Inf", unquote(type))

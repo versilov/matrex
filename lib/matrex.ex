@@ -471,6 +471,12 @@ defmodule Matrex do
     end
   end
 
+  defmacrop size_of_type() do
+    {_type, size} = Module.get_attribute(__CALLER__.module, :type_and_size)
+
+    quote do: size(unquote(size))
+  end
+
   @spec call_nif(atom, type, list) :: any
   defp call_nif(func, type, args), do: Kernel.apply(NIFs, :"#{func}_#{type}", args)
 
@@ -1816,16 +1822,20 @@ defmodule Matrex do
     def unquote(:"apply_on_matrix_#{@guard}")(<<>>, _, accumulator), do: accumulator
 
     def unquote(:"apply_on_matrix_#{@guard}")(
-          <<value::type_and_size(), rest::binary>>,
+          <<value::size_of_type(), rest::binary>>,
           function,
           accumulator
         ) do
-      new_value = function.(value)
+      new_value =
+        <<value::size_of_type()>>
+        |> binary_to_element(unquote(guard))
+        |> function.()
+        |> element_to_binary(unquote(guard))
 
       unquote(:"apply_on_matrix_#{@guard}")(
         rest,
         function,
-        <<accumulator::binary, new_value::type_and_size()>>
+        <<accumulator::binary, new_value::binary>>
       )
     end
 
@@ -1833,20 +1843,24 @@ defmodule Matrex do
     def unquote(:"apply_on_matrix_#{@guard}")(<<>>, _, _, _, accumulator), do: accumulator
 
     def unquote(:"apply_on_matrix_#{@guard}")(
-          <<value::type_and_size(), rest::binary>>,
+          <<value::size_of_type(), rest::binary>>,
           function,
           pos,
           shape,
           accumulator
         ) do
-      new_value = function.(value, pos)
+      new_value =
+        <<value::size_of_type()>>
+        |> binary_to_element(unquote(guard))
+        |> function.(pos)
+        |> element_to_binary(unquote(guard))
 
       unquote(:"apply_on_matrix_#{@guard}")(
         rest,
         function,
         next_pos(pos, shape),
         shape,
-        <<accumulator::binary, new_value::type_and_size()>>
+        <<accumulator::binary, new_value::binary>>
       )
     end
 
@@ -1854,14 +1868,20 @@ defmodule Matrex do
     def unquote(:"apply_on_matrices_#{@guard}")(<<>>, <<>>, _, accumulator), do: accumulator
 
     def unquote(:"apply_on_matrices_#{@guard}")(
-          <<first_value::type_and_size(), first_rest::binary>>,
-          <<second_value::type_and_size(), second_rest::binary>>,
+          <<first_value::size_of_type(), first_rest::binary>>,
+          <<second_value::size_of_type(), second_rest::binary>>,
           function,
           accumulator
         )
         when is_function(function, 2) do
-      new_value = function.(first_value, second_value)
-      new_accumulator = <<accumulator::binary, new_value::type_and_size()>>
+      new_value =
+        function.(
+          binary_to_element(<<first_value::size_of_type()>>, unquote(guard)),
+          binary_to_element(<<second_value::size_of_type()>>, unquote(guard))
+        )
+        |> element_to_binary(unquote(guard))
+
+      new_accumulator = <<accumulator::binary, new_value::binary>>
 
       unquote(:"apply_on_matrices_#{@guard}")(first_rest, second_rest, function, new_accumulator)
     end
@@ -1874,7 +1894,7 @@ defmodule Matrex do
         unquote(:"new_matrix_from_function_#{@guard}")(
           size - 1,
           function,
-          <<accumulator::binary, function.()::type_and_size()>>
+          <<accumulator::binary, element_to_binary(function.(), unquote(guard))::binary>>
         )
 
     @doc false
@@ -1887,7 +1907,8 @@ defmodule Matrex do
           function,
           accumulator
         ) do
-      new_accumulator = <<accumulator::binary, function.(pos)::type_and_size()>>
+      new_accumulator =
+        <<accumulator::binary, element_to_binary(function.(pos), unquote(guard))::binary>>
 
       unquote(:"new_matrix_from_function_#{@guard}")(
         size - 1,
