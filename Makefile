@@ -48,9 +48,11 @@ endif
 
 else  # Linux
 	CFLAGS += -shared
-	LDFLAGS += -lm -lcblas
+	LDFLAGS += -lm
 
-ifeq ($(BLAS), openblas)
+ifeq ($(BLAS), blas)
+	LDFLAGS += -lcblas
+else ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
 else ifeq ($(BLAS), atlas)
 	LDFLAGS += -latlas
