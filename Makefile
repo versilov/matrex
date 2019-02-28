@@ -58,7 +58,7 @@ endif
 
 else ifeq ($(COMPILE_ARCH), linux) # Linux
 	CFLAGS += -shared
-	LDFLAGS += -lm -lcblas
+	LDFLAGS += -lm 
 
 ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
