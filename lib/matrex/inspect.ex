@@ -7,6 +7,9 @@ defmodule Matrex.Inspect do
   def do_inspect(%Matrex{type: type} = matrex, screen_width \\ 80, display_rows \\ 21),
     do: do_inspect(matrex, screen_width, display_rows, element_chars_size(type))
 
+  ###############################
+  # 2-D matrices display
+  ###############################
   defp do_inspect(
          %Matrex{
            shape: {rows, columns} = shape,
@@ -97,7 +100,9 @@ defmodule Matrex.Inspect do
     "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
 
+  ############################################
   # Multi-dimensional matrix printing
+  ############################################
 
   # Our goal:
   # Matrex[2×2×3×2×2]:int32
@@ -127,16 +132,17 @@ defmodule Matrex.Inspect do
     # Position of the very first element.
     pos = Tuple.duplicate(1, tuple_size(shape))
 
-    "#{header(shape, type)}\n#{print_elem(matrex, shape, pos, element_chars_size)}"
+    "#{header(shape, type)}\n#{top_row(shape, element_chars_size)}\n#{leading_seps(shape)}#{
+      print_elem(matrex, shape, pos, element_chars_size)
+    }#{IO.ANSI.reset()}#{bottom_row(shape, element_chars_size)}"
   end
 
   # Last element reached.
   defp print_elem(_, _, nil, _), do: ""
 
-  defp print_elem(%Matrex{} = matrex, shape, pos, chars_size) do
-    "#{String.pad_leading(inspect(M.at(matrex, pos)), chars_size)} #{
-      separators(shape, pos, chars_size)
-    }" <> print_elem(matrex, shape, next_pos(pos, shape), chars_size)
+  defp print_elem(%Matrex{type: type} = matrex, shape, pos, chars_size) do
+    "#{format_elem(M.at(matrex, pos), type)} #{separators(shape, pos, chars_size)}" <>
+      print_elem(matrex, shape, next_pos(pos, shape), chars_size)
   end
 
   # Catch all for unexpected situations
@@ -171,6 +177,11 @@ defmodule Matrex.Inspect do
 
   # defp dims_order(n) when is_odd(n), do: [n-1 | ]
 
+  defp leading_seps(shape) do
+    seps_count = (tuple_size(shape) / 2) |> Float.round() |> trunc()
+    String.duplicate("│", seps_count)
+  end
+
   # Should we start a new line now?
   defp separators(shape, pos, char_size) do
     ndims = (tuple_size(shape) / 2) |> trunc()
@@ -185,6 +196,10 @@ defmodule Matrex.Inspect do
     seps_count =
       if elem(pos, hd(dims)) == elem(shape, hd(dims)) do
         Enum.count(dims, &(elem(pos, &1) == elem(shape, &1)))
+
+        Enum.reduce_while(dims, 0, fn dim, acc ->
+          if elem(pos, dim) == elem(shape, dim), do: {:cont, acc + 1}, else: {:halt, acc}
+        end)
       else
         0
       end
@@ -196,7 +211,11 @@ defmodule Matrex.Inspect do
     separators =
       if Enum.all?(dims, &(elem(pos, &1) == elem(shape, &1))) do
         String.duplicate("│", seps_count + extra_sep) <>
-          "\n" <> new_row(shape, pos, char_size) <> String.duplicate("│", seps_count + extra_sep)
+          "\n" <>
+          new_row(shape, pos, char_size) <>
+          unless last_pos?(pos, shape),
+            do: String.duplicate("│", seps_count + extra_sep),
+            else: ""
       else
         String.duplicate("│", seps_count * 2)
       end
@@ -204,7 +223,11 @@ defmodule Matrex.Inspect do
     "#{IO.ANSI.reset()}#{separators}#{IO.ANSI.yellow()}"
   end
 
+  # Last position in this matrix?
+  defp last_pos?(pos, shape), do: pos == shape
+
   # Should we start new matrices row?
+  defp new_row(x, x, _), do: ""
   defp new_row({_, x, y}, {_, x, y}, _), do: "\n"
   defp new_row({_, _, _}, {_, _, _}, _), do: ""
 
@@ -212,19 +235,22 @@ defmodule Matrex.Inspect do
     last_dim = tuple_size(shape) - 1
 
     if Enum.all?((last_dim - 2)..last_dim, &(elem(pos, &1) == elem(shape, &1))) do
-      "#{closing_row(shape, char_size)}\n#{opening_row(shape, char_size)}\n"
+      "#{closing_row(shape, pos, char_size)}\n#{opening_row(shape, pos, char_size)}\n"
     else
       ""
     end
   end
 
-  defp opening_row(shape, char_size) do
-    last_dim = elem(shape, tuple_size(shape) - 1)
-    "│┌┌#{String.duplicate(" ", (char_size + 1) * last_dim)}┐"
+  def opening_row(shape, pos, char_size) do
+    top_row(shape, char_size)
+    |> String.replace_prefix("┌", "│")
+    |> String.replace_suffix("┐", "│")
   end
 
-  defp closing_row(shape, char_size) do
-    "└        ┘"
+  defp closing_row(shape, pos, char_size) do
+    bottom_row(shape, char_size)
+    |> String.replace_prefix("└", "│")
+    |> String.replace_suffix("┘", "│")
   end
 
   # Matrex[2×2×3×2×2]:int16
@@ -245,6 +271,24 @@ defmodule Matrex.Inspect do
   # │││ 39  40 ││ 43  44 ││ 47  48 │││
   # └└└        ┘└        ┘└        ┘┘┘
 
+  # Matrex[2×2×2×3×2×2]:byte
+  # ┌┌┌        ┐┌        ┐┌        ┐┐┌┌        ┐┌        ┐┌        ┐┐┐
+  # │││  1   2 ││  5   6 ││  9  10 ││││  1   2 ││  5   6 ││  9  10 │││
+  # │││  3   4 ││  7   8 ││ 11  12 ││││  3   4 ││  7   8 ││ 11  12 │││
+  # ││└        ┘└        ┘└        ┘││└        ┘└        ┘└        ┘││
+  # ││┌        ┐┌        ┐┌        ┐││┌        ┐┌        ┐┌        ┐││
+  # │││ 13  14 ││ 17  18 ││ 21  22 ││││ 13  14 ││ 17  18 ││ 21  22 │││
+  # │││ 15  16 ││ 19  20 ││ 23  24 ││││ 15  16 ││ 19  20 ││ 23  24 │││
+  # │└└        ┘└        ┘└        ┘┘└└        ┘└        ┘└        ┘┘│
+  # │┌┌        ┐┌        ┐┌        ┐┐┌┌        ┐┌        ┐┌        ┐┐│
+  # │││ 25  26 ││ 29  30 ││ 33  34 ││││ 25  26 ││ 29  30 ││ 33  34 │││
+  # │││ 27  28 ││ 31  32 ││ 35  36 ││││ 27  28 ││ 31  32 ││ 35  36 │││
+  # ││└        ┘└        ┘└        ┘││└        ┘└        ┘└        ┘││
+  # ││┌        ┐┌        ┐┌        ┐││┌        ┐┌        ┐┌        ┐││
+  # │││ 37  38 ││ 41  42 ││ 45  46 ││││ 37  38 ││ 41  42 ││ 45  46 │││
+  # │││ 39  40 ││ 43  44 ││ 47  48 ││││ 39  40 ││ 43  44 ││ 47  48 │││
+  # └└└        ┘└        ┘└        ┘┘└└        ┘└        ┘└        ┘┘┘
+
   # Matrex[2×2×3]:int16
   # ┌┌            ┐┐
   # ││  1   2   3 ││
@@ -254,6 +298,33 @@ defmodule Matrex.Inspect do
   # ││  7   8   9 ││
   # ││ 10  11  12 ││
   # └└            ┘┘
+
+  # Matrex[2×3×2×2×1×1]:byte
+  # ┌┌┌     ┐┌     ┐┐┌┌     ┐┌     ┐┐┌┌     ┐┌     ┐┐┐
+  # │││   1 ││   2 ││││   5 ││   6 ││││   9 ││  10 │││
+  # ││└     ┘└     ┘││└     ┘└     ┘││└     ┘└     ┘││
+  # ││┌     ┐┌     ┐││┌     ┐┌     ┐││┌     ┐┌     ┐││
+  # │││   3 ││   4 ││││   7 ││   8 ││││  11 ││  12 │││
+  # │└└     ┘└     ┘┘└└     ┘└     ┘┘└└     ┘└     ┘┘│
+  # │┌┌     ┐┌     ┐┐┌┌     ┐┌     ┐┐┌┌     ┐┌     ┐┐│
+  # │││  13 ││  14 ││││  17 ││  18 ││││  21 ││  22 │││
+  # ││└     ┘└     ┘││└     ┘└     ┘││└     ┘└     ┘││
+  # ││┌     ┐┌     ┐││┌     ┐┌     ┐││┌     ┐┌     ┐││
+  # │││  15 ││  16 ││││  19 ││  20 ││││  23 ││  24 │││
+  # └└└     ┘└     ┘┘└└     ┘└     ┘┘└└     ┘└     ┘┘┘
+
+  # ┌┌┌      ┐┌      ┐┐┌┌      ┐┌      ┐┐┌┌      ┐┌      ┐┐┐
+  # │││111111││111211││││121111││121211││││131111││131211│││
+  # ││└      ┘└      ┘││└      ┘└      ┘││└      ┘└      ┘││
+  # ││┌      ┐┌      ┐││┌      ┐┌     ┐││┌     ┐┌     ┐││
+  # │││   3  ││    4 ││││    7 ││   8 ││││  11 ││  12 │││
+  # │└└      ┘└      ┘┘└└      ┘└     ┘┘└└     ┘└     ┘┘│
+  # │┌┌     ┐┌     ┐┐┌┌     ┐┌     ┐┐┌┌     ┐┌     ┐┐│
+  # │││   1 ││   2 ││││   5 ││   6 ││││   9 ││  10 │││
+  # ││└     ┘└     ┘││└     ┘└     ┘││└     ┘└     ┘││
+  # ││┌     ┐┌     ┐││┌     ┐┌     ┐││┌     ┐┌     ┐││
+  # │││   3 ││   4 ││││   7 ││   8 ││││  11 ││  12 │││
+  # └└└     ┘└     ┘┘└└     ┘└     ┘┘└└     ┘└     ┘┘┘
 
   # End of multi-dimensional.
 
@@ -266,6 +337,25 @@ defmodule Matrex.Inspect do
 
   @spec top_row(pos_integer) :: binary
   defp top_row(length), do: "#{IO.ANSI.reset()}┌#{String.pad_trailing("", length)}┐"
+
+  # Top row naive experiment
+  @spec top_row(tuple(), :bool | :byte | :float32 | :float64 | :int16 | :int32 | :int64) ::
+          <<_::48, _::_*8>>
+  def top_row({_rows, cols}, csize), do: "┌#{String.pad_trailing("", (csize + 1) * cols)}┐"
+
+  def top_row({_rows1, rows, cols}, csize), do: "┌#{top_row({rows, cols}, csize)}┐"
+
+  def top_row({_rows1, cols1, rows, cols}, csize),
+    do: "┌#{String.duplicate(top_row({rows, cols}, csize), cols1)}┐"
+
+  def top_row({_rows2, _rows1, cols1, rows, cols}, csize),
+    do: "┌┌#{String.duplicate(top_row({rows, cols}, csize), cols1)}┐┐"
+
+  def top_row({_rows2, cols2, rows1, cols1, rows, cols}, csize),
+    do: "┌#{String.duplicate(top_row({rows1, cols1, rows, cols}, csize), cols2)}┐"
+
+  def bottom_row(shape, csize),
+    do: top_row(shape, csize) |> String.replace("┌", "└") |> String.replace("┐", "┘")
 
   @spec bottom_row(pos_integer) :: binary
   defp bottom_row(length), do: "#{IO.ANSI.reset()}└#{String.pad_trailing("", length)}┘"
@@ -440,6 +530,9 @@ defmodule Matrex.Inspect do
     do: Integer.to_string(e) |> String.pad_leading(element_chars_size(type))
 
   defp format_elem(b, :bool = type), do: String.pad_leading("#{b}", element_chars_size(type))
+
+  defp format_elem(f, :float32), do: format_elem(f)
+  defp format_elem(f, :float64), do: format_elem(f)
 
   defp format_elem(f) when is_float(f) do
     f
