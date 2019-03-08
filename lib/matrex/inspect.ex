@@ -133,8 +133,10 @@ defmodule Matrex.Inspect do
     pos = Tuple.duplicate(1, tuple_size(shape))
 
     "#{header(shape, type)}\n#{top_row(shape, element_chars_size)}\n#{leading_seps(shape)}#{
-      print_elem(matrex, shape, pos, element_chars_size)
-    }#{IO.ANSI.reset()}#{bottom_row(shape, element_chars_size)}"
+      digit_color()
+    }#{print_elem(matrex, shape, pos, element_chars_size)}#{IO.ANSI.reset()}#{
+      bottom_row(shape, element_chars_size)
+    }"
   end
 
   # Last element reached.
@@ -220,7 +222,7 @@ defmodule Matrex.Inspect do
         String.duplicate("│", seps_count * 2)
       end
 
-    "#{IO.ANSI.reset()}#{separators}#{IO.ANSI.yellow()}"
+    "#{IO.ANSI.reset()}#{separators}#{digit_color()}"
   end
 
   # Last position in this matrix?
@@ -371,11 +373,11 @@ defmodule Matrex.Inspect do
     |> format_row_head_tail(suffix_size, 0, type)
   end
 
-  defp format_row(%Matrex{} = matrex, row, _rows, columns, suffix_size, prefix_size)
+  defp format_row(%Matrex{type: type} = matrex, row, _rows, columns, suffix_size, prefix_size)
        when suffix_size + prefix_size >= columns do
     matrex
     |> row_to_list_of_binaries(row)
-    |> Enum.map(&format_elem(&1))
+    |> Enum.map(&format_elem(&1, type))
     |> Enum.join()
   end
 
@@ -541,6 +543,8 @@ defmodule Matrex.Inspect do
     |> String.pad_leading(element_chars_size(:float32))
   end
 
+  # defp format_elem(<<f::float-little-32>>), do: format_elem(f)
+
   def ffloat(f) when is_float(f) do
     af = abs(f)
     frac = af - trunc(af)
@@ -624,10 +628,13 @@ defmodule Matrex.Inspect do
     shape_string =
       shape
       |> Tuple.to_list()
-      |> Enum.join("#{IO.ANSI.reset()}×#{IO.ANSI.yellow()}")
+      |> Enum.join("#{IO.ANSI.reset()}×#{digit_color()}")
 
-    "#{IO.ANSI.reset()}#Matrex[#{IO.ANSI.yellow()}#{shape_string}#{IO.ANSI.reset()}]:#{type}"
+    "#{IO.ANSI.reset()}#Matrex[#{digit_color()}#{shape_string}#{IO.ANSI.reset()}]:#{type}"
   end
+
+  # Colors
+  defp digit_color(), do: IO.ANSI.yellow()
 
   #
   # Heatmap
