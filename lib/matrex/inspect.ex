@@ -236,27 +236,35 @@ defmodule Matrex.Inspect do
   defp last_pos?(pos, shape), do: pos == shape
 
   # Should we start new matrices row?
+  # It's the last element of the matrix
   defp new_row(x, x, _), do: ""
-  defp new_row({_, x, y}, {_, x, y}, _), do: "\n"
-  defp new_row({_, _, _}, {_, _, _}, _), do: ""
 
   defp new_row(shape, pos, char_size) do
-    last_dim = tuple_size(shape) - 1
-
-    if Enum.all?((last_dim - 2)..last_dim, &(elem(pos, &1) == elem(shape, &1))) do
+    if last_element_in_row?(shape, pos) do
       "#{closing_row(shape, pos, char_size)}\n#{opening_row(shape, pos, char_size)}\n"
     else
       ""
     end
   end
 
-  def opening_row(shape, pos, char_size) do
+  # 3-dimensional matrices are special case
+  defp last_element_in_row?({_, _, _} = shape, pos) do
+    last_dim = tuple_size(shape) - 1
+    Enum.all?((last_dim - 1)..last_dim, &(elem(pos, &1) == elem(shape, &1)))
+  end
+
+  defp last_element_in_row?(shape, pos) do
+    last_dim = tuple_size(shape) - 1
+    Enum.all?((last_dim - 2)..last_dim, &(elem(pos, &1) == elem(shape, &1)))
+  end
+
+  def opening_row(shape, _pos, char_size) do
     top_row(shape, char_size)
     |> String.replace_prefix("┌", "│")
     |> String.replace_suffix("┐", "│")
   end
 
-  defp closing_row(shape, pos, char_size) do
+  def closing_row(shape, _pos, char_size) do
     bottom_row(shape, char_size)
     |> String.replace_prefix("└", "│")
     |> String.replace_suffix("┘", "│")
@@ -542,6 +550,9 @@ defmodule Matrex.Inspect do
 
   defp format_elem(f, :float32), do: format_elem(f)
   defp format_elem(f, :float64), do: format_elem(f)
+
+  defp format_elem(b, :byte),
+    do: Integer.to_string(b) |> String.pad_leading(element_chars_size(:byte))
 
   defp format_elem(f) when is_float(f) do
     f
