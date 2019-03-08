@@ -671,8 +671,15 @@ defmodule Matrex.Inspect do
 
     1..n_lines
     |> Enum.map(fn rp ->
-      top_row = m[rp * 2 - 1]
-      bottom_row = if rp * 2 <= m[:rows], do: m[rp * 2], else: nil
+      # Special treatment for one-row matrices
+      top_row_index = rp * 2 - 1
+      top_row = M.submatrix(m, top_row_index..top_row_index, 1..m[:cols])
+
+      bottom_row =
+        if rp * 2 <= m[:rows],
+          do: M.submatrix(m, (top_row_index + 1)..(top_row_index + 1), 1..m[:cols]),
+          else: nil
+
       {rows_pair, _, _} = rows_pair_to_ascii(top_row, bottom_row, mn, range, type)
 
       <<"#{row_prefix(at_opts, rp + 1)}│", rows_pair::binary, "\e[0m│">>
