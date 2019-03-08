@@ -2485,9 +2485,9 @@ defmodule Matrex do
     do: matrex
 
   def reshape(
-        %Matrex{shape: shape} = matrex,
+        %Matrex{shape: shape, type: type} = matrex,
         new_shape,
-        type
+        _type
       )
       when is_tuple(new_shape),
       do:
