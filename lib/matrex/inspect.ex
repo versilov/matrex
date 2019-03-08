@@ -30,11 +30,15 @@ defmodule Matrex.Inspect do
       )
 
     row_length =
-      String.length(List.first(rows_as_strings) |> String.replace(@ansi_formatting, "") || "") + 1
+      String.length(List.first(rows_as_strings) |> String.replace(@ansi_formatting, "") || "") +
+        String.length(pad_row_end(type))
 
-    contents_str = rows_as_strings |> Enum.join(IO.ANSI.reset() <> " │\n│" <> IO.ANSI.yellow())
+    contents_str =
+      rows_as_strings
+      |> Enum.join(IO.ANSI.reset() <> pad_row_end(type) <> "│\n│" <> digit_color())
 
-    contents_str = <<"│#{IO.ANSI.yellow()}", contents_str::binary, " #{IO.ANSI.reset()}│">>
+    contents_str =
+      <<"│#{digit_color()}", contents_str::binary, pad_row_end(type) <> "#{IO.ANSI.reset()}│">>
 
     "#{header(shape, type)}\n#{top_row(row_length)}\n#{contents_str}\n#{bottom_row(row_length)}"
   end
@@ -46,6 +50,9 @@ defmodule Matrex.Inspect do
   defp element_chars_size(:int64), do: 10
   defp element_chars_size(:float32), do: 8
   defp element_chars_size(:float64), do: 8
+
+  defp pad_row_end(:bool), do: ""
+  defp pad_row_end(_), do: " "
 
   defp do_inspect(
          %Matrex{
