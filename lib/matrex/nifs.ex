@@ -19,7 +19,14 @@ defmodule Matrex.NIFs do
           path
       end
 
-    :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0)
+    case :erlang.load_nif(:filename.join(priv_dir, "matrix_nifs"), 0) do
+      :ok ->
+        :ok
+
+      {:error, {:load_failed, reason}} ->
+        IO.warn("Error loading NIF #{reason}")
+        :ok
+    end
   end
 
   @spec add(binary, binary, number, number) :: binary
