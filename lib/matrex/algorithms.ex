@@ -545,9 +545,9 @@ defmodule Matrex.Algorithms do
       |> Matrex.new()
 
     # Visualize solutions
-    solutions
-    |> Matrex.to_list_of_lists()
-    |> Enum.each(&(Matrex.reshape(tl(&1), {28, 28}) |> Matrex.heatmap()))
+    # solutions
+    # |> Matrex.to_list_of_lists()
+    # |> Enum.each(&(Matrex.reshape(tl(&1), {28, 28}) |> Matrex.heatmap()))
 
     # x_test = Matrex.load("test/data/Xtest.mtx.gz") |> Matrex.normalize()
     # x_test = Matrex.concat(Matrex.ones(x_test[:rows], 1), x_test)
@@ -745,11 +745,11 @@ defmodule Matrex.Algorithms do
     m = x[:rows]
 
     h1 =
-      Matrex.concat(Matrex.ones(m, 1), x)
+      Matrex.concat(Matrex.ones({m, 1}), x)
       |> Matrex.dot_nt(theta1)
       |> Matrex.apply(:sigmoid)
 
-    Matrex.concat(Matrex.ones(m, 1), h1)
+    Matrex.concat(Matrex.ones({m, 1}), h1)
     |> Matrex.dot_nt(theta2)
     |> Matrex.apply(:sigmoid)
   end
@@ -815,7 +815,7 @@ defmodule Matrex.Algorithms do
 
         theta2 =
           sX[(@hidden_layer_size * (@input_layer_size + 1) + 1)..sX[:rows]]
-          |> Matrex.reshape(@num_labels, @hidden_layer_size + 1)
+          |> Matrex.reshape({@num_labels, @hidden_layer_size + 1})
 
         predictions = Matrex.Algorithms.nn_predict(theta1, theta2, x_test)
 
@@ -825,8 +825,8 @@ defmodule Matrex.Algorithms do
             acc + 1
           else
             # Show wrongful predictions
-            x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
-            IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
+            # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+            # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
             acc
           end
         end)
