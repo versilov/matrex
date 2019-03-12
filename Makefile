@@ -34,11 +34,21 @@ else ifeq ($(BLAS), noblas)
 	CFLAGS += -D MATREX_NO_BLAS
 endif
 
+# Determine Platform, and check for override $ARCH var
+COMPILE_ARCH=linux
+ifeq ($(shell uname -s), Darwin)
+	COMPILE_ARCH=darwin
+endif
+
+ifeq ($(findstring linux,$(CC)),linux)
+	COMPILE_ARCH=linux
+endif
 
 # MacOS needs extra flags to link successfully
-ifeq ($(shell uname -s), Darwin)
+ifeq ($(COMPILE_ARCH), darwin)
 	LDFLAGS +=  -flat_namespace -undefined suppress
 
+## MacOS BLAS
 ifeq ($(BLAS), openblas)
 	CFLAGS += -I/usr/local/opt/openblas/include
 	LDFLAGS += -L/usr/local/opt/openblas/lib
@@ -46,18 +56,18 @@ else ifeq ($(BLAS), blas)
 	CFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers
 endif
 
-else  # Linux
+else ifeq ($(COMPILE_ARCH), linux) # Linux
 	CFLAGS += -shared
-	LDFLAGS += -lm
+	LDFLAGS += -lm 
 
-ifeq ($(BLAS), blas)
-	LDFLAGS += -lcblas
-else ifeq ($(BLAS), openblas)
+ifeq ($(BLAS), openblas)
 	LDFLAGS += -lopenblas
 else ifeq ($(BLAS), atlas)
 	LDFLAGS += -latlas
 endif
 
+else
+	$(error var was not specified at commandline!)
 endif
 
 # For compiling and linking the test runner.
@@ -167,6 +177,8 @@ build: $(OBJECTS_DIRECTORIES) $(OBJECTS) $(PRIV_DIRECTORY) $(NIFS_OBJECTS)
 # Target for creating directories for the C object files.
 $(OBJECTS_DIRECTORIES):
 	@mkdir -p $(OBJECTS_DIRECTORIES)
+	@echo 'Compile Arch: '$(COMPILE_ARCH)
+	@echo 'Library BLAS: '$(BLAS)
 
 # Target for creating object files from C source files.
 # Each object file depends on it's corresponding C source file for compilation.
@@ -286,3 +298,4 @@ ci:
 	@make test
 	@mix coveralls.travis
 	@mix dialyzer --halt-exit-status
+
