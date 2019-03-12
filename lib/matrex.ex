@@ -528,7 +528,7 @@ defmodule Matrex do
   def fetch(%Matrex{shape: {rows, _}}, :rows), do: {:ok, rows}
   def fetch(%Matrex{shape: {_, cols}}, :cols), do: {:ok, cols}
   def fetch(%Matrex{shape: {_, cols}}, :columns), do: {:ok, cols}
-  def fetch(%Matrex{shape: {rows, cols}}, :size), do: {:ok, {rows, cols}}
+  def fetch(%Matrex{shape: shape}, :size), do: {:ok, shape}
   def fetch(matrex, :sum), do: {:ok, sum(matrex)}
   def fetch(matrex, :max), do: {:ok, max(matrex)}
   def fetch(matrex, :min), do: {:ok, min(matrex)}
