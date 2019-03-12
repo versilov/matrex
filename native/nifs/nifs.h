@@ -1027,12 +1027,6 @@ TYPED_NIF(submatrix, TYPE_NAME)
   enif_get_uint64(env, argv[5], &column_to);
 
   matrix_data = (TYPE *)matrix.data;
-  rows = MX_ROWS(matrix_data);
-  cols = MX_COLS(matrix_data);
-
-  if (row_from >= rows || column_from >= cols || row_to >= rows || column_to >= cols)
-    return enif_raise_exception(env, enif_make_string(env,
-                                                      "Submatrix position out of bounds.", ERL_NIF_LATIN1));
 
   rows = row_to - row_from + 1;
   cols = column_to - column_from + 1;
