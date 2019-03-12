@@ -12,6 +12,8 @@ defmodule Matrex.MixProject do
       deps: deps(),
       package: package(),
       make_clean: ["clean"],
+      make_env: %{ "MATREX_BLAS" => Application.get_env(:matrex, :blas, System.get_env("MATREX_BLAS")) },
+
       compilers: [:elixir_make] ++ Mix.compilers(),
       aliases: aliases(),
       preferred_cli_env: ["bench.matrex": :bench, docs: :docs],

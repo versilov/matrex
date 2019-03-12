@@ -177,10 +177,8 @@ build: $(OBJECTS_DIRECTORIES) $(OBJECTS) $(PRIV_DIRECTORY) $(NIFS_OBJECTS)
 # Target for creating directories for the C object files.
 $(OBJECTS_DIRECTORIES):
 	@mkdir -p $(OBJECTS_DIRECTORIES)
-	echo COMPILE_ARCH: $(COMPILE_ARCH)
-	echo ARCH: $(CC)
-	echo FINDSTR: $(findstring linux,$(CC))
-	echo MATREX_BLAS: $(MATREX_BLAS)
+	@echo 'Compile Arch: '$(COMPILE_ARCH)
+	@echo 'Library BLAS: '$(BLAS)
 
 # Target for creating object files from C source files.
 # Each object file depends on it's corresponding C source file for compilation.
