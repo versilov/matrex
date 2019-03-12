@@ -467,7 +467,7 @@ defmodule Matrex.Algorithms do
       IO.puts("#{IO.ANSI.home()}")
 
       theta[2..785]
-      |> Matrex.reshape(28, 28)
+      |> Matrex.reshape({28, 28})
       |> Dashboard.heatmap(
         digit,
         :mono256,
@@ -545,9 +545,9 @@ defmodule Matrex.Algorithms do
       |> Matrex.new()
 
     # Visualize solutions
-    # solutions
-    # |> Matrex.to_list_of_lists()
-    # |> Enum.each(&(Matrex.reshape(tl(&1), 28, 28) |> Matrex.heatmap()))
+    solutions
+    |> Matrex.to_list_of_lists()
+    |> Enum.each(&(Matrex.reshape(tl(&1), {28, 28}) |> Matrex.heatmap()))
 
     # x_test = Matrex.load("test/data/Xtest.mtx.gz") |> Matrex.normalize()
     # x_test = Matrex.concat(Matrex.ones(x_test[:rows], 1), x_test)
@@ -638,9 +638,9 @@ defmodule Matrex.Algorithms do
       |> M.reshape({num_labels, hidden_layer_size + 1})
 
     # IO.write(IO.ANSI.home())
-    #
+
     # data_side_size = trunc(:math.sqrt(theta1[:cols]))
-    #
+
     # theta1
     # |> Matrex.submatrix(1..theta1[:rows], 2..theta1[:cols])
     # |> visual_net({5, 5}, {data_side_size, data_side_size})
@@ -758,8 +758,8 @@ defmodule Matrex.Algorithms do
   # Group these matrices into a rows x cols big matrix for visualization
   defp visual_net(theta, {rows, cols} = _visu_size, {n_rows, n_cols} = _neuron_size) do
     1..theta[:rows]
-    |> Enum.map(&(theta[&1] |> Matrex.reshape(n_rows, n_cols)))
-    |> Matrex.reshape(rows, cols)
+    |> Enum.map(&(theta[&1] |> Matrex.reshape({n_rows, n_cols})))
+    |> Matrex.reshape({rows, cols})
   end
 
   @sample_side_size 20
@@ -811,7 +811,7 @@ defmodule Matrex.Algorithms do
         # Unpack thetas from the found solution
         theta1 =
           sX[1..(@hidden_layer_size * (@input_layer_size + 1))]
-          |> Matrex.reshape(@hidden_layer_size, @input_layer_size + 1)
+          |> Matrex.reshape({@hidden_layer_size, @input_layer_size + 1})
 
         theta2 =
           sX[(@hidden_layer_size * (@input_layer_size + 1) + 1)..sX[:rows]]
@@ -825,8 +825,8 @@ defmodule Matrex.Algorithms do
             acc + 1
           else
             # Show wrongful predictions
-            # x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
-            # IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
+            x[row][2..785] |> Matrex.reshape(28, 28) |> Matrex.heatmap()
+            IO.puts("#{y[row]} != #{predictions[row][:argmax]}")
             acc
           end
         end)
