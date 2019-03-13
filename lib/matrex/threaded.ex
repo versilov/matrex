@@ -19,7 +19,14 @@ defmodule Matrex.Threaded do
           path
       end
 
-    :ok = :erlang.load_nif(:filename.join(priv_dir, "matrix_threaded_nifs"), 0)
+    case :erlang.load_nif(:filename.join(priv_dir, "matrix_threaded_nifs"), 0) do
+      :ok ->
+        :ok
+
+      {:error, {:load_failed, reason}} ->
+        IO.warn("Error loading NIF #{reason}")
+        :ok
+    end
   end
 
   def apply_math(matrix, function)
