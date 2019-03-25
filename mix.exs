@@ -20,14 +20,15 @@ defmodule Matrex.MixProject do
       source_url: "https://github.com/versilov/matrex",
       dialyzer: dialyzer(),
       test_coverage: [tool: ExCoveralls],
-      docs: docs()
+      docs: docs(),
+      escript: escript()
     ]
   end
 
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: []
+      extra_applications: [:iex]
     ]
   end
 
@@ -127,5 +128,9 @@ defmodule Matrex.MixProject do
         "README.md"
       ]
     ]
+  end
+
+  defp escript() do
+    [main_module: Matrex.CLI]
   end
 end
