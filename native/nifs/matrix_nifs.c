@@ -483,6 +483,37 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
+solve(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  first, second;
+  ERL_NIF_TERM  result;
+  float        *first_data, *second_data, *result_data;
+  int64_t       data_size;
+  size_t        result_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &first )) return enif_make_badarg(env);
+  if (!enif_inspect_binary(env, argv[1], &second)) return enif_make_badarg(env);
+
+  first_data  = (float *) first.data;
+  second_data = (float *) second.data;
+
+  if (MX_COLS(first_data) != MX_COLS(second_data))
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
+  if (MX_ROWS(first_data) != MX_ROWS(second_data))
+    return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
+
+  data_size   =  MX_ROWS(first_data) + 2;
+
+  result_size = sizeof(float) * data_size;
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_solve(first_data, second_data, result_data);
+
+  return result;
+}
+
+static ERL_NIF_TERM
 eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
   unsigned long size;

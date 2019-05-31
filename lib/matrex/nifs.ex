@@ -128,6 +128,11 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second) and is_number(alpha),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec dot_solve(binary, binary) :: binary
+  def dot_solve(matrix, beta)
+      when is_binary(matrix) and is_binary(beta),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec eye(pos_integer, number) :: binary
   def eye(size, value)
       when is_integer(size) and is_number(value),
