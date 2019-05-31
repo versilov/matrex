@@ -1190,6 +1190,17 @@ defmodule Matrex do
 
   Raises `ErlangError` if matrices' sizes do not match.
 
+  ## Example
+
+      iex> Matrex.solve(
+      ...>   Matrex.new([[3, 4], [4, 8]]) |> Matrex.cholesky(),
+      ...>   Matrex.new([[1],[2]]))
+      #Matrex[2×1]
+      ┌         ┐
+      │ 0.57735 │
+      │ 0.40825 │
+      └         ┘
+
   """
   @spec solve(matrex, matrex) :: matrex
   def solve(
@@ -1211,16 +1222,12 @@ defmodule Matrex do
       iex> Matrex.new([[3, 4, 3], [4, 8, 6], [3, 6, 9]]) |>
       ...> Matrex.cholesky()
       #Matrex[3×3]
+      ┌                         ┐
+      │ 1.73205     0.0     0.0 │
+      │  2.3094 1.63299     0.0 │
+      │ 1.73205 1.22474 2.12132 │
+      └                         ┘
 
-      ┌                            ┐
-      │   1.73205  2.3094   1.73205  │
-      │   0.0      1.63299  1.22474  │
-      │   0.0      0.0       2.12132  │
-      └                 ┘
-
-       1.73205  2.3094   1.73205
-  0.0       1.63299  1.22474
-  0.0        0.0       2.12132
   """
   @spec cholesky(matrex) :: matrex
   def cholesky(
