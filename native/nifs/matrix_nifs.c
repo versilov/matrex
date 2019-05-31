@@ -483,7 +483,7 @@ dot_tn(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
 }
 
 static ERL_NIF_TERM
-solve(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
+forward_substitute(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
   ERL_NIF_TERM  result;
   float        *first_data, *second_data, *result_data;
@@ -1217,7 +1217,7 @@ static ErlNifFunc nif_functions[] = {
   {"dot_nt",               2, dot_nt,               0},
   {"dot_tn",               3, dot_tn,               0},
   {"cholesky",             1, cholesky,             0},
-  {"solve",                2, solve,                0},
+  {"forward_substitute",                2, forward_substitute,                0},
   {"eye",                  2, eye,                  0},
   {"fill",                 3, fill,                 0},
   {"find",                 2, find,                 0},

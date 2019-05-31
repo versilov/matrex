@@ -261,7 +261,7 @@ defmodule Matrex do
             dot_and_add: 3,
             dot_nt: 2,
             dot_tn: 2,
-            solve: 2,
+            forward_substitute: 2,
             cholesky: 1,
             eye: 1,
             element_to_string: 1,
@@ -1182,35 +1182,6 @@ defmodule Matrex do
       do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
 
   @doc """
-  Matrix solve. NIF, via simple forward substitution.
-
-  The first matrix must be square while the
-  number of columns of the first matrix must
-  equal the number of rows of the second.
-
-  Raises `ErlangError` if matrices' sizes do not match.
-
-  ## Example
-
-      iex> Matrex.solve(
-      ...>   Matrex.new([[3, 4], [4, 8]]) |> Matrex.cholesky(),
-      ...>   Matrex.new([[1],[2]]))
-      #Matrex[2×1]
-      ┌         ┐
-      │ 0.57735 │
-      │ 0.40825 │
-      └         ┘
-
-  """
-  @spec solve(matrex, matrex) :: matrex
-  def solve(
-        matrex_data(rows1, columns1, _data1, first),
-        matrex_data(rows2, columns2, _data2, second)
-      )
-      when rows1 == columns1 and rows1 == rows2 and columns2 == 1,
-      do: %Matrex{data: NIFs.solve(first, second)}
-
-  @doc """
   Matrix cholesky decompose. NIF, via naive implementation.
 
   The first matrix must be symmetric and positive definitive.
@@ -1235,6 +1206,35 @@ defmodule Matrex do
       )
       when rows1 == columns1,
       do: %Matrex{data: NIFs.cholesky(first)}
+
+  @doc """
+  Matrix forward substitution. NIF, via naive C implementation.
+
+  The first matrix must be square while the
+  number of columns of the first matrix must
+  equal the number of rows of the second.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.forward_substitute(
+      ...>   Matrex.new([[3, 4], [4, 8]]) |> Matrex.cholesky(),
+      ...>   Matrex.new([[1],[2]]))
+      #Matrex[2×1]
+      ┌         ┐
+      │ 0.57735 │
+      │ 0.40825 │
+      └         ┘
+
+  """
+  @spec forward_substitute(matrex, matrex) :: matrex
+  def forward_substitute(
+        matrex_data(rows1, columns1, _data1, first),
+        matrex_data(rows2, columns2, _data2, second)
+      )
+      when rows1 == columns1 and rows1 == rows2 and columns2 == 1,
+      do: %Matrex{data: NIFs.forward_substitute(first, second)}
 
   @doc """
   Create eye (identity) square matrix of given size.
