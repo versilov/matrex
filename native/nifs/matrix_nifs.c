@@ -531,7 +531,6 @@ cholesky(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
 
   data_size   =  MX_ROWS(first_data) * MX_COLS(first_data) + 2;
-
   result_size = sizeof(float) * data_size;
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 

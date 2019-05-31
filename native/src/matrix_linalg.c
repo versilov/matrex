@@ -19,8 +19,8 @@ matrix_cholesky(const Matrix matrix, Matrix result) {
   size_t N = MX_ROWS(matrix);
   size_t cols = MX_COLS(matrix);
 
-  for (size_t i = 0; i < data_size; i++)
-    result[i] = 0.0;
+  for (size_t i = 0; i < N*cols; i++)
+    result[2 + i] = 0.0;
 
   MX_SET_ROWS(result, N);
   MX_SET_COLS(result, N);
@@ -28,15 +28,13 @@ matrix_cholesky(const Matrix matrix, Matrix result) {
   for (size_t i = 0; i < N; i++)
       for (size_t k = 0; k < (i+1); k++) {
 
-          float ts = 0;
+          float ts = 0.0;
           for (size_t j = 0; j < k; j++)
             ts += result[2 + i*cols + j] * result[2 + k*cols + j];
 
-          float v = (i == k) ?
-                          sqrt(matrix[2 + i*cols + k] - ts) :
-                          (1.0 / result[2 + k*cols + k] * (result[2 + i*cols + k] - ts));
-
-          result[2 + i*cols + k] = v;
+          result[2 + i*cols + k] = (i == k) ?
+                          sqrt(fmax(matrix[2 + i*cols + i] - ts, 0.0)) :
+                          (1.0 / result[2 + k*cols + k]) * (matrix[2 + i*cols + k] - ts);
       }
 
 }

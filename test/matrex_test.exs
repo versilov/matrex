@@ -349,13 +349,13 @@ defmodule MatrexTest do
       [ 0.0    , 0.392758 , 0.0978632,  0.115377 ,  0.115243 ],
       [ 0.0    ,  0.0     , 0.393137 ,  0.0838399,  0.0762048],
       [ 0.0    ,  0.0     ,  0.0     ,  0.369894 ,  0.0729279],
-      [ 0.0    ,  0.0     ,  0.0     ,   0.0     ,  0.362245 ],
+      [ 0.0    ,  0.0     ,  0.0     ,   0.0     ,  0.362246 ],
     ]) |> Matrex.transpose()
 
     result = Matrex.cholesky(first)
-    IO.inspect(result, label: :RESULT)
+    # IO.inspect(result, label: :RESULT)
 
-    assert result == expected
+    assert Matrex.sum(Matrex.subtract(result, expected)) < 1.0e-6
   end
 
   test "#find returns position tuple of the element" do
