@@ -262,6 +262,7 @@ defmodule Matrex do
             dot_nt: 2,
             dot_tn: 2,
             solve: 2,
+            cholesky: 1,
             eye: 1,
             element_to_string: 1,
             fill: 3,
@@ -1197,6 +1198,21 @@ defmodule Matrex do
       )
       when rows1 == columns1 and rows1 == rows2 and columns2 == 1,
       do: %Matrex{data: NIFs.solve(first, second)}
+
+  @doc """
+  Matrix cholesky decompose. NIF, via naive implementation.
+
+  The first matrix must be square and positive definitive.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  """
+  @spec cholesky(matrex) :: matrex
+  def cholesky(
+        matrex_data(rows1, columns1, _data1, first)
+      )
+      when rows1 == columns1,
+      do: %Matrex{data: NIFs.cholesky(first)}
 
   @doc """
   Create eye (identity) square matrix of given size.

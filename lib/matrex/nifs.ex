@@ -128,6 +128,11 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second) and is_number(alpha),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec cholesky(binary) :: binary
+  def cholesky(matrix)
+      when is_binary(matrix),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec solve(binary, binary) :: binary
   def solve(matrix, beta)
       when is_binary(matrix) and is_binary(beta),

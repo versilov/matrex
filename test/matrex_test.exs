@@ -335,6 +335,29 @@ defmodule MatrexTest do
     assert Matrex.sum(Matrex.subtract(result, expected)) < 1.0e-6
   end
 
+  test "#decompose cholesky" do
+    first = Matrex.new([
+      [0.169684 ,  0.0511599,  0.0306869,  0.0460945,  0.0488367 ],
+      [0.0511599,  0.169684 ,  0.0476887,  0.0592127,  0.059987  ],
+      [0.0306869,  0.0476887,  0.169684 ,  0.0525878,  0.050069  ],
+      [0.0460945,  0.0592127,  0.0525878,  0.169684 ,  0.0599274 ],
+      [0.0488367,  0.059987 ,  0.050069 ,  0.0599274,  0.169684  ],
+    ])
+
+    expected = Matrex.new([
+      [0.411927, 0.124196,  0.0744958,  0.1119   ,  0.118557 ],
+      [ 0.0    , 0.392758 , 0.0978632,  0.115377 ,  0.115243 ],
+      [ 0.0    ,  0.0     , 0.393137 ,  0.0838399,  0.0762048],
+      [ 0.0    ,  0.0     ,  0.0     ,  0.369894 ,  0.0729279],
+      [ 0.0    ,  0.0     ,  0.0     ,   0.0     ,  0.362245 ],
+    ]) |> Matrex.transpose()
+
+    result = Matrex.cholesky(first)
+    IO.inspect(result, label: :RESULT)
+
+    assert result == expected
+  end
+
   test "#find returns position tuple of the element" do
     matrex = Matrex.reshape(1..100, 10, 10)
     assert Matrex.find(matrex, 11) == {2, 1}

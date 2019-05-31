@@ -4,7 +4,7 @@
 #include "matrix.h"
 
 void
-matrix_decomp_chol(const Matrix matrix, Matrix result);
+matrix_cholesky(const Matrix matrix, Matrix result);
 
 void
 matrix_solve(const Matrix matrix, const Matrix b, Matrix result);

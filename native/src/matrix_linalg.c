@@ -1,25 +1,42 @@
 #include "../include/matrix.h"
 
+/*
 
+S_ik = \sum_{j=1}^{k-1} ( l_ij * l_kj )
+
+if i == k do
+  l_kk = \sqrt{ a_kk - S_ik } 
+else
+  l_ik = \frac{1}{l_kk} \( a_ik - S_ik \)
+end
+
+*/
 
 void
-matrix_decomp_chol(const Matrix matrix, Matrix result) {
+matrix_cholesky(const Matrix matrix, Matrix result) {
   size_t data_size = MX_BYTE_SIZE(matrix);
 
-  memcpy(result, matrix, data_size);
   size_t N = MX_ROWS(matrix);
+  size_t cols = MX_COLS(matrix);
 
-  for (size_t r = 0; r < N; r++)
-      for (size_t c = 0; c < (r+1); c++) {
+  for (size_t i = 0; i < data_size; i++)
+    result[i] = 0.0;
+
+  MX_SET_ROWS(result, N);
+  MX_SET_COLS(result, N);
+
+  for (size_t i = 0; i < N; i++)
+      for (size_t k = 0; k < (i+1); k++) {
+
           float ts = 0;
-          for (size_t k = 0; k < c; k++)
-            ts += result[2 + r*N + k] * result[2 + c*N + k];
+          for (size_t j = 0; j < k; j++)
+            ts += result[2 + i*cols + j] * result[2 + k*cols + j];
 
-          float v = (r == c) ?
-                          sqrt(result[r * N + r] - ts) :
-                          (1.0 / result[c * N + c] * (result[2 + r*N + c] - ts));
+          float v = (i == k) ?
+                          sqrt(matrix[2 + i*cols + k] - ts) :
+                          (1.0 / result[2 + k*cols + k] * (result[2 + i*cols + k] - ts));
 
-          result[2 + r*N + c] = v;
+          result[2 + i*cols + k] = v;
       }
 
 }
@@ -30,7 +47,6 @@ v = zeros(N);
 
 for i in 1:N
     v[i] = ( cK[i] - sum(v .* L[i, :]) ) ./ L[i, i]
-    @show v
 end
 */
 
