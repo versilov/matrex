@@ -498,7 +498,7 @@ solve(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   first_data  = (float *) first.data;
   second_data = (float *) second.data;
 
-  if (MX_COLS(first_data) != MX_COLS(second_data))
+  if (MX_COLS(first_data) != MX_COLS(first_data))
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
   if (MX_ROWS(first_data) != MX_ROWS(second_data))
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
@@ -1190,6 +1190,7 @@ static ErlNifFunc nif_functions[] = {
   {"dot_and_apply",        3, dot_and_apply,        0},
   {"dot_nt",               2, dot_nt,               0},
   {"dot_tn",               3, dot_tn,               0},
+  {"solve",                2, solve,                0},
   {"eye",                  2, eye,                  0},
   {"fill",                 3, fill,                 0},
   {"find",                 2, find,                 0},

@@ -37,6 +37,7 @@ end
 void
 matrix_solve(const Matrix matrix, const Matrix beta, Matrix result) {
   const size_t N = MX_ROWS(matrix);
+  const size_t cols = MX_COLS(matrix);
 
   MX_SET_ROWS(result, N);
   MX_SET_COLS(result, 1);
@@ -45,12 +46,13 @@ matrix_solve(const Matrix matrix, const Matrix beta, Matrix result) {
     result[2 + i] = 0.0;
 
   for (size_t r = 0; r < N; r++) {
-    // sum(v .* L[i, :])
-    float ts = 0;
-    for (size_t c = 0; c < N; c++)
-      ts += result[2 + r*N + c] * matrix[2 + r*N + c];
+    const int64_t elem_offset = 2 + r*cols;
+    // sum( v .* L[r,:] )
+    float row_sum = 0.0;
+    for (size_t c = 0; c < r; c++)
+      row_sum += result[2 + c] * matrix[elem_offset + c];
     
-    result[2 + r] = (beta[2 + r] - ts) / matrix[2 + r];
+    result[2 + r] = (beta[2 + r] - row_sum) / matrix[elem_offset + r];
   }
 
 }

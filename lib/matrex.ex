@@ -261,6 +261,7 @@ defmodule Matrex do
             dot_and_add: 3,
             dot_nt: 2,
             dot_tn: 2,
+            solve: 2,
             eye: 1,
             element_to_string: 1,
             fill: 3,
@@ -1178,6 +1179,24 @@ defmodule Matrex do
       )
       when rows1 == rows2 and is_number(alpha),
       do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
+
+  @doc """
+  Matrix solve. NIF, via simple forward substitution.
+
+  The first matrix must be square while the
+  number of columns of the first matrix must
+  equal the number of rows of the second.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  """
+  @spec solve(matrex, matrex) :: matrex
+  def solve(
+        matrex_data(rows1, columns1, _data1, first),
+        matrex_data(rows2, columns2, _data2, second)
+      )
+      when rows1 == columns1 and rows1 == rows2 and columns2 == 1,
+      do: %Matrex{data: NIFs.solve(first, second)}
 
   @doc """
   Create eye (identity) square matrix of given size.
