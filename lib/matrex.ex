@@ -261,6 +261,8 @@ defmodule Matrex do
             dot_and_add: 3,
             dot_nt: 2,
             dot_tn: 2,
+            forward_substitute: 2,
+            cholesky: 1,
             eye: 1,
             element_to_string: 1,
             fill: 3,
@@ -1178,6 +1180,61 @@ defmodule Matrex do
       )
       when rows1 == rows2 and is_number(alpha),
       do: %Matrex{data: NIFs.dot_tn(first, second, alpha)}
+
+  @doc """
+  Matrix cholesky decompose. NIF, via naive implementation.
+
+  The first matrix must be symmetric and positive definitive.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[3, 4, 3], [4, 8, 6], [3, 6, 9]]) |>
+      ...> Matrex.cholesky()
+      #Matrex[3×3]
+      ┌                         ┐
+      │ 1.73205     0.0     0.0 │
+      │  2.3094 1.63299     0.0 │
+      │ 1.73205 1.22474 2.12132 │
+      └                         ┘
+
+  """
+  @spec cholesky(matrex) :: matrex
+  def cholesky(
+        matrex_data(rows1, columns1, _data1, first)
+      )
+      when rows1 == columns1,
+      do: %Matrex{data: NIFs.cholesky(first)}
+
+  @doc """
+  Matrix forward substitution. NIF, via naive C implementation.
+
+  The first matrix must be square while the
+  number of columns of the first matrix must
+  equal the number of rows of the second.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.forward_substitute(
+      ...>   Matrex.new([[3, 4], [4, 8]]) |> Matrex.cholesky(),
+      ...>   Matrex.new([[1],[2]]))
+      #Matrex[2×1]
+      ┌         ┐
+      │ 0.57735 │
+      │ 0.40825 │
+      └         ┘
+
+  """
+  @spec forward_substitute(matrex, matrex) :: matrex
+  def forward_substitute(
+        matrex_data(rows1, columns1, _data1, first),
+        matrex_data(rows2, columns2, _data2, second)
+      )
+      when rows1 == columns1 and rows1 == rows2 and columns2 == 1,
+      do: %Matrex{data: NIFs.forward_substitute(first, second)}
 
   @doc """
   Create eye (identity) square matrix of given size.
