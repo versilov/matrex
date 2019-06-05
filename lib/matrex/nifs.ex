@@ -143,7 +143,7 @@ defmodule Matrex.NIFs do
       when is_integer(size) and is_number(value),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec diagonal(matrix) :: matrix
+  @spec diagonal(binary) :: binary
   def diagonal(matrix)
       when is_binary(matrix),
       do: :erlang.nif_error(:nif_library_not_loaded)

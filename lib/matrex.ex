@@ -1284,8 +1284,8 @@ defmodule Matrex do
       └                         ┘
   """
   @spec diagonal( matrex ) :: matrex
-  def diagonal(matrix) when is_binary(matrix)
-    do: %Matrex{data: NIFs.diagonal(matrix)}
+  def diagonal(matrix),
+    do: %Matrex{data: NIFs.diagonal(matrix.data)}
 
   @doc """
   Create matrix filled with given value. NIF.

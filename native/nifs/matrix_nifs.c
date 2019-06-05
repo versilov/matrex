@@ -4,6 +4,7 @@
 
 #include "../include/matrix.h"
 #include "../include/matrix_dot.h"
+#include "../include/matrix_linalg.h"
 
 #define ASSERT_SIZES_MATCH(m1, m2) if (MX_ROWS(m1) != MX_ROWS(m2) || MX_COLS(m1) != MX_COLS(m2)) \
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
@@ -1063,8 +1064,6 @@ submatrix(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
 
   return result;
 }
-
-  enif_get_uint64(env, argv[2], &row_to);
 
 static ERL_NIF_TERM
 subtract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
