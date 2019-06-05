@@ -306,7 +306,7 @@ defmodule MatrexTest do
     end
   end
 
-  test "#solve for `x` where L x = b` where A is of lower triangular form " do
+  test "#forward_substitute for `x` where L x = b` where A is of lower triangular form " do
     first = Matrex.new([
       [0.411927 ,   0.0       ,   0.0       ,   0.0       ,   0.0      ],
       [0.124196 ,  0.392758 ,   0.0       ,   0.0       ,   0.0      ],
@@ -330,7 +330,7 @@ defmodule MatrexTest do
       0.042019689663027514,
     ]]) |> Matrex.transpose()
 
-    result = Matrex.solve(first, second)
+    result = Matrex.forward_substitute(first, second)
 
     assert Matrex.sum(Matrex.subtract(result, expected)) < 1.0e-6
   end

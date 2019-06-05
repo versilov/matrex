@@ -133,8 +133,8 @@ defmodule Matrex.NIFs do
       when is_binary(matrix),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
-  @spec solve(binary, binary) :: binary
-  def solve(matrix, beta)
+  @spec forward_substitute(binary, binary) :: binary
+  def forward_substitute(matrix, beta)
       when is_binary(matrix) and is_binary(beta),
       do: :erlang.nif_error(:nif_library_not_loaded)
 

@@ -1,6 +1,6 @@
 #include "../include/matrix.h"
 
-#ifdef MATREX_NO_BLAS
+#ifndef MATREX_NO_BLAS
 
 #include <cblas.h>
 
