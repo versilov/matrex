@@ -563,6 +563,40 @@ eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   return result;
 }
 
+
+static ERL_NIF_TERM
+diagonal(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  uint32_t      new_rows, new_cols;
+  float        *matrix_data, *result_data;
+  size_t        result_size;
+  uint32_t rows, cols;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
+
+  if (rows != cols)
+    return enif_raise_exception(env, enif_make_string(env, "Non-symmetric matrix.", ERL_NIF_LATIN1));
+
+  new_rows = (uint32_t)1;
+  new_cols = (uint32_t)cols;
+
+  result_size = sizeof(float) * (2 + new_rows * new_cols);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  matrix_diagonal(matrix_data, new_cols, result_data);
+
+  return result;
+}
+
+
 static ERL_NIF_TERM
 fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
@@ -1030,6 +1064,7 @@ submatrix(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   return result;
 }
 
+  enif_get_uint64(env, argv[2], &row_to);
 
 static ERL_NIF_TERM
 subtract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
