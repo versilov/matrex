@@ -2543,6 +2543,35 @@ defmodule Matrex do
   def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
 
   @doc """
+  Trace of matrix (sum of all diagonal elements). Elixir.
+
+  Can return special float values as atoms.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.trace(m)
+      15.0
+
+      iex> m = Matrex.new("Inf 1; 2 3")
+      #Matrex[2×2]
+      ┌                 ┐
+      │     ∞       1.0 │
+      │     2.0     3.0 │
+      └                 ┘
+      iex> trace(m)
+      :inf
+  """
+  @spec trace(matrex) :: element
+  def trace(%Matrex{data: matrix}), do: NIFs.diagonal(matrix) |> NIFs.sum()
+
+  @doc """
   Converts to flat list. NIF.
 
   ## Example

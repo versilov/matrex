@@ -372,6 +372,13 @@ defmodule MatrexTest do
     assert Matrex.diagonal(a) == expected
   end
 
+  test "#trace of a matrix" do
+    a = Matrex.new([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+    expected = Matrex.new([[1, 5, 9]]) |> Matrex.sum()
+    assert Matrex.trace(a) == expected
+  end
+
   test "#find returns position tuple of the element" do
     matrex = Matrex.reshape(1..100, 10, 10)
     assert Matrex.find(matrex, 11) == {2, 1}
