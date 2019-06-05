@@ -365,6 +365,13 @@ defmodule MatrexTest do
     assert Matrex.diagonal(a) == expected
   end
 
+  test "#diagonal of a non-symmetric matrix" do
+    a = Matrex.new([[1, 2, 3], [4, 5, 6] ])
+
+    expected = Matrex.new([[1, 5]])
+    assert Matrex.diagonal(a) == expected
+  end
+
   test "#find returns position tuple of the element" do
     matrex = Matrex.reshape(1..100, 10, 10)
     assert Matrex.find(matrex, 11) == {2, 1}

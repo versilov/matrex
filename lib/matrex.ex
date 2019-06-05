@@ -1263,25 +1263,15 @@ defmodule Matrex do
     do: %Matrex{data: NIFs.eye(size, value)}
 
   @doc """
-  Create diagonal (identity) square matrix of given size.
+  Create new matrix with only diagonal elements from a given matrix.
 
   ## Examples
 
-      iex> Matrex.eye(3)
-      #Matrex[3×3]
+      iex> Matrex.eye(3) |> Matrex.diagonal()
       ┌                         ┐
-      │     1.0     0.0     0.0 │
-      │     0.0     1.0     0.0 │
-      │     0.0     0.0     1.0 │
+      │    1.0      1.0     1.0 │
       └                         ┘
 
-      iex> Matrex.eye(3, 2.95)
-      #Matrex[3×3]
-      ┌                         ┐
-      │    2.95     0.0     0.0 │
-      │     0.0    2.95     0.0 │
-      │     0.0     0.0    2.95 │
-      └                         ┘
   """
   @spec diagonal( matrex ) :: matrex
   def diagonal(matrix),

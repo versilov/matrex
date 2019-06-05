@@ -572,7 +572,7 @@ diagonal(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
   uint32_t      new_rows, new_cols;
   float        *matrix_data, *result_data;
   size_t        result_size;
-  uint32_t rows, cols;
+  uint32_t rows, cols, diag_size;
 
   (void)(argc);
 
@@ -582,17 +582,17 @@ diagonal(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
 
   rows = MX_ROWS(matrix_data);
   cols = MX_COLS(matrix_data);
-
-  if (rows != cols)
-    return enif_raise_exception(env, enif_make_string(env, "Non-symmetric matrix.", ERL_NIF_LATIN1));
+  diag_size = rows <= cols ? rows : cols;
 
   new_rows = (uint32_t)1;
-  new_cols = (uint32_t)cols;
+  new_cols = (uint32_t)diag_size;
 
   result_size = sizeof(float) * (2 + new_rows * new_cols);
   result_data = (float *) enif_make_new_binary(env, result_size, &result);
 
-  matrix_diagonal(matrix_data, new_cols, result_data);
+  MX_SET_ROWS(result_data, new_rows);
+  MX_SET_COLS(result_data, new_cols);
+  matrix_diagonal(matrix_data, diag_size, result_data);
 
   return result;
 }
