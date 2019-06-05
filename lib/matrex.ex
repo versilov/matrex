@@ -264,6 +264,7 @@ defmodule Matrex do
             forward_substitute: 2,
             cholesky: 1,
             eye: 1,
+            diagonal: 1,
             element_to_string: 1,
             fill: 3,
             fill: 2,
@@ -1260,6 +1261,31 @@ defmodule Matrex do
   @spec eye(index, element) :: matrex
   def eye(size, value \\ 1.0) when is_integer(size) and is_number(value),
     do: %Matrex{data: NIFs.eye(size, value)}
+
+  @doc """
+  Create diagonal (identity) square matrix of given size.
+
+  ## Examples
+
+      iex> Matrex.eye(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     1.0     0.0     0.0 │
+      │     0.0     1.0     0.0 │
+      │     0.0     0.0     1.0 │
+      └                         ┘
+
+      iex> Matrex.eye(3, 2.95)
+      #Matrex[3×3]
+      ┌                         ┐
+      │    2.95     0.0     0.0 │
+      │     0.0    2.95     0.0 │
+      │     0.0     0.0    2.95 │
+      └                         ┘
+  """
+  @spec diagonal( matrex ) :: matrex
+  def diagonal(matrix) when is_binary(matrix)
+    do: %Matrex{data: NIFs.diagonal(matrix)}
 
   @doc """
   Create matrix filled with given value. NIF.

@@ -1254,6 +1254,7 @@ static ErlNifFunc nif_functions[] = {
   {"cholesky",             1, cholesky,             0},
   {"forward_substitute",                2, forward_substitute,                0},
   {"eye",                  2, eye,                  0},
+  {"diagonal",             1, diagonal,             0},
   {"fill",                 3, fill,                 0},
   {"find",                 2, find,                 0},
   {"from_range",           4, from_range,           0},

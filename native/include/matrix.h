@@ -70,6 +70,9 @@ void
 matrix_eye(Matrix matrix, const float value);
 
 void
+matrix_diagonal(const Matrix matrix, const uint32_t N, Matrix result);
+
+void
 matrix_fill(Matrix matrix, const float value);
 
 int32_t
