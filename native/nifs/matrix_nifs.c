@@ -4,6 +4,7 @@
 
 #include "../include/matrix.h"
 #include "../include/matrix_dot.h"
+#include "../include/matrix_linalg.h"
 
 #define ASSERT_SIZES_MATCH(m1, m2) if (MX_ROWS(m1) != MX_ROWS(m2) || MX_COLS(m1) != MX_COLS(m2)) \
     return enif_raise_exception(env, enif_make_string(env, "Matrices sizes mismatch.", ERL_NIF_LATIN1));
@@ -563,6 +564,40 @@ eye(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   return result;
 }
 
+
+static ERL_NIF_TERM
+diagonal(ErlNifEnv *env, int argc, const ERL_NIF_TERM *argv) {
+  ErlNifBinary  matrix;
+  ERL_NIF_TERM  result;
+  uint32_t      new_rows, new_cols;
+  float        *matrix_data, *result_data;
+  size_t        result_size;
+  uint32_t rows, cols, diag_size;
+
+  (void)(argc);
+
+  if (!enif_inspect_binary(env, argv[0], &matrix)) return enif_make_badarg(env);
+
+  matrix_data = (float *) matrix.data;
+
+  rows = MX_ROWS(matrix_data);
+  cols = MX_COLS(matrix_data);
+  diag_size = rows <= cols ? rows : cols;
+
+  new_rows = (uint32_t)1;
+  new_cols = (uint32_t)diag_size;
+
+  result_size = sizeof(float) * (2 + new_rows * new_cols);
+  result_data = (float *) enif_make_new_binary(env, result_size, &result);
+
+  MX_SET_ROWS(result_data, new_rows);
+  MX_SET_COLS(result_data, new_cols);
+  matrix_diagonal(matrix_data, diag_size, result_data);
+
+  return result;
+}
+
+
 static ERL_NIF_TERM
 fill(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ERL_NIF_TERM result;
@@ -1030,7 +1065,6 @@ submatrix(ErlNifEnv* env, int32_t argc, const ERL_NIF_TERM *argv) {
   return result;
 }
 
-
 static ERL_NIF_TERM
 subtract(ErlNifEnv *env, int32_t argc, const ERL_NIF_TERM *argv) {
   ErlNifBinary  first, second;
@@ -1219,6 +1253,7 @@ static ErlNifFunc nif_functions[] = {
   {"cholesky",             1, cholesky,             0},
   {"forward_substitute",                2, forward_substitute,                0},
   {"eye",                  2, eye,                  0},
+  {"diagonal",             1, diagonal,             0},
   {"fill",                 3, fill,                 0},
   {"find",                 2, find,                 0},
   {"from_range",           4, from_range,           0},

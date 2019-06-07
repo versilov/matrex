@@ -264,6 +264,7 @@ defmodule Matrex do
             forward_substitute: 2,
             cholesky: 1,
             eye: 1,
+            diagonal: 1,
             element_to_string: 1,
             fill: 3,
             fill: 2,
@@ -1260,6 +1261,21 @@ defmodule Matrex do
   @spec eye(index, element) :: matrex
   def eye(size, value \\ 1.0) when is_integer(size) and is_number(value),
     do: %Matrex{data: NIFs.eye(size, value)}
+
+  @doc """
+  Create new matrix with only diagonal elements from a given matrix.
+
+  ## Examples
+
+      iex> Matrex.eye(3) |> Matrex.diagonal()
+      ┌                         ┐
+      │    1.0      1.0     1.0 │
+      └                         ┘
+
+  """
+  @spec diagonal( matrex ) :: matrex
+  def diagonal(matrix),
+    do: %Matrex{data: NIFs.diagonal(matrix.data)}
 
   @doc """
   Create matrix filled with given value. NIF.
@@ -2525,6 +2541,35 @@ defmodule Matrex do
   """
   @spec sum(matrex) :: element
   def sum(%Matrex{data: matrix}), do: NIFs.sum(matrix)
+
+  @doc """
+  Trace of matrix (sum of all diagonal elements). Elixir.
+
+  Can return special float values as atoms.
+
+  ## Example
+
+      iex> m = Matrex.magic(3)
+      #Matrex[3×3]
+      ┌                         ┐
+      │     8.0     1.0     6.0 │
+      │     3.0     5.0     7.0 │
+      │     4.0     9.0     2.0 │
+      └                         ┘
+      iex> Matrex.trace(m)
+      15.0
+
+      iex> m = Matrex.new("Inf 1; 2 3")
+      #Matrex[2×2]
+      ┌                 ┐
+      │     ∞       1.0 │
+      │     2.0     3.0 │
+      └                 ┘
+      iex> trace(m)
+      :inf
+  """
+  @spec trace(matrex) :: element
+  def trace(%Matrex{data: matrix}), do: NIFs.diagonal(matrix) |> NIFs.sum()
 
   @doc """
   Converts to flat list. NIF.

@@ -1,4 +1,5 @@
 #include "../include/matrix.h"
+#include "../include/matrix_linalg.h"
 
 /*
 
@@ -14,8 +15,6 @@ end
 
 void
 matrix_cholesky(const Matrix matrix, Matrix result) {
-  size_t data_size = MX_BYTE_SIZE(matrix);
-
   size_t N = MX_ROWS(matrix);
   size_t cols = MX_COLS(matrix);
 

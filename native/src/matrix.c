@@ -234,6 +234,17 @@ matrix_eye(Matrix matrix, const float value) {
 }
 
 void
+matrix_diagonal(const Matrix matrix, const uint64_t diag_size, Matrix result) {
+  // Set it all to zeros
+  const uint64_t cols = MX_COLS(matrix);
+
+  // Now set the diagonal
+  for (uint64_t i = 0; i < diag_size; i++) {
+    result[2 + i] = matrix[2 + i*cols + i];
+  }
+}
+
+void
 matrix_fill(Matrix matrix, const float value) {
   const uint64_t length = MX_LENGTH(matrix);
 
