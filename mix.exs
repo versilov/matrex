@@ -1,13 +1,13 @@
 defmodule Matrex.MixProject do
   use Mix.Project
 
-  @version "0.6.6"
+  @version "0.7.0"
 
   def project do
     [
       app: :matrex,
       version: @version,
-      elixir: "~> 1.4",
+      elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
