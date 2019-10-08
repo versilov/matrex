@@ -101,6 +101,7 @@ It can even draw a heatmap of your matrix in console! Here is an animation of lo
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/twin_peaks.png" width="220px"  />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="180px" />&nbsp;
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/iex_matrex_logo.png" width="200px" />&nbsp;
 
 ## Installation
 
@@ -382,4 +383,19 @@ because BEAM does not accept special values as valid floats.
 
     iex> n[1][2]
     :nan
+```
+
+## Creating Matrex logo from MNIST letters
+
+```elixir
+    iex(166)> matrex_logo = \
+    ...(166)> "../emnist/emnist-letters-test-images-idx3-ubyte" \
+    ...(166)> |> Matrex.load(:idx) \
+    ...(166)> |> Access.get(9601..10200) \
+    ...(166)> |> Matrex.list_of_rows() \
+    ...(166)> |> Enum.reduce(fn x, sum -> add(x, sum) end) \
+    ...(166)> |> Matrex.reshape(28, 28) \
+    ...(166)> |> Matrex.transpose() \
+    ...(166)> |> Matrex.resize(2) \
+    ...(166)> |> Matrex.heatmap(:color24bit)
 ```
