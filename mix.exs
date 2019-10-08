@@ -7,7 +7,7 @@ defmodule Matrex.MixProject do
     [
       app: :matrex,
       version: @version,
-      elixir: "~> 1.5",
+      elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
@@ -20,7 +20,9 @@ defmodule Matrex.MixProject do
       preferred_cli_env: ["bench.matrex": :bench, docs: :docs],
       description:
         "Blazing fast matrix library for Elixir/Erlang with native C implementation using CBLAS.",
+      name: "Matrex",
       source_url: "https://github.com/versilov/matrex",
+      homepage_url: "https://matrex.org",
       dialyzer: dialyzer(),
       test_coverage: [tool: ExCoveralls],
       docs: docs()
@@ -45,7 +47,7 @@ defmodule Matrex.MixProject do
       {:excoveralls, github: "parroty/excoveralls", only: :test},
       {:ex_unit_notifier, "~> 0.1", only: :test},
       {:elixir_make, "~> 0.4", runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       {:inch_ex, "~> 0.5", only: :docs},
       {:matrix, "~> 0.3.0", only: :bench},
       {:exmatrix, "~> 0.0.1", only: :bench},
@@ -122,10 +124,9 @@ defmodule Matrex.MixProject do
   defp docs() do
     [
       main: "Matrex",
-      name: "Matrex",
+      logo: "docs/matrex_logo_dark_rounded.png",
       source_ref: "v#{@version}",
       canonical: "http://hexdocs.pm/matrex",
-      source_url: "https://github.com/versilov/matrex",
       extras: [
         "README.md"
       ]
