@@ -1,19 +1,20 @@
 defmodule Matrex.MixProject do
   use Mix.Project
 
-  @version "0.6.7"
+  @version "0.6.8"
 
   def project do
     [
       app: :matrex,
       version: @version,
-      elixir: "~> 1.4",
+      elixir: "~> 1.5",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       package: package(),
       make_clean: ["clean"],
-      make_env: %{ "MATREX_BLAS" => Application.get_env(:matrex, :blas, System.get_env("MATREX_BLAS")) },
-
+      make_env: %{
+        "MATREX_BLAS" => Application.get_env(:matrex, :blas, System.get_env("MATREX_BLAS"))
+      },
       compilers: [:elixir_make] ++ Mix.compilers(),
       aliases: aliases(),
       preferred_cli_env: ["bench.matrex": :bench, docs: :docs],
