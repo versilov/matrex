@@ -19,7 +19,7 @@ defmodule Matrex.MagicSquare do
 
     Enum.zip(1..n2, make_pattern(n))
     |> Enum.map(fn {i, p} -> if p, do: i, else: n2 - i + 1 end)
-    |> Enum.chunk(n)
+    |> Enum.chunk_every(n)
   end
 
   def new(n) when rem(n - 2, 4) == 0 do
@@ -72,7 +72,7 @@ defmodule Matrex.MagicSquare do
       Enum.reduce(1..4, [true], fn _, acc ->
         acc ++ Enum.map(acc, &(!&1))
       end)
-      |> Enum.chunk(4)
+      |> Enum.chunk_every(4)
 
     for i <- 0..(n - 1),
         j <- 0..(n - 1),

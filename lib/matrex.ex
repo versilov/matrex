@@ -365,7 +365,6 @@ defmodule Matrex do
   def fetch(matrex, :min), do: {:ok, min(matrex)}
   def fetch(matrex, :argmax), do: {:ok, argmax(matrex)}
 
-  @impl Access
   def get(%Matrex{} = matrex, key, default) do
     case fetch(matrex, key) do
       {:ok, value} -> value
@@ -2089,7 +2088,7 @@ defmodule Matrex do
   @spec reshape([matrex], index, index) :: matrex
   def reshape([%Matrex{} | _] = enum, _rows, columns) do
     enum
-    |> Enum.chunk(columns)
+    |> Enum.chunk_every(columns)
     |> new()
   end
 
