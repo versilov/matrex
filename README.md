@@ -101,7 +101,7 @@ It can even draw a heatmap of your matrix in console! Here is an animation of lo
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/twin_peaks.png" width="220px"  />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="180px" />&nbsp;
-<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/iex_matrex_logo.png" width="200px" />&nbsp;
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/iex_matrex_logo.png" width="215px" />&nbsp;
 
 ## Installation
 
