@@ -586,8 +586,8 @@ defmodule Matrex.Algorithms do
   @doc """
   Function of a surface with two hills.
   """
-  @spec boobs(float, float) :: float
-  def boobs(x, y) do
+  @spec twin_peaks(float, float) :: float
+  def twin_peaks(x, y) do
     x = (x - 40) / 4
     y = (y - 40) / 4
 

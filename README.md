@@ -25,6 +25,7 @@ Operations are performed on 3000×3000 matrices filled with random numbers.
 You can run benchmarks from the `/bench` folder with `python numpy_bench.py` and `MIX_ENV=bench mix bench` commands.
 
 #### NumPy
+
 ```
 benchmark         iterations	average time
 logistic_cost()   1000         	1.23 ms/op
@@ -35,6 +36,7 @@ np.dot(A, B)      10            196.57 ms/op
 ```
 
 #### Matrex
+
 ```
 benchmark     iterations   average time
 logistic_cost()      1000  1.23 ms/op (on par)
@@ -52,42 +54,38 @@ Slaughter of the innocents, actually.
 
 Dot product of 500×500 matrices
 
-| Library      | Ops/sec  | Compared to Matrex  |
-| ------------ | -------- | ------------------- |
-| Matrex       | 674.70   |                     |
-| Matrix       | 0.0923   | 7 312.62× slower    |
-| Numexy       | 0.0173   | 38 906.14× slower   |
-| ExMatrix     | 0.0129   | 52 327.40× slower   |
-
+| Library  | Ops/sec | Compared to Matrex |
+| -------- | ------- | ------------------ |
+| Matrex   | 674.70  |                    |
+| Matrix   | 0.0923  | 7 312.62× slower   |
+| Numexy   | 0.0173  | 38 906.14× slower  |
+| ExMatrix | 0.0129  | 52 327.40× slower  |
 
 Dot product of 3×3 matrices
 
-
-| Library      | Ops/sec  | Compared to Matrex  |
-| ------------ | -------- | ------------------- |
-| Matrex       | 3624.36 K|                     |
-| GraphMath    | 1310.16 K| 2.77x slower
-| Matrix       |  372.58 K| 9.73x slower
-| Numexy       |   89.72 K| 40.40x slower
-| ExMatrix     |   35.76 K| 101.35x slower
+| Library   | Ops/sec   | Compared to Matrex |
+| --------- | --------- | ------------------ |
+| Matrex    | 3624.36 K |                    |
+| GraphMath | 1310.16 K | 2.77x slower       |
+| Matrix    | 372.58 K  | 9.73x slower       |
+| Numexy    | 89.72 K   | 40.40x slower      |
+| ExMatrix  | 35.76 K   | 101.35x slower     |
 
 Transposing 1000x1000 matrix
 
-| Library      | Ops/sec  | Compared to Matrex  |
-| ------------ | -------- | ------------------- |
-| Matrex       |   428.69 |                     |
-| ExMatrix     |     9.39 | 45.64× slower       |
-| Matrix       |     8.54 | 50.17× slower       |
-| Numexy       |     6.83 | 62.80× slower       |
+| Library  | Ops/sec | Compared to Matrex |
+| -------- | ------- | ------------------ |
+| Matrex   | 428.69  |                    |
+| ExMatrix | 9.39    | 45.64× slower      |
+| Matrix   | 8.54    | 50.17× slower      |
+| Numexy   | 6.83    | 62.80× slower      |
 
 ![Transpose benchmark](https://raw.githubusercontent.com/versilov/matrex/master/docs/transposing_benchmark.png)
-
 
 ## Example
 
 Complete example of Matrex library at work:
 [Linear regression on MNIST digits (Jupyter notebook)](https://github.com/versilov/matrex/blob/master/Matrex.ipynb)
-
 
 ## Visualization
 
@@ -100,7 +98,7 @@ It can even draw a heatmap of your matrix in console! Here is an animation of lo
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist8.png" width="200px" />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/mnist_sum.png" width="200px" />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/magic_square.png" width="200px" />&nbsp;
-<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/hot_boobs.png" width="220px"  />&nbsp;
+<img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/twin_peaks.png" width="220px"  />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/neurons_mono.png" width="233px"  />&nbsp;
 <img src="https://raw.githubusercontent.com/versilov/matrex/master/docs/logistic_regression.gif" width="180px" />&nbsp;
 
@@ -116,15 +114,16 @@ def deps do
   ]
 end
 ```
+
 ### MacOS
 
 Everything works out of the box, thanks to Accelerate framework. If you encounter a compilation error
- 
-```native/src/matrix_dot.c:5:10: fatal error: 'cblas.h' file not found``` 
+
+`native/src/matrix_dot.c:5:10: fatal error: 'cblas.h' file not found`
 
 then make sure the XCode command-line tools are installed (`xcode-select --install`).
 If the error still not resolved, for MacOS Mojave, run
-```open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg```
+`open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg`
 to restore /usr/include and /usr/lib.
 
 ### Ubuntu
@@ -153,7 +152,6 @@ $ mix clean
 $ MATREX_BLAS=noblas mix compile
 ```
 
-
 ## Access behaviour
 
 Access behaviour is partly implemented for Matrex, so you can do:
@@ -170,7 +168,9 @@ Access behaviour is partly implemented for Matrex, so you can do:
     iex> m[2][3]
     7.0
 ```
+
 Or even:
+
 ```elixir
 
     iex> m[1..2]
@@ -182,6 +182,7 @@ Or even:
 ```
 
 There are also several shortcuts for getting dimensions of matrix:
+
 ```elixir
 
     iex> m[:rows]
@@ -190,25 +191,33 @@ There are also several shortcuts for getting dimensions of matrix:
     iex> m[:size]
     {3, 3}
 ```
+
 calculating maximum value of the whole matrix:
+
 ```elixir
 
     iex> m[:max]
     9.0
 ```
+
 or just one of it's rows:
+
 ```elixir
 
     iex> m[2][:max]
     7.0
 ```
+
 calculating one-based index of the maximum element for the whole matrix:
+
 ```elixir
 
     iex> m[:argmax]
     8
 ```
+
 and a row:
+
 ```elixir
 
     iex> m[2][:argmax]
@@ -217,7 +226,7 @@ and a row:
 
 ## Math operators overloading
 
-`Matrex.Operators` module redefines `Kernel` math operators (+, -, *, / <|>) and
+`Matrex.Operators` module redefines `Kernel` math operators (+, -, \*, / <|>) and
 defines some convenience functions, so you can write calculations code in more natural way.
 
 It should be used with great caution. We suggest using it only inside specific functions
@@ -247,7 +256,6 @@ ones which do two or more operations at one call, are 2-3 times faster.
       {scalar(j), grad}
     end
 ```
-
 
 The same function, coded with module methods calls (2.5 times faster):
 
@@ -344,7 +352,6 @@ so you can use it to exchange data between two systems.
     │     ∞       ∞       ∞       ∞       8.0 │
     └                                         ┘
 ```
-
 
 ## NaN and Infinity
 
