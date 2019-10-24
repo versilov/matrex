@@ -796,7 +796,7 @@ defmodule Matrex do
       │     4.0     9.0     2.0 │
       └                         ┘
       iex> Matrex.argmax(m)
-      7
+      8
 
   """
   @spec argmax(matrex) :: index
@@ -1279,7 +1279,7 @@ defmodule Matrex do
 
   ## Example
 
-      iex> Matrex.fill(4,3, 55)
+      iex> Matrex.fill(4, 3, 55)
       #Matrex[4×3]
       ┌                         ┐
       │    55.0    55.0    55.0 │
@@ -1301,10 +1301,11 @@ defmodule Matrex do
       iex> Matrex.fill(3, 55)
       #Matrex[3×3]
       ┌                         ┐
-      │    33.0    33.0    33.0 │
-      │    33.0    33.0    33.0 │
-      │    33.0    33.0    33.0 │
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
+      │    55.0    55.0    55.0 │
       └                         ┘
+
   """
   @spec fill(index, element) :: matrex
   def fill(size, value), do: fill(size, size, value)
