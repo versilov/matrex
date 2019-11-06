@@ -2287,7 +2287,7 @@ defmodule Matrex do
   @doc """
   Transfer one-element matrix to a scalar value.
 
-  Differently from `first/1` will not match and throw an error,
+  Unlike `first/1` it raises `FunctionClauseError`
   if matrix contains more than one element.
 
   ## Example
