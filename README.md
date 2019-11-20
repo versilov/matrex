@@ -127,6 +127,10 @@ If the error still not resolved, for MacOS Mojave, run
 `open /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg`
 to restore /usr/include and /usr/lib.
 
+On MacOS 10.15 this error can be solved with
+
+`export CPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
+
 ### Ubuntu
 
 You need to install scientific libraries for this package to compile:
