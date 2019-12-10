@@ -131,6 +131,10 @@ On MacOS 10.15 this error can be solved with
 
 `export CPATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/`
 
+or with
+
+`C_INCLUDE_PATH=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Headers mix compile`
+
 ### Ubuntu
 
 You need to install scientific libraries for this package to compile:
