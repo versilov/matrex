@@ -270,33 +270,33 @@ defmodule Matrex.Algorithms do
   defp iteration2(%FMinCG{} = data) do
     data = tighten(data)
 
-    IO.puts("\n\n\n\n### Iter ###")
+    # IO.puts("\n\n\n\n### Iter ###")
 
-    IO.puts("iter2 first: #{inspect {data.f2, :>, data.f1 + data.z1 * @rho * data.d1, data.d2 > -@sig * data.d1}}")
-    IO.puts("iter2 second: #{inspect {data.d2, :>, @sig * data.d1}}")
-    IO.puts("iter2 third: #{inspect {data.m, :=, 0}}")
-    IO.puts("iter2 data: #{inspect data |> Map.drop([:fParams])}")
+    # IO.puts("iter2 first: #{inspect {data.f2, :>, data.f1 + data.z1 * @rho * data.d1, data.d2 > -@sig * data.d1}}")
+    # IO.puts("iter2 second: #{inspect {data.d2, :>, @sig * data.d1}}")
+    # IO.puts("iter2 third: #{inspect {data.m, :=, 0}}")
+    # IO.puts("iter2 data: #{inspect data |> Map.drop([:fParams])}")
 
     cond do
       data.f2 in [:nan, :inf, :neg_inf] ->
-        IO.puts("iter2: inf ")
+        # IO.puts("iter2: inf ")
         {false, data}
 
       data.f2 > data.f1 + data.z1 * @rho * data.d1 or data.d2 > -@sig * data.d1 ->
-        IO.puts("iter2: first ")
+        # IO.puts("iter2: first ")
         {false, data}
 
       data.d2 > @sig * data.d1 ->
-        IO.puts("iter2: second #{data.d1}, #{data.d2}")
+        # IO.puts("iter2: second #{data.d1}, #{data.d2}")
         {true, data}
 
       data.m == 0 ->
-        IO.puts("iter2: third")
+        # IO.puts("iter2: third")
         {false, data}
 
       true ->
         z2 = z2(data, data.limit)
-        IO.puts("iter2: none, z2=#{z2}")
+        # IO.puts("iter2: none, z2=#{z2}")
 
         data = %{
           data
@@ -666,7 +666,7 @@ defmodule Matrex.Algorithms do
 
     theta = Matrex.zeros(degree + 1, 1)
 
-    {sX, fX, _i} =  Matrex.Algorithms.fmincg(&LRTest.linear_cost_fun/3, theta, {xx, y, lambda}, iterations)
+    {sX, fX, _i} =  fmincg(&linear_cost_fun/3, theta, {xx, y, lambda}, iterations)
 
     coefs = sX |> Enum.to_list() |> Enum.with_index(0) |> Enum.map(fn {x,y} -> {y,x} end)
     %{coefs: coefs, fun: &poly_func(&1, coefs), error: fX |> Enum.at(-1)}
