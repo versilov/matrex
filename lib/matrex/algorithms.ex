@@ -410,12 +410,12 @@ defmodule Matrex.Algorithms do
   end
 
   @doc """
-  Linear regression cost and gradient function with regularization from Andrew Ng's course (ex3).
+  Logistic regression cost and gradient function with regularization from Andrew Ng's course (ex3).
 
   Computes the cost of using `theta` as the parameter for regularized logistic regression and the
   gradient of the cost w.r.t. to the parameters.
 
-  Compatible with `fmincg/4` algorithm from thise module.
+  Compatible with `fmincg/4` algorithm from this module.
 
   `theta`  — parameters, to compute cost for
 
@@ -590,6 +590,99 @@ defmodule Matrex.Algorithms do
     IO.puts("Time elapsed: #{time_elapsed / 1_000_000} sec.")
 
     accuracy
+  end
+
+  @doc """
+  Linear regression cost and gradient function, with no normalization.
+
+  Computes the cost of using `theta` as the parameter for regularized linear regression and the
+  gradient of the cost w.r.t. to the parameters.
+
+  Compatible with `fmincg/4` algorithm from thise module.
+
+  `theta`  — parameters, to compute cost for
+
+  `X`  — training data input.
+
+  `y`  — training data output.
+
+  `lambda`  — regularization parameter.
+
+  """
+  @spec linear_cost_fun(Matrex.t(), {Matrex.t(), Matrex.t(), number, non_neg_integer}, pos_integer) ::
+          {float, Matrex.t()}
+  def linear_cost_fun(
+        %Matrex{} = theta,
+        {%Matrex{} = x, %Matrex{} = y, lambda} = _params,
+        _iteration \\ 0
+      ) when is_number(lambda) do
+    n = Enum.count(y)
+    h! = x |> Matrex.dot(theta)
+
+    h_sub_y = Matrex.subtract(h!,y)
+
+    j = 1.0/(2*n) *
+      (Matrex.dot( h_sub_y |> Matrex.transpose, h_sub_y) |> Matrex.scalar())
+
+    grad = x |> Matrex.transpose |> Matrex.dot(h_sub_y) |> Matrex.apply(& &1 * lambda / n)
+
+    {j, grad}
+  end
+
+  @doc """
+  Fit polynomial function based on given `x` and `y` using gradient descent (`fmincg/4`) using
+  `linear_cost_fun/4`.
+
+  This approach produces decent results for many datasets. It isn't as efficient as using
+  least squares, but is still useful and provides a goode example of how to optimize general
+  functions.
+
+  Note that gradient descent won't always converge well for polynomials with linear cost function.
+  If this happens for your dataset try adjusting `opts` parameters. Uses the `fmincg/4` algorithm
+  from this module.
+
+  `x`  — training data input.
+
+  `y`  — training data output.
+
+  `opts` - algorithm parameters
+    `lambda`  — regularization parameter.
+    `iterations`  — regularization parameter.
+
+  """
+  @spec fit_poly(Matrex.t(), Matrex.t(), pos_integer, keyword() ) ::
+      %{ coefs: keyword(), error: float(), fun: (Matrex.t() -> Matrex.t()) }
+  def fit_poly(x, y, degree, opts \\ []) do
+    iterations = Keyword.get(opts, :iterations, 100)
+    lambda  = Keyword.get(opts, :lambda, 1.0)
+
+    {m, n} = Matrex.size(y)
+    unless m >= n, do: raise %ArgumentError{message: "y shape (m,n) must have m > n"}
+
+    xx =
+      for i <- 0..degree, into: [] do
+        x |> Matrex.apply(&:math.pow(&1, i))
+      end |> Matrex.concat()
+
+    theta = Matrex.zeros(degree + 1, 1)
+
+    {sX, fX, _i} =  Matrex.Algorithms.fmincg(&LRTest.linear_cost_fun/3, theta, {xx, y, lambda}, iterations)
+
+    coefs = sX |> Enum.to_list() |> Enum.with_index(0) |> Enum.map(fn {x,y} -> {y,x} end)
+    %{coefs: coefs, fun: &poly_func(&1, coefs), error: fX |> Enum.at(-1)}
+  end
+
+  def fit_linear(x, y, opts \\ []) do
+    fit_poly(x, y, 1, opts)
+  end
+
+  defp poly_func(x, coefs) when is_list(coefs) do
+    # coefs_idx = Enum.with_index(coefs, 0)
+    x |> Enum.map(fn x ->
+      Enum.reduce(coefs, 0.0, fn {i, f}, acc ->
+        acc + f * :math.pow(x, i)
+      end)
+    end)
   end
 
   @doc """
