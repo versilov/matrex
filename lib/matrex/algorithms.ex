@@ -270,13 +270,6 @@ defmodule Matrex.Algorithms do
   defp iteration2(%FMinCG{} = data) do
     data = tighten(data)
 
-    # IO.puts("\n\n\n\n### Iter ###")
-
-    # IO.puts("iter2 first: #{inspect {data.f2, :>, data.f1 + data.z1 * @rho * data.d1, data.d2 > -@sig * data.d1}}")
-    # IO.puts("iter2 second: #{inspect {data.d2, :>, @sig * data.d1}}")
-    # IO.puts("iter2 third: #{inspect {data.m, :=, 0}}")
-    # IO.puts("iter2 data: #{inspect data |> Map.drop([:fParams])}")
-
     cond do
       data.f2 in [:nan, :inf, :neg_inf] ->
         # IO.puts("iter2: inf ")
