@@ -88,6 +88,11 @@ defmodule Matrex.NIFs do
       when is_binary(first) and is_binary(second),
       do: :erlang.nif_error(:nif_library_not_loaded)
 
+  @spec power(number, binary) :: binary
+  def power(exponent, matrix)
+      when is_number(exponent) and is_binary(matrix),
+      do: :erlang.nif_error(:nif_library_not_loaded)
+
   @spec divide(binary, binary) :: binary
   def divide(first, second)
       when is_binary(first) and is_binary(second),

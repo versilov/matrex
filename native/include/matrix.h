@@ -58,6 +58,9 @@ void
 matrix_concat_columns(const Matrix first, const Matrix second, Matrix result);
 
 void
+matrix_pow(const float scalar, const Matrix matrex, Matrix result);
+
+void
 matrix_divide(const Matrix first, const Matrix second, Matrix result);
 
 void

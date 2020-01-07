@@ -298,31 +298,6 @@ defmodule Matrex do
 
   @behaviour Access
 
-  defmacrop matrex_data(rows, columns, body) do
-    quote do
-      %Matrex{
-        data: <<
-          unquote(rows)::unsigned-integer-little-32,
-          unquote(columns)::unsigned-integer-little-32,
-          unquote(body)::binary
-        >>
-      }
-    end
-  end
-
-  defmacrop matrex_data(rows, columns, body, data) do
-    quote do
-      %Matrex{
-        data:
-          <<
-            unquote(rows)::unsigned-integer-little-32,
-            unquote(columns)::unsigned-integer-little-32,
-            unquote(body)::binary
-          >> = unquote(data)
-      }
-    end
-  end
-
   @impl Access
   def fetch(matrex, key)
 
@@ -416,17 +391,7 @@ defmodule Matrex do
     # Matrix element size in bytes
     @element_size 4
 
-    defmacrop matrex_data(rows, columns, data) do
-      quote do
-        %Matrex{
-          data: <<
-            unquote(rows)::unsigned-integer-little-32,
-            unquote(columns)::unsigned-integer-little-32,
-            unquote(data)::binary
-          >>
-        }
-      end
-    end
+    import Matrex.Guards
 
     @doc false
     def count(matrex_data(rows, cols, _data)), do: {:ok, rows * cols}
@@ -1083,6 +1048,32 @@ defmodule Matrex do
       do: %Matrex{data: NIFs.dot(first, second)}
 
   @doc """
+  Matrix inner product for two "vector" matrices (e.g. rows == 1 and columns >= 1).
+
+  Number of columns of the first matrix must be equal to the number of rows of the second matrix.
+
+  Raises `ErlangError` if matrices' sizes do not match.
+
+  ## Example
+
+      iex> Matrex.new([[1, 2, 3], [4, 5, 6]]) |>
+      ...> Matrex.dot(Matrex.new([[1, 2], [3, 4], [5, 6]]))
+      #Matrex[2×2]
+      ┌                 ┐
+      │    22.0    28.0 │
+      │    49.0    64.0 │
+      └                 ┘
+
+  """
+  @spec inner_dot(matrex, matrex) :: matrex
+  def inner_dot(
+        vector_data(columns1, _data1, first),
+        vector_data(columns2, _data2, second)
+      )
+      when columns1 == columns2,
+      do: %Matrex{data: NIFs.dot_nt(first, second)}
+
+  @doc """
   Matrix multiplication with addition of third matrix.  NIF, via `cblas_sgemm()`.
 
   Raises `ErlangError` if matrices' sizes do not match.
@@ -1697,6 +1688,22 @@ defmodule Matrex do
     size = rows * columns
 
     new_matrix_from_function(size, rows, columns, function, initial)
+  end
+
+  @doc """
+  Creates new 1-column matrix (aka vector) from the given list.
+
+  ## Examples
+
+      iex> [1,2,3] |> Matrex.from_list()
+      #Matrex[1×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      └                         ┘
+
+  """
+  def from_list(lst) when is_list(lst) do
+    new([lst])
   end
 
   @spec float_to_binary(element | :nan | :inf | :neg_inf) :: binary
@@ -2409,6 +2416,28 @@ defmodule Matrex do
   """
   @spec square(matrex) :: matrex
   def square(%Matrex{data: matrix}), do: %Matrex{data: Matrex.NIFs.multiply(matrix, matrix)}
+
+  @doc """
+  Produces element-wise pow matrix. NIF through `power/2`.
+
+  ## Example
+
+      iex> m = Matrex.new("1 2 3; 4 5 6")
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     2.0     3.0 │
+      │     4.0     5.0     6.0 │
+      └                         ┘
+      iex> Matrex.pow(m, 2)
+      #Matrex[2×3]
+      ┌                         ┐
+      │     1.0     4.0     9.0 │
+      │    16.0    25.0    36.0 │
+      └                         ┘
+
+  """
+  @spec pow(matrex, number) :: matrex
+  def pow(%Matrex{data: matrix}, exponent), do: %Matrex{data: Matrex.NIFs.power(exponent, matrix)}
 
   @doc """
   Returns submatrix for a given matrix. NIF.
