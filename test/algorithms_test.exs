@@ -162,7 +162,8 @@ defmodule AlgorithmsTest do
     expected_coefs = expected_fit[:coefs] |> coefs_nums()
     coefs = fit[:coefs] |> coefs_nums()
 
-    assert coefs |> Matrex.subtract(expected_coefs) |> Matrex.sum() < 1.0e-5
+    # Due to the randomness in GD, these parameters will vary more than most tests
+    assert coefs |> Matrex.subtract(expected_coefs) |> Matrex.sum() < 1.0e-2
   end
 
   defp coefs_nums(c) do
