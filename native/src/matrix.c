@@ -181,6 +181,17 @@ matrix_concat_columns(const Matrix first, const Matrix second, Matrix result) {
   }
 }
 
+void
+matrix_pow(const float scalar, const Matrix matrix, Matrix result) {
+  const int64_t data_size = MX_LENGTH(matrix);
+
+  MX_SET_ROWS(result, MX_ROWS(matrix));
+  MX_SET_COLS(result, MX_COLS(matrix));
+
+  for (int64_t index = 2; index < data_size; index += 1) {
+    result[index] = powf(matrix[index], scalar);
+  }
+}
 
 void
 matrix_divide(const Matrix first, const Matrix second, Matrix result) {
