@@ -115,4 +115,58 @@ defmodule AlgorithmsTest do
 
     {x_train, y_train, x_test, y_test}
   end
+
+
+  test "#linear_cost_fun computes cost" do
+    m = Matrex.load("test/rand_array.mtx")
+    y_t = m |> Matrex.submatrix(1..41, 2..2)
+
+    # for linear func, must add `ones` for the offset constant
+    x = m |> Matrex.submatrix(1..41, 1..1)
+    x_t = Matrex.concat(Matrex.ones(Matrex.size(x)), x)
+
+    lambda_t = 0.01
+    theta_t = Matrex.zeros(2, 1)
+
+    expected_j = 5238.50381097561
+
+    expected_grad =
+      Matrex.new(
+        " -0.91246 ; -2.41489 "
+      )
+
+    {j, grad} = Algorithms.linear_cost_fun(theta_t, {x_t, y_t, lambda_t})
+
+    assert grad |> Matrex.subtract(expected_grad) |> Matrex.sum() < 5.0e-6
+    assert j == expected_j
+
+  end
+
+  test "#fit_poly " do
+    m = Matrex.load("test/rand_array.mtx")
+    y = m |> Matrex.submatrix(1..41, 2..2)
+    x = m |> Matrex.submatrix(1..41, 1..1)
+
+    fit = Algorithms.fit_poly(x, y, 2)
+
+    expected_fit = %{
+      coefs: [
+        {0, 37.48050308227539},
+        {1, 6.260676383972168},
+        {2, 6.991103172302246}
+      ],
+      error: 149.0388957698171,
+    }
+
+    # IO.inspect(fit, label: :fit)
+    expected_coefs = expected_fit[:coefs] |> coefs_nums()
+    coefs = fit[:coefs] |> coefs_nums()
+
+    # Due to the randomness in GD, these parameters will vary more than most tests
+    assert coefs |> Matrex.subtract(expected_coefs) |> Matrex.sum() < 1.0e-2
+  end
+
+  defp coefs_nums(c) do
+    [c |> Enum.map(& &1 |> elem(1))] |> Matrex.new()
+  end
 end
