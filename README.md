@@ -12,7 +12,7 @@ For example, vectorized linear regression is about 13 times faster, than Octave 
 It's also memory efficient, so you can work with large matrices,
 about billion of elements in size.
 
-Based on matrix code from https://github.com/sdwolfz/exlearn
+Based on matrix code from https://gitlab.com/sdwolfz/experimental/-/tree/master/exlearn
 
 ## Benchmarks
 
