@@ -182,7 +182,7 @@ void
 matrix_dot_and_apply(
   const float alpha, const Matrix first, const Matrix second, const char *function_name, Matrix result
 ) {
-  const math_func_ptr_t func = math_func_from_name(function_name);
+  const math_func_float64_ptr_t func = math_func_float64_from_name(function_name);
 
   const int64_t rows = MX_ROWS(first);
   const int64_t cols = MX_COLS(second);
